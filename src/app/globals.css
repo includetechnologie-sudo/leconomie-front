@@ -1,0 +1,67 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --font-inter: "Inter", sans-serif;
+  --font-serif: "Source Serif 4", Georgia, serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-serif);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Titres en Source Serif 4 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* Classe utilitaire */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+/* Prose — contenu articles WordPress */
+.prose {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 1.8;
+  color: #1f2937;
+}
+.prose h2, .prose h3, .prose h4 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: #111827;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.prose h2 { font-size: 1.5rem; border-left: 4px solid #dc2626; padding-left: 0.75rem; }
+.prose h3 { font-size: 1.25rem; }
+.prose a { color: #dc2626; text-decoration: underline; }
+.prose a:hover { color: #b91c1c; }
+.prose strong { color: #111827; font-weight: 700; }
+.prose blockquote {
+  border-left: 4px solid #dc2626;
+  background: #fef2f2;
+  padding: 1rem 1.25rem;
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: #374151;
+}
+.prose img { border-radius: 8px; margin: 1.5rem auto; }
+.prose ul li::marker { color: #dc2626; }
+.prose ol li::marker { color: #dc2626; font-weight: 700; }
