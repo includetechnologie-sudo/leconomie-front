@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const FEATURES_BASE = [
   "Articles gratuits",
@@ -72,6 +73,7 @@ const PLANS: Plan[] = [
 ];
 
 export default function AbonnementClient() {
+  const router = useRouter();
   const [step, setStep] = useState<"plans" | "checkout">("plans");
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [email, setEmail] = useState("");
@@ -265,7 +267,7 @@ export default function AbonnementClient() {
                 {/* CTA */}
                 <button
                   onClick={() => {
-                    if (plan.id === "gratuit") return;
+                    if (plan.id === "gratuit") { router.push("/connexion"); return; }
                     setSelectedPlan(plan);
                     setStep("checkout");
                   }}
