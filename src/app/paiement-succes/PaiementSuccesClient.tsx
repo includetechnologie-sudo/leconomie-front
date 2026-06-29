@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import CreatePasswordForm from "./CreatePasswordForm";
 
@@ -9,8 +9,8 @@ type State = "loading" | "new" | "existing" | "error";
 
 export default function PaiementSuccesClient() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [state, setState] = useState<State>("loading");
-  const [hasPassword, setHasPassword] = useState(false);
   const [info, setInfo] = useState({ email: "", plan: "", ref: "", planLabel: "" });
 
   useEffect(() => {
@@ -36,7 +36,6 @@ export default function PaiementSuccesClient() {
       .then((r) => r.json())
       .then((data) => {
         if (data.hasPassword) {
-          setHasPassword(true);
           setState("existing");
         } else {
           setState("new");
@@ -44,6 +43,13 @@ export default function PaiementSuccesClient() {
       })
       .catch(() => setState("error"));
   }, [searchParams]);
+
+  // Abonné existant : redirige automatiquement vers l'espace après 3 s
+  useEffect(() => {
+    if (state !== "existing") return;
+    const t = setTimeout(() => router.push("/mon-compte"), 3000);
+    return () => clearTimeout(t);
+  }, [state, router]);
 
   if (state === "loading") {
     return (
@@ -101,7 +107,8 @@ export default function PaiementSuccesClient() {
               </svg>
             </div>
             <p className="font-bold text-gray-900 mb-1">Abonnement mis à jour</p>
-            <p className="text-sm text-gray-500 mb-5">Votre compte existe déjà. Connectez-vous pour lire.</p>
+            <p className="text-sm text-gray-500 mb-2">Redirection vers votre espace…</p>
+            <p className="text-xs text-gray-400 mb-4">Vous serez redirigé automatiquement dans quelques secondes.</p>
             <Link href="/mon-compte"
               className="block w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition text-sm">
               Accéder à mon espace →
