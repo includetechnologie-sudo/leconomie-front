@@ -118,7 +118,9 @@ export default function ConnexionClient() {
           </div>
           <p className="text-center text-sm text-gray-600">
             Pas de compte ?{" "}
-            <Link href="/abonnement" className="font-bold text-red-600 hover:underline">Inscrivez-vous</Link>
+            <Link href="/inscription" className="font-bold text-red-600 hover:underline">Créer un compte gratuit</Link>
+            {" "}·{" "}
+            <Link href="/abonnement" className="font-semibold text-gray-500 hover:text-red-600 transition">S&apos;abonner</Link>
           </p>
         </div>
       </div>

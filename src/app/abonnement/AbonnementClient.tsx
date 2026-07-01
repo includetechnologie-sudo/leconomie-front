@@ -267,7 +267,7 @@ export default function AbonnementClient() {
                 {/* CTA */}
                 <button
                   onClick={() => {
-                    if (plan.id === "gratuit") { router.push("/connexion"); return; }
+                    if (plan.id === "gratuit") { router.push("/inscription"); return; }
                     setSelectedPlan(plan);
                     setStep("checkout");
                   }}
