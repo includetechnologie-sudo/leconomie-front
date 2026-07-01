@@ -4,6 +4,7 @@ import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_JOURNAUX, GET_MAGAZINES } from "@/graphql/queries";
 import type { JournalWP, MagazineWP } from "@/lib/types";
 import { parseAccessCookie } from "@/lib/parse-access";
+import { readAbonnes } from "@/lib/abonnes";
 import MonCompteClient from "./MonCompteClient";
 
 export default async function MonComptePage() {
@@ -28,5 +29,10 @@ export default async function MonComptePage() {
     magazines = mData.magazines.nodes;
   } catch { /* silence — affiche liste vide si WordPress indisponible */ }
 
-  return <MonCompteClient user={user!} journaux={journaux} magazines={magazines} />;
+  // Récupère les achats unitaires de l'utilisateur
+  const abonnes = await readAbonnes();
+  const abonne = abonnes.find((a) => a.email === user!.email);
+  const achats = abonne?.achats || [];
+
+  return <MonCompteClient user={user!} journaux={journaux} magazines={magazines} achats={achats} />;
 }

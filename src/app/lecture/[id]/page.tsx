@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { graphqlFetch } from "@/lib/graphql-fetch";
+import { readAbonnes } from "@/lib/abonnes";
+import { PLAN_RIGHTS } from "@/lib/subscription";
+import type { Plan } from "@/lib/subscription";
 import PdfViewer from "@/components/lecture/PdfViewer";
 
 const GET_EDITION = `
@@ -28,7 +31,26 @@ export default async function LectureViewerPage({
   const cookieStore = await cookies();
   const access = cookieStore.get("abonne_access");
   if (!access) redirect("/connexion?raison=acces_reserve");
-  try { JSON.parse(access.value); } catch { redirect("/connexion?raison=session_invalide"); }
+
+  let raw: { email?: string; plan?: string; expiresAt?: number } = {};
+  try { raw = JSON.parse(access.value); } catch { redirect("/connexion?raison=session_invalide"); }
+
+  const email = raw.email || "";
+  const plan = (raw.plan || "gratuit") as Plan;
+  const isExpired = raw.expiresAt && raw.expiresAt > 0 && Date.now() > raw.expiresAt;
+  const hasSubscription = !isExpired && PLAN_RIGHTS[plan]?.journal;
+
+  // Vérifie si le numéro a été acheté à l'unité
+  let hasUnitAccess = false;
+  if (!hasSubscription && email) {
+    const abonnes = await readAbonnes();
+    const abonne = abonnes.find((a) => a.email === email);
+    hasUnitAccess = abonne?.achats?.some((a) => a.id === Number(id)) ?? false;
+  }
+
+  if (!hasSubscription && !hasUnitAccess) {
+    redirect(`/abonnement?raison=acces_reserve`);
+  }
 
   // Récupère les infos depuis WordPress
   let titre = "";

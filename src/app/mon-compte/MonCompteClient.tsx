@@ -6,13 +6,32 @@ import type { JournalWP, MagazineWP } from "@/lib/types";
 import { PLAN_LABELS, PLAN_RIGHTS, daysUntilExpiry } from "@/lib/subscription";
 import type { Plan } from "@/lib/subscription";
 
+interface Achat {
+  id: number;
+  type: "journal" | "magazine";
+  titre: string;
+  ref: string;
+  acheteLe: number;
+}
+
 interface Props {
   user: { name: string; email: string; roles: string[]; plan?: string; ref?: string; expiresAt?: number };
   journaux: JournalWP[];
   magazines: MagazineWP[];
+  achats: Achat[];
 }
 
 const NAV = [
+  {
+    id: "achats",
+    label: "Mes achats",
+    icon: (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.99-1.77l1.59-10.23H6"/>
+      </svg>
+    ),
+  },
   {
     id: "journaux",
     label: "Mes journaux",
@@ -51,7 +70,7 @@ const NAV = [
   },
 ];
 
-export default function MonCompteClient({ user, journaux, magazines }: Props) {
+export default function MonCompteClient({ user, journaux, magazines, achats }: Props) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -126,6 +145,65 @@ export default function MonCompteClient({ user, journaux, magazines }: Props) {
 
         {/* Contenu principal */}
         <main className="space-y-8">
+
+          {/* Mes achats unitaires */}
+          <section id="achats">
+            <h2 className="text-base font-bold mb-4 flex items-center gap-2">
+              <span className="w-1 h-5 bg-red-600 inline-block rounded" />
+              Mes achats
+            </h2>
+            {achats.length === 0 ? (
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 text-center">
+                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg width="22" height="22" fill="none" stroke="#9ca3af" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.99-1.77l1.59-10.23H6"/>
+                  </svg>
+                </div>
+                <p className="text-sm font-bold text-gray-800 mb-1">Aucun achat pour le moment</p>
+                <p className="text-xs text-gray-500 mb-4">Achetez un numéro à l&apos;unité pour le retrouver ici.</p>
+                <Link href="/abonnement" className="inline-block bg-red-600 text-white text-xs font-bold px-5 py-2.5 rounded-lg hover:bg-red-700 transition">
+                  Voir les offres →
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                {achats.map((achat, i) => (
+                  <div key={`${achat.type}-${achat.id}`} className={`flex items-center justify-between px-5 py-4 gap-4 ${i !== 0 ? "border-t border-gray-50" : ""} hover:bg-gray-50 transition`}>
+                    <div className="flex items-center gap-4">
+                      <div className="bg-red-50 rounded-lg p-2.5 shrink-0">
+                        {achat.type === "journal" ? (
+                          <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                          </svg>
+                        ) : (
+                          <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-red-600 uppercase">{achat.type}</span>
+                        <p className="text-sm font-medium text-gray-900 leading-snug">{achat.titre}</p>
+                        <p className="text-xs text-gray-400">
+                          Acheté le {new Date(achat.acheteLe).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href={`/lecture/${achat.id}`}
+                      className="shrink-0 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition"
+                    >
+                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Lire
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
 
           {/* Mes journaux */}
           <section id="journaux">

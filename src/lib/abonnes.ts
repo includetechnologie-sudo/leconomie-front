@@ -12,6 +12,7 @@ export interface Subscriber {
   expiresAt: number;
   createdAt: number;
   passwordHash?: string;
+  achats?: { id: number; type: "journal" | "magazine"; titre: string; ref: string; acheteLe: number }[];
 }
 
 export async function readAbonnes(): Promise<Subscriber[]> {
