@@ -1,26 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
-import fs from "fs";
-import path from "path";
-
-const DB_PATH = path.join(process.cwd(), "data", "newsletter-subscribers.json");
-
-function readEmails(): string[] {
-  try {
-    if (!fs.existsSync(DB_PATH)) return [];
-    return JSON.parse(fs.readFileSync(DB_PATH, "utf-8"));
-  } catch { return []; }
-}
-
-function saveEmail(email: string) {
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  const emails = readEmails();
-  if (!emails.includes(email)) {
-    emails.push(email);
-    fs.writeFileSync(DB_PATH, JSON.stringify(emails, null, 2));
-  }
-}
+import { readSubscribers, writeSubscribers, generateToken, buildUnsubscribeUrl } from "@/lib/newsletter";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -39,14 +19,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email invalide" }, { status: 400 });
     }
 
-    const existing = readEmails();
-    if (existing.includes(email)) {
+    const subscribers = await readSubscribers();
+    const existing = subscribers.find((s) => s.email === email);
+    if (existing) {
       return NextResponse.json({ message: "Déjà inscrit" });
     }
 
-    saveEmail(email);
+    const token = generateToken(email);
+    subscribers.push({ email, token, createdAt: Date.now() });
+    await writeSubscribers(subscribers);
 
-    // Email de confirmation
+    const unsubscribeUrl = buildUnsubscribeUrl(email, token);
+
     await transporter.sendMail({
       from: `"L'Économie" <${process.env.SMTP_USER}>`,
       to: email,
@@ -59,19 +43,25 @@ export async function POST(req: NextRequest) {
           </div>
           <div style="padding:32px 24px;">
             <h2 style="color:#111;font-size:20px;margin:0 0 12px;">Inscription confirmée !</h2>
-            <p style="color:#555;line-height:1.6;">Vous recevrez désormais chaque matin l'essentiel de l'actualité économique de la zone CEMAC.</p>
-            <p style="color:#555;line-height:1.6;margin-top:16px;">Pour vous désabonner à tout moment, cliquez sur le lien en bas de chaque email.</p>
+            <p style="color:#555;line-height:1.6;">Vous recevrez désormais l'essentiel de l'actualité économique de la zone CEMAC directement dans votre boîte email.</p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="https://leconomie.info" style="background:#dc2626;color:#fff;padding:14px 32px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:14px;">
+                Accéder à L'Économie
+              </a>
+            </div>
           </div>
           <div style="background:#f9fafb;padding:16px 24px;text-align:center;border-top:1px solid #e5e7eb;">
-            <a href="https://leconomie.info" style="color:#dc2626;text-decoration:none;font-weight:bold;">leconomie.info</a>
-            <p style="color:#9ca3af;font-size:11px;margin:8px 0 0;">© 2026 L'Économie — Tous droits réservés</p>
+            <a href="https://leconomie.info" style="color:#dc2626;text-decoration:none;font-weight:bold;font-size:13px;">leconomie.info</a>
+            <p style="color:#9ca3af;font-size:11px;margin:8px 0 4px;">© 2026 L'Économie — Tous droits réservés</p>
+            <a href="${unsubscribeUrl}" style="color:#9ca3af;font-size:11px;text-decoration:underline;">Se désabonner</a>
           </div>
         </div>
       `,
     });
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error("Newsletter subscribe error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
