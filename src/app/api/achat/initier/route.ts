@@ -1,4 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
+
+const PENDING_FILE = path.join(process.cwd(), "data", "achats-pending.json");
+
+async function savePending(ref: string, data: object) {
+  let pending: Record<string, object> = {};
+  try {
+    const raw = await fs.readFile(PENDING_FILE, "utf-8");
+    pending = JSON.parse(raw);
+  } catch { /* fichier inexistant, on repart de zéro */ }
+  pending[ref] = data;
+  await fs.mkdir(path.dirname(PENDING_FILE), { recursive: true });
+  await fs.writeFile(PENDING_FILE, JSON.stringify(pending, null, 2));
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,12 +31,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Paramètres manquants." }, { status: 400 });
     }
 
-    // Référence qui encode l'achat unitaire : leco-achat-{id}-{type}-{timestamp}
     const reference = `leco-achat-${id}-${type}-${Date.now()}`;
     const publicKey = process.env.MYCOOLPAY_PUBLIC_KEY!;
 
     const digits = phone.replace(/\D/g, "");
     const formattedPhone = digits.startsWith("237") ? digits : `237${digits}`;
+
+    // Sauvegarde l'intention d'achat pour retrouver email/infos au retour
+    await savePending(reference, { email, name, id, type, titre });
 
     const body = {
       transaction_amount: amount,

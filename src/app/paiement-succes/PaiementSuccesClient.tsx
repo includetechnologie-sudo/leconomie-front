@@ -18,13 +18,14 @@ export default function PaiementSuccesClient() {
     const email = searchParams.get("customer_email") || searchParams.get("email") || "";
     const name  = searchParams.get("customer_name") || searchParams.get("name") || "";
 
-    if (!ref || !email) {
+    // Détecter achat unitaire : leco-achat-{id}-{type}-{timestamp}
+    const isAchatUnitaire = ref.startsWith("leco-achat-");
+
+    // Pour un achat unitaire, l'email peut être absent (retrouvé via le fichier pending)
+    if (!ref || (!email && !isAchatUnitaire)) {
       setState("error");
       return;
     }
-
-    // Détecter achat unitaire : leco-achat-{id}-{type}-{timestamp}
-    const isAchatUnitaire = ref.startsWith("leco-achat-");
     if (isAchatUnitaire) {
       // leco-achat-3512-journal-1234567890
       const parts = ref.split("-"); // ["leco","achat","{id}","{type}","{ts}"]
