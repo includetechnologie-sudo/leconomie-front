@@ -17,16 +17,46 @@ export default function PaiementSuccesClient() {
     const ref   = searchParams.get("app_transaction_ref") || searchParams.get("ref") || searchParams.get("transaction_ref") || "";
     const email = searchParams.get("customer_email") || searchParams.get("email") || "";
     const name  = searchParams.get("customer_name") || searchParams.get("name") || "";
-    const rawPlan = searchParams.get("plan") || ref.split("-")[1] || "mensuel";
-    const plan = ["mensuel", "annuel"].includes(rawPlan) ? rawPlan : "mensuel";
-    const planLabel = plan === "annuel" ? "Annuel — 50 000 FCFA/an" : "Mensuel — 5 000 FCFA/mois";
-
-    setInfo({ email, plan, ref, planLabel });
 
     if (!ref || !email) {
       setState("error");
       return;
     }
+
+    // Détecter achat unitaire : leco-achat-{id}-{type}-{timestamp}
+    const isAchatUnitaire = ref.startsWith("leco-achat-");
+    if (isAchatUnitaire) {
+      // leco-achat-3512-journal-1234567890
+      const parts = ref.split("-"); // ["leco","achat","{id}","{type}","{ts}"]
+      const id = Number(parts[2] || 0);
+      const type = (parts[3] || "journal") as "journal" | "magazine";
+      const titre = searchParams.get("titre") || `Numéro ${id}`;
+
+      setInfo({ email, plan: "achat", ref, planLabel: titre });
+
+      fetch("/api/achat/confirmer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, id, type, titre, ref }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) {
+            setState("existing");
+          } else {
+            setState("error");
+          }
+        })
+        .catch(() => setState("error"));
+      return;
+    }
+
+    // Abonnement classique
+    const rawPlan = searchParams.get("plan") || ref.split("-")[1] || "mensuel";
+    const plan = ["mensuel", "annuel"].includes(rawPlan) ? rawPlan : "mensuel";
+    const planLabel = plan === "annuel" ? "Annuel — 50 000 FCFA/an" : "Mensuel — 5 000 FCFA/mois";
+
+    setInfo({ email, plan, ref, planLabel });
 
     fetch("/api/abonnement/confirmer", {
       method: "POST",
@@ -87,11 +117,13 @@ export default function PaiementSuccesClient() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Paiement confirmé !</h1>
-          <p className="text-gray-500 text-sm mb-4">Bienvenue dans L&apos;Économie Premium.</p>
+          <p className="text-gray-500 text-sm mb-4">
+            {info.plan === "achat" ? "Votre numéro est disponible dans votre espace." : "Bienvenue dans L’Économie Premium."}
+          </p>
           <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-4">
             <p className="text-sm font-bold text-red-600">{info.planLabel}</p>
             <p className="text-xs text-gray-500 mt-0.5">
-              {info.plan === "annuel" ? "Accès valable 12 mois" : "Accès valable 1 mois"}
+              {info.plan === "achat" ? "Achat à l'unité" : info.plan === "annuel" ? "Accès valable 12 mois" : "Accès valable 1 mois"}
             </p>
           </div>
           {info.email && <p className="text-sm text-gray-500 mb-1">Confirmation envoyée à <strong>{info.email}</strong></p>}
