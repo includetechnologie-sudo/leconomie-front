@@ -28,8 +28,7 @@ export default function InscriptionClient() {
       });
       const data = await res.json();
       if (res.ok) {
-        router.push("/mon-compte");
-        router.refresh();
+        window.location.href = "/mon-compte";
       } else {
         setError(data.error || "Erreur lors de l'inscription.");
       }

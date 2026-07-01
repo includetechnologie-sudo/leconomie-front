@@ -39,8 +39,7 @@ export default function ConnexionClient() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        router.refresh();
-        router.push(data.redirect || "/mon-compte");
+        window.location.href = data.redirect || "/mon-compte";
       } else if (data.redirect_to_subscribe) {
         router.push("/abonnement?raison=pas_de_compte");
       } else {
