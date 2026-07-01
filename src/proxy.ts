@@ -40,11 +40,6 @@ export function proxy(req: NextRequest) {
 
     // Format MyCoolPay — vérifie l'expiration
     if (raw.email && raw.plan) {
-      // Le plan gratuit peut accéder à /mon-compte mais pas à /lecture
-      if (raw.plan === "gratuit" && pathname.startsWith("/lecture")) {
-        return NextResponse.redirect(new URL("/abonnement?raison=plan_gratuit", req.url));
-      }
-
       if (raw.expiresAt && Date.now() > raw.expiresAt) {
         const res = NextResponse.redirect(
           new URL("/abonnement?raison=abonnement_expire&email=" + encodeURIComponent(raw.email), req.url)
