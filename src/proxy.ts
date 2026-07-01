@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseAccessCookie } from "@/lib/subscription";
 
 function isTokenExpired(token: string): boolean {
   try {
@@ -41,7 +40,8 @@ export function proxy(req: NextRequest) {
 
     // Format MyCoolPay — vérifie l'expiration
     if (raw.email && raw.plan) {
-      if (raw.plan === "gratuit") {
+      // Le plan gratuit peut accéder à /mon-compte mais pas à /lecture
+      if (raw.plan === "gratuit" && pathname.startsWith("/lecture")) {
         return NextResponse.redirect(new URL("/abonnement?raison=plan_gratuit", req.url));
       }
 
