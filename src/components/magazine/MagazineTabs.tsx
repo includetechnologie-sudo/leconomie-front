@@ -91,12 +91,14 @@ function AchatModal({ magazine, onClose }: { magazine: Magazine; onClose: () => 
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/mycoolpay/initier", {
+      const res = await fetch("/api/achat/initier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email, name, phone,
-          plan: `magazine_${magazine.id}`,
+          id: Number(magazine.id),
+          type: "magazine",
+          titre: magazine.titre,
           amount: magazine.prix,
         }),
       });
@@ -591,12 +593,14 @@ function AchatJournalModal({ journal, onClose }: { journal: Quotidien; onClose: 
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/mycoolpay/initier", {
+      const res = await fetch("/api/achat/initier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email, name, phone,
-          plan: `journal_${journal.id}`,
+          id: Number(journal.id),
+          type: "journal",
+          titre: journal.titre,
           amount: journal.prix,
         }),
       });
