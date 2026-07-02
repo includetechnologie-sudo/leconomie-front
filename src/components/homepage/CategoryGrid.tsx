@@ -82,7 +82,7 @@ export default async function CategoryGrid() {
                     src={cat.posts[0].featuredImage?.node?.sourceUrl || "/images/hero.jpg"}
                     alt={cat.posts[0].title}
                     fill
-                    className="object-cover group-hover:scale-105 transition duration-300"
+                    className="object-cover object-top group-hover:scale-105 transition duration-300"
                   />
                 </div>
                 <h3 className="font-bold text-sm leading-snug group-hover:text-red-600 transition line-clamp-3">

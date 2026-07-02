@@ -56,7 +56,7 @@ export default async function RubriqueSection({ title, displayTitle }: RubriqueS
                 src={post.featuredImage?.node?.sourceUrl || "/images/hero.jpg"}
                 alt={post.title}
                 fill
-                className="object-cover group-hover:scale-105 transition"
+                className="object-cover object-top group-hover:scale-105 transition"
               />
             </div>
 

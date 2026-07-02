@@ -42,7 +42,7 @@ export default async function HeroSidebar() {
               src={post.featuredImage?.node?.sourceUrl || "/images/hero.jpg"}
               alt={post.title}
               fill
-              className="object-cover"
+              className="object-cover object-top"
             />
           </div>
 
