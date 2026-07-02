@@ -2,16 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { readSubscribers, buildUnsubscribeUrl } from "@/lib/newsletter";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
 // Sécurité : WordPress doit envoyer ce secret dans le header
 const WEBHOOK_SECRET = process.env.NEWSLETTER_WEBHOOK_SECRET || "";
 
@@ -76,12 +66,27 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
+    // Ignorer les brouillons/révisions — on ne notifie que les articles publiés
+    const postStatus = body.post_status || body.status || "publish";
+    if (postStatus !== "publish") {
+      return NextResponse.json({ success: true, skipped: true, reason: "non publié" });
+    }
+
     // WP Webhooks envoie les données de l'article publié
     const title    = body.post_title || body.title || "";
     const excerpt  = body.post_excerpt || body.excerpt || body.post_content || "";
     const slug     = body.post_name || body.slug || "";
-    const category = body.post_category?.[0]?.name || body.category || "";
-    const imageUrl = body.featured_image_url || body.thumbnail || "";
+    // WP Webhooks : post_thumbnail = URL directe de l'image mise en avant
+    const imageUrl = body.post_thumbnail || body.featured_image_url || body.thumbnail || "";
+    // WP Webhooks : taxonomies est un objet { category: { slug: { name, ... } } }
+    let category = body.category || "";
+    if (!category && body.taxonomies) {
+      const cats = body.taxonomies.category || body.taxonomies;
+      if (cats && typeof cats === "object") {
+        const first = Object.values(cats)[0] as Record<string, string> | undefined;
+        category = first?.name || "";
+      }
+    }
 
     if (!title || !slug) {
       return NextResponse.json({ error: "Données article manquantes" }, { status: 400 });
@@ -91,6 +96,16 @@ export async function POST(req: NextRequest) {
     if (subscribers.length === 0) {
       return NextResponse.json({ success: true, sent: 0 });
     }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
     // Envoi en parallèle par batch de 10
     let sent = 0;

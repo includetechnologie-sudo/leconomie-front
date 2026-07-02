@@ -2,16 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { readSubscribers, writeSubscribers, generateToken, buildUnsubscribeUrl } from "@/lib/newsletter";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
-
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
@@ -30,6 +20,16 @@ export async function POST(req: NextRequest) {
     await writeSubscribers(subscribers);
 
     const unsubscribeUrl = buildUnsubscribeUrl(email, token);
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
     await transporter.sendMail({
       from: `"L'Économie" <${process.env.SMTP_USER}>`,
