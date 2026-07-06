@@ -12,12 +12,12 @@ export default function HeroSlider() {
 
         {/* Pub gauche */}
         <div className="h-full flex items-center justify-center">
-          <Link href="/magazine/32502" className="block w-full h-full relative rounded-lg overflow-hidden group">
+          <Link href="/magazine/32502" className="block w-full h-full relative rounded-lg overflow-hidden group bg-[#f5ede8]">
             <Image
               src="https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/pub-magazine-international.jpg"
               alt="L'Économie International N°049"
               fill
-              className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+              className="object-contain group-hover:scale-105 transition-transform duration-500"
             />
           </Link>
         </div>
@@ -29,16 +29,9 @@ export default function HeroSlider() {
           <div className="col-span-2 h-full overflow-y-auto"><MostReadWidget /></div>
         </div>
 
-        {/* Pub droite */}
-        <div className="h-full flex items-center justify-center">
-          <Link href="/magazine/32502" className="block w-full h-full relative rounded-lg overflow-hidden group">
-            <Image
-              src="https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/pub-magazine-international.jpg"
-              alt="L'Économie International N°049"
-              fill
-              className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-            />
-          </Link>
+        {/* Pub droite — à venir */}
+        <div className="h-full flex items-center justify-center bg-gray-100 rounded-lg">
+          <p className="text-gray-400 text-xs text-center px-2">Espace publicitaire<br/>300×860px</p>
         </div>
       </div>
 
