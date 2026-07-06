@@ -31,7 +31,8 @@ export default function HomePage() {
       {/* Rubriques approfondies depuis WordPress */}
       <RubriqueSection title="Opinion"        displayTitle="Opinions & Débats" />
       <RubriqueSection title="Interview"      displayTitle="Interviews" />
-      <RubriqueSection title="Événement"      displayTitle="Événements" />
+
+<RubriqueSection title="Événement"      displayTitle="Événements" />
       <RubriqueSection title="Décideur"       displayTitle="Décideurs" />
       <RubriqueSection title="Infrastructure" displayTitle="Infrastructures" />
 
