@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import fs from "fs";
+import path from "path";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,6 +44,14 @@ export async function POST(req: NextRequest) {
         </div>
       `,
     });
+
+    // Persister la demande de devis
+    const devisPath = path.join(process.cwd(), "data", "devis.json");
+    try {
+      const existing = JSON.parse(fs.readFileSync(devisPath, "utf-8"));
+      existing.push({ nom, email, telephone, entreprise, poste, effectif, message, date: new Date().toISOString() });
+      fs.writeFileSync(devisPath, JSON.stringify(existing, null, 2));
+    } catch {}
 
     return NextResponse.json({ success: true });
   } catch (err) {

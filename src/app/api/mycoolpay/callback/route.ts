@@ -1,4 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+
+function savePaiement(data: object) {
+  try {
+    const p = path.join(process.cwd(), "data", "paiements.json");
+    const existing = JSON.parse(fs.readFileSync(p, "utf-8"));
+    existing.push({ ...data, date: new Date().toISOString() });
+    fs.writeFileSync(p, JSON.stringify(existing, null, 2));
+  } catch {}
+}
 
 export async function GET(req: NextRequest) {
   const reference = req.nextUrl.searchParams.get("ref")
@@ -18,6 +29,8 @@ export async function GET(req: NextRequest) {
 
   if (status === "success" || status === "completed" || status === "successful") {
     const plan = reference.split("-")[1] || "mensuel";
+    const amount = plan === "annuel" ? 50000 : 5000;
+    savePaiement({ email, plan, amount, reference });
 
     const url = new URL("/paiement-succes", req.url);
     url.searchParams.set("ref", reference);
