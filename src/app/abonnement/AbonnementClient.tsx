@@ -302,12 +302,12 @@ export default function AbonnementClient() {
               Ne mettez pas votre entreprise dans une boîte. Contactez-nous pour un plan tarifaire personnalisé qui correspond le mieux à vos besoins.
             </p>
           </div>
-          <a
-            href="mailto:leconomieinfo@gmail.com?subject=Abonnement%20Entreprise"
+          <Link
+            href="/abonnement/entreprise"
             className="shrink-0 border border-red-600 text-red-600 font-bold px-6 py-2.5 rounded-lg hover:bg-red-600 hover:text-white transition text-sm whitespace-nowrap"
           >
-            Contact Nous
-          </a>
+            Voir les offres
+          </Link>
         </div>
 
         {/* Liens bas */}
