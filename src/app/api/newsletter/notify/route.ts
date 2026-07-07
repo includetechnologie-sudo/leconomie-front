@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import fs from "fs";
+import path from "path";
 import { readSubscribers, buildUnsubscribeUrl } from "@/lib/newsletter";
 
-// Sécurité : WordPress doit envoyer ce secret dans le header
 const WEBHOOK_SECRET = process.env.NEWSLETTER_WEBHOOK_SECRET || "";
+const NOTIFIED_PATH = path.join(process.cwd(), "data", "newsletter-notified.json");
+
+function hasBeenNotified(slug: string): boolean {
+  try {
+    const data = JSON.parse(fs.readFileSync(NOTIFIED_PATH, "utf-8"));
+    return Array.isArray(data) && data.includes(slug);
+  } catch {
+    return false;
+  }
+}
+
+function markNotified(slug: string) {
+  let data: string[] = [];
+  try {
+    data = JSON.parse(fs.readFileSync(NOTIFIED_PATH, "utf-8"));
+  } catch {}
+  if (!data.includes(slug)) {
+    data.push(slug);
+    fs.writeFileSync(NOTIFIED_PATH, JSON.stringify(data, null, 2));
+  }
+}
 
 function buildEmail(article: {
   title: string;
@@ -92,6 +114,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Données article manquantes" }, { status: 400 });
     }
 
+    // Anti-doublon : si cet article a déjà été notifié, on ignore
+    if (hasBeenNotified(slug)) {
+      return NextResponse.json({ success: true, skipped: true, reason: "déjà notifié" });
+    }
+
     const subscribers = await readSubscribers();
     if (subscribers.length === 0) {
       return NextResponse.json({ success: true, sent: 0 });
@@ -125,6 +152,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    markNotified(slug);
     console.log(`Newsletter notify: ${sent}/${subscribers.length} emails envoyés pour "${title}"`);
     return NextResponse.json({ success: true, sent, total: subscribers.length });
   } catch (err) {
