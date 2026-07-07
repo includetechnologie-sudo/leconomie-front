@@ -6,6 +6,7 @@ import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_POST_BY_SLUG, GET_RELATED_POSTS, GET_JOURNAUX } from "@/graphql/queries";
 import PremiumWall from "@/components/article/PremiumWall";
 import NewsletterForm from "@/components/newsletter/NewsletterForm";
+import TrackPageView from "@/components/TrackPageView";
 import { parseAccessCookie, canAccess } from "@/lib/subscription";
 import type { JournalWP } from "@/lib/types";
 import type { Metadata } from "next";
@@ -149,6 +150,7 @@ export default async function ArticlePage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
+      <TrackPageView slug={post.slug} />
       <div className="grid lg:grid-cols-[1fr_300px] gap-10">
 
         {/* ── Contenu principal ── */}

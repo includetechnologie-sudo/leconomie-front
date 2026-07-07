@@ -13,6 +13,8 @@ interface Stats {
   paiements: { total: number; revenus: number; mensuel: number; annuel: number; recent: { email?: string; plan?: string; amount?: number; date?: string }[] };
   devis: { total: number; recent: { nom?: string; entreprise?: string; effectif?: string; email?: string; date?: string }[] };
   articles: { total: number; recent: { title: string; date: string; slug: string }[] };
+  visits: { total: number; today: number; last7: { date: string; count: number }[] };
+  topArticles: { slug: string; views: number }[];
 }
 
 export default function DashboardPage() {
@@ -21,7 +23,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "newsletter" | "paiements" | "devis" | "articles">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "newsletter" | "paiements" | "devis" | "articles" | "visiteurs" | "top-articles">("overview");
 
   const fetchStats = useCallback(async (t: string) => {
     setLoading(true);
@@ -108,6 +110,8 @@ export default function DashboardPage() {
     { id: "paiements", label: `Paiements (${stats.paiements.total})` },
     { id: "devis", label: `Devis (${stats.devis.total})` },
     { id: "articles", label: `Articles (${stats.articles.total})` },
+    { id: "visiteurs", label: `Visiteurs (${stats.visits?.today || 0} auj.)` },
+    { id: "top-articles", label: "Top articles" },
   ] as const;
 
   return (
@@ -155,7 +159,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
                 { label: "Abonnés newsletter", value: stats.newsletter.total, icon: "📧" },
-                { label: "Paiements reçus", value: stats.paiements.total, icon: "💳" },
+                { label: "Visiteurs aujourd'hui", value: stats.visits?.today || 0, icon: "👁️" },
                 { label: "Revenus totaux", value: formatAmount(stats.paiements.revenus), icon: "💰" },
                 { label: "Demandes de devis", value: stats.devis.total, icon: "🏢" },
               ].map(card => (
@@ -351,6 +355,87 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* VISITEURS */}
+        {activeTab === "visiteurs" && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold">Visiteurs</h2>
+              <div className="flex gap-6 text-right">
+                <div>
+                  <div className="text-2xl font-bold text-blue-400">{stats.visits?.today || 0}</div>
+                  <div className="text-xs text-gray-500">Aujourd&apos;hui</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{stats.visits?.total || 0}</div>
+                  <div className="text-xs text-gray-500">Total</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Graphique 7 jours */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-4">
+              <h3 className="text-sm text-gray-400 uppercase tracking-widest mb-4">7 derniers jours</h3>
+              <div className="flex items-end gap-2 h-32">
+                {(stats.visits?.last7 || []).map((d) => {
+                  const max = Math.max(...(stats.visits?.last7 || []).map(x => x.count), 1);
+                  const pct = Math.round((d.count / max) * 100);
+                  return (
+                    <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-xs text-gray-500">{d.count}</span>
+                      <div
+                        className="w-full bg-blue-600 rounded-t transition-all"
+                        style={{ height: `${Math.max(pct, 4)}%` }}
+                      />
+                      <span className="text-xs text-gray-600">
+                        {new Date(d.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TOP ARTICLES */}
+        {activeTab === "top-articles" && (
+          <div>
+            <h2 className="text-lg font-bold mb-6">Articles les plus lus</h2>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {!stats.topArticles || stats.topArticles.length === 0 ? (
+                <p className="text-gray-500 text-sm p-6">Aucune donnée — les vues s&apos;accumulent au fil des visites.</p>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-800">
+                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">#</th>
+                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Article</th>
+                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Vues</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.topArticles.map((a, i) => (
+                      <tr key={a.slug} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="px-6 py-3 text-gray-500 text-sm font-bold">{i + 1}</td>
+                        <td className="px-6 py-3 text-sm">
+                          <a href={`https://leconomie.info/article/${a.slug}`} target="_blank" rel="noreferrer"
+                            className="text-white hover:text-red-400 transition">
+                            {a.slug}
+                          </a>
+                        </td>
+                        <td className="px-6 py-3 text-sm">
+                          <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{a.views}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
