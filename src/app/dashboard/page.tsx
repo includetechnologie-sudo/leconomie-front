@@ -2,8 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 
+interface Subscriber {
+  email?: string;
+  token?: string;
+  createdAt?: number;
+}
+
 interface Stats {
-  newsletter: { total: number; list: string[] };
+  newsletter: { total: number; list: (string | Subscriber)[] };
   paiements: { total: number; revenus: number; mensuel: number; annuel: number; recent: { email?: string; plan?: string; amount?: number; date?: string }[] };
   devis: { total: number; recent: { nom?: string; entreprise?: string; effectif?: string; email?: string; date?: string }[] };
   articles: { total: number; recent: { title: string; date: string; slug: string }[] };
@@ -205,15 +211,23 @@ export default function DashboardPage() {
                     <tr className="border-b border-gray-800">
                       <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">#</th>
                       <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Email</th>
+                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Date</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.newsletter.list.map((email, i) => (
-                      <tr key={email} className="border-b border-gray-800 hover:bg-gray-800/50">
-                        <td className="px-6 py-3 text-gray-500 text-sm">{i + 1}</td>
-                        <td className="px-6 py-3 text-sm text-white">{email}</td>
-                      </tr>
-                    ))}
+                    {stats.newsletter.list.map((item, i) => {
+                      const email = typeof item === "string" ? item : item.email || "—";
+                      const date = typeof item === "object" && item.createdAt
+                        ? new Date(item.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
+                        : "—";
+                      return (
+                        <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
+                          <td className="px-6 py-3 text-gray-500 text-sm">{i + 1}</td>
+                          <td className="px-6 py-3 text-sm text-white">{email}</td>
+                          <td className="px-6 py-3 text-sm text-gray-500">{date}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}
