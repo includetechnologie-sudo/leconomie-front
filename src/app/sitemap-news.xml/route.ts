@@ -17,6 +17,15 @@ const GET_RECENT_POSTS = `
   }
 `;
 
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 export async function GET() {
   let posts: { title: string; slug: string; date: string; categories?: { nodes: { name: string }[] } }[] = [];
 
@@ -32,17 +41,17 @@ export async function GET() {
 
   const urls = posts.map((post) => {
     const pubDate = new Date(post.date).toISOString();
-    const category = post.categories?.nodes[0]?.name || "Actualité";
+    const category = escapeXml(post.categories?.nodes[0]?.name || "Actualité");
     return `
   <url>
-    <loc>${SITE_URL}/article/${post.slug}</loc>
+    <loc>${SITE_URL}/article/${escapeXml(post.slug)}</loc>
     <news:news>
       <news:publication>
-        <news:name>L'Économie</news:name>
+        <news:name>L&apos;Économie</news:name>
         <news:language>fr</news:language>
       </news:publication>
       <news:publication_date>${pubDate}</news:publication_date>
-      <news:title>${post.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</news:title>
+      <news:title>${escapeXml(post.title)}</news:title>
       <news:keywords>${category}</news:keywords>
     </news:news>
   </url>`;
