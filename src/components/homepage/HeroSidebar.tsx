@@ -43,6 +43,7 @@ export default async function HeroSidebar() {
               alt={post.title}
               fill
               className="object-cover object-top"
+              priority={i === 0}
             />
           </div>
 

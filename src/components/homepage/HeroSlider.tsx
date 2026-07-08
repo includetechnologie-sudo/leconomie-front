@@ -31,6 +31,7 @@ export default async function HeroSlider() {
               alt="L'Économie International N°049"
               fill
               className="object-contain group-hover:scale-105 transition-transform duration-500"
+              priority
             />
           </Link>
         </div>
@@ -51,6 +52,7 @@ export default async function HeroSlider() {
               alt={`Couverture ${numero}`}
               fill
               className="object-contain"
+              priority
             />
           </div>
           {/* Infos + bouton */}
