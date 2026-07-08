@@ -1,61 +1,94 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
+import { promises as fsPromises } from "fs";
 import path from "path";
+import { readAbonnes, writeAbonnes } from "@/lib/abonnes";
+
+const PENDING_FILE = path.join(process.cwd(), "data", "achats-pending.json");
+const PAIEMENTS_FILE = path.join(process.cwd(), "data", "paiements.json");
+
+function isSuccess(status: string | undefined | null): boolean {
+  if (!status) return false;
+  const s = status.toLowerCase();
+  return s === "success" || s === "completed" || s === "successful";
+}
 
 function savePaiement(data: object) {
   try {
-    const p = path.join(process.cwd(), "data", "paiements.json");
-    const existing = JSON.parse(fs.readFileSync(p, "utf-8"));
+    const existing = JSON.parse(fs.readFileSync(PAIEMENTS_FILE, "utf-8"));
     existing.push({ ...data, date: new Date().toISOString() });
-    fs.writeFileSync(p, JSON.stringify(existing, null, 2));
+    fs.writeFileSync(PAIEMENTS_FILE, JSON.stringify(existing, null, 2));
   } catch {}
 }
 
-export async function GET(req: NextRequest) {
-  const reference = req.nextUrl.searchParams.get("ref")
-    || req.nextUrl.searchParams.get("app_transaction_ref")
-    || req.nextUrl.searchParams.get("transaction_ref");
-
-  const status = req.nextUrl.searchParams.get("status")
-    || req.nextUrl.searchParams.get("transaction_status");
-
-  const email = req.nextUrl.searchParams.get("email")
-    || req.nextUrl.searchParams.get("customer_email")
-    || "";
-
-  if (!reference) {
-    return NextResponse.redirect(new URL("/abonnement?erreur=reference_manquante", req.url));
+async function resolvePending(ref: string): Promise<{
+  email: string; name: string; id: number; type: "journal" | "magazine"; titre: string;
+} | null> {
+  try {
+    const raw = await fsPromises.readFile(PENDING_FILE, "utf-8");
+    const pending = JSON.parse(raw);
+    return pending[ref] || null;
+  } catch {
+    return null;
   }
-
-  if (status === "success" || status === "completed" || status === "successful") {
-    const plan = reference.split("-")[1] || "mensuel";
-    const amount = plan === "annuel" ? 50000 : 5000;
-    savePaiement({ email, plan, amount, reference });
-
-    const url = new URL("/paiement-succes", req.url);
-    url.searchParams.set("ref", reference);
-    url.searchParams.set("email", email);
-    url.searchParams.set("plan", plan);
-
-    const response = NextResponse.redirect(url);
-
-    const days = plan === "annuel" || plan === "entreprise" ? 365 : 31;
-    response.cookies.set("abonne_access", JSON.stringify({ email, plan, ref: reference }), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * days,
-      path: "/",
-    });
-
-    return response;
-  }
-
-  return NextResponse.redirect(
-    new URL(`/abonnement?erreur=paiement_echoue&ref=${reference}`, req.url)
-  );
 }
 
+async function deletePending(ref: string) {
+  try {
+    const raw = await fsPromises.readFile(PENDING_FILE, "utf-8");
+    const pending = JSON.parse(raw);
+    delete pending[ref];
+    await fsPromises.writeFile(PENDING_FILE, JSON.stringify(pending, null, 2));
+  } catch {}
+}
+
+async function sendAchatEmail(email: string, name: string, titre: string, id: number) {
+  try {
+    const nodemailer = await import("nodemailer");
+    const transporter = nodemailer.default.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: true,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
+
+    await transporter.sendMail({
+      from: `"L'Économie" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: `Votre achat — ${titre}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
+          <div style="background:#dc2626;padding:20px;text-align:center;border-radius:8px 8px 0 0">
+            <h1 style="color:white;margin:0;font-size:24px">L'Économie</h1>
+          </div>
+          <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:30px;border-radius:0 0 8px 8px">
+            <p>Bonjour <strong>${name}</strong>,</p>
+            <p>Merci pour votre achat. Votre exemplaire <strong style="color:#dc2626">${titre}</strong> est disponible dans votre espace.</p>
+            <div style="text-align:center;margin:24px 0">
+              <a href="${siteUrl}/mes-achats"
+                 style="background:#dc2626;color:white;padding:14px 32px;border-radius:8px;font-weight:bold;text-decoration:none">
+                Accéder à mon exemplaire
+              </a>
+            </div>
+            <p style="color:#6b7280;font-size:13px">
+              Connectez-vous à votre compte sur <a href="${siteUrl}" style="color:#dc2626">${siteUrl}</a>
+              pour télécharger et lire votre exemplaire.
+            </p>
+            <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:20px">
+              Référence interne : ${id}
+            </p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Achat email error:", err);
+  }
+}
+
+// Callback serveur-à-serveur (POST) envoyé par MyCoolPay après paiement
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -63,26 +96,121 @@ export async function POST(req: NextRequest) {
 
     const status = body.status || body.transaction_status;
     const reference = body.app_transaction_ref || body.transaction_ref;
-    const email = body.customer_email || "";
 
-    if ((status === "success" || status === "completed") && reference) {
-      const plan = reference.split("-")[1] || "mensuel";
-      const days = plan === "annuel" || plan === "entreprise" ? 365 : 31;
-
-      const response = NextResponse.json({ received: true });
-      response.cookies.set("abonne_access", JSON.stringify({ email, plan, ref: reference }), {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * days,
-        path: "/",
-      });
-
-      return response;
+    if (!isSuccess(status) || !reference) {
+      console.log("MyCoolPay webhook: statut non-success ou référence manquante", { status, reference });
+      return NextResponse.json({ received: true });
     }
 
+    const pending = await resolvePending(reference);
+    if (!pending) {
+      console.error("MyCoolPay webhook: pending introuvable pour ref", reference);
+      return NextResponse.json({ received: true });
+    }
+
+    const { email, name, id, type, titre } = pending;
+
+    // Enregistre le paiement
+    savePaiement({ email, reference, titre, id, type, amount: body.transaction_amount });
+
+    // Sauvegarde l'achat dans abonnes.json
+    const abonnes = await readAbonnes();
+    const idx = abonnes.findIndex((a) => a.email === email);
+    const achat = { id, type, titre, ref: reference, acheteLe: Date.now() };
+
+    if (idx >= 0) {
+      const existing = abonnes[idx];
+      const dejaAchete = existing.achats?.some((a) => a.id === id && a.type === type);
+      if (!dejaAchete) {
+        existing.achats = [...(existing.achats || []), achat];
+        abonnes[idx] = existing;
+        await writeAbonnes(abonnes);
+      }
+    } else {
+      abonnes.push({
+        email,
+        name: name || email.split("@")[0],
+        plan: "gratuit",
+        ref: reference,
+        expiresAt: 0,
+        createdAt: Date.now(),
+        achats: [achat],
+      });
+      await writeAbonnes(abonnes);
+    }
+
+    await deletePending(reference);
+
+    // Envoie email de confirmation avec lien
+    Promise.resolve().then(() => sendAchatEmail(email, name || email.split("@")[0], titre, id));
+
+    console.log(`MyCoolPay webhook: achat confirmé pour ${email} — ${titre}`);
     return NextResponse.json({ received: true });
-  } catch {
+  } catch (err) {
+    console.error("MyCoolPay callback error:", err);
     return NextResponse.json({ received: true });
   }
+}
+
+// Retour navigateur (GET) après paiement MyCoolPay
+export async function GET(req: NextRequest) {
+  const reference =
+    req.nextUrl.searchParams.get("ref") ||
+    req.nextUrl.searchParams.get("app_transaction_ref") ||
+    req.nextUrl.searchParams.get("transaction_ref");
+
+  const status =
+    req.nextUrl.searchParams.get("status") ||
+    req.nextUrl.searchParams.get("transaction_status");
+
+  if (!reference) {
+    return NextResponse.redirect(new URL("/abonnement?erreur=reference_manquante", req.url));
+  }
+
+  if (isSuccess(status)) {
+    const pending = await resolvePending(reference);
+    const email = pending?.email || req.nextUrl.searchParams.get("email") || "";
+    const titre = pending?.titre || "";
+
+    if (pending) {
+      const { id, name, type } = pending;
+      savePaiement({ email, reference, titre, id, type });
+
+      const abonnes = await readAbonnes();
+      const idx = abonnes.findIndex((a) => a.email === email);
+      const achat = { id, type, titre, ref: reference, acheteLe: Date.now() };
+
+      if (idx >= 0) {
+        const existing = abonnes[idx];
+        const dejaAchete = existing.achats?.some((a) => a.id === id && a.type === type);
+        if (!dejaAchete) {
+          existing.achats = [...(existing.achats || []), achat];
+          abonnes[idx] = existing;
+          await writeAbonnes(abonnes);
+        }
+      } else {
+        abonnes.push({
+          email,
+          name: name || email.split("@")[0],
+          plan: "gratuit",
+          ref: reference,
+          expiresAt: 0,
+          createdAt: Date.now(),
+          achats: [achat],
+        });
+        await writeAbonnes(abonnes);
+      }
+
+      await deletePending(reference);
+      Promise.resolve().then(() => sendAchatEmail(email, name || email.split("@")[0], titre, id));
+    }
+
+    const url = new URL("/mes-achats", req.url);
+    url.searchParams.set("ref", reference);
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.redirect(
+    new URL(`/abonnement?erreur=paiement_echoue&ref=${reference}`, req.url)
+  );
 }
