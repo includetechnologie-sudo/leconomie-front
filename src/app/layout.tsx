@@ -40,7 +40,6 @@ export const metadata = {
     apple: "/images/favicon.png",
   },
   manifest: "/manifest.json",
-  themeColor: "#dc2626",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -90,6 +89,10 @@ const organizationJsonLd = {
   "areaServed": ["CM", "GA", "CG", "TD", "CF", "GQ"],
   "inLanguage": "fr",
 };
+
+export function generateViewport() {
+  return { themeColor: "#dc2626" };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
