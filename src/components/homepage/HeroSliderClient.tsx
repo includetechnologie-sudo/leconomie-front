@@ -84,6 +84,13 @@ export default function HeroSliderClient({ posts }: Props) {
       {/* Dégradé */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
+      {/* Filigrane */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" style={{ opacity: 0.08 }}>
+        <span className="text-white font-serif font-bold tracking-widest rotate-[-30deg]" style={{ fontSize: "clamp(28px, 5vw, 56px)", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+          L'ÉCONOMIE
+        </span>
+      </div>
+
       {/* Badges haut gauche */}
       <div className="absolute top-4 left-4 flex gap-2">
         <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">

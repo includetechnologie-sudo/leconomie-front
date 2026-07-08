@@ -243,6 +243,12 @@ export default async function ArticlePage({
               className="object-cover"
               priority
             />
+            {/* Filigrane */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" style={{ opacity: 0.08 }}>
+              <span className="text-white font-serif font-bold tracking-widest rotate-[-30deg]" style={{ fontSize: "clamp(24px, 4vw, 48px)", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                L'ÉCONOMIE
+              </span>
+            </div>
           </div>
 
           {/* Contenu article — mur premium si non connecté */}
