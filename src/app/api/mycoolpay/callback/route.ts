@@ -67,14 +67,14 @@ async function sendAchatEmail(email: string, name: string, titre: string, id: nu
             <p>Bonjour <strong>${name}</strong>,</p>
             <p>Merci pour votre achat. Votre exemplaire <strong style="color:#dc2626">${titre}</strong> est disponible dans votre espace.</p>
             <div style="text-align:center;margin:24px 0">
-              <a href="${siteUrl}/mes-achats"
+              <a href="${siteUrl}/mon-compte#achats"
                  style="background:#dc2626;color:white;padding:14px 32px;border-radius:8px;font-weight:bold;text-decoration:none">
                 Accéder à mon exemplaire
               </a>
             </div>
             <p style="color:#6b7280;font-size:13px">
-              Connectez-vous à votre compte sur <a href="${siteUrl}" style="color:#dc2626">${siteUrl}</a>
-              pour télécharger et lire votre exemplaire.
+              Connectez-vous sur <a href="${siteUrl}/connexion" style="color:#dc2626">leconomie.info</a>
+              puis allez dans <strong>Mon compte → Mes achats</strong> pour lire votre exemplaire.
             </p>
             <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:20px">
               Référence interne : ${id}
@@ -205,8 +205,8 @@ export async function GET(req: NextRequest) {
       Promise.resolve().then(() => sendAchatEmail(email, name || email.split("@")[0], titre, id));
     }
 
-    const url = new URL("/mes-achats", req.url);
-    url.searchParams.set("ref", reference);
+    const url = new URL("/mon-compte", req.url);
+    url.hash = "achats";
     return NextResponse.redirect(url);
   }
 
