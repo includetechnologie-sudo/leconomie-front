@@ -39,6 +39,13 @@ export const metadata = {
     icon: "/images/favicon.png",
     apple: "/images/favicon.png",
   },
+  manifest: "/manifest.json",
+  themeColor: "#dc2626",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "L'Économie",
+  },
   openGraph: {
     type: "website",
     locale: "fr_FR",

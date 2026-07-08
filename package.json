@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@tailwindcss/typography": "^0.5.20",
     "d3": "^7.9.0",
     "next": "16.2.7",

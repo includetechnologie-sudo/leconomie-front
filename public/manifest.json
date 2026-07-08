@@ -1,0 +1,38 @@
+{
+  "name": "L'Économie — Actualités CEMAC",
+  "short_name": "L'Économie",
+  "description": "Le premier quotidien économique de la zone CEMAC",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "orientation": "portrait",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/images/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["news", "business"],
+  "shortcuts": [
+    {
+      "name": "Dernières actualités",
+      "url": "/",
+      "description": "Voir les dernières actualités"
+    },
+    {
+      "name": "Magazine",
+      "url": "/magazine",
+      "description": "Lire le magazine"
+    }
+  ]
+}
