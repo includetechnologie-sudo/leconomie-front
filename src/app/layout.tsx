@@ -99,6 +99,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${inter.variable} ${sourceSerif.variable}`}>
       <body className="font-sans antialiased">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+        {/* Google Reader Revenue Manager */}
+        <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js" />
+        <script dangerouslySetInnerHTML={{ __html: `(self.SWG_BASIC = self.SWG_BASIC || []).push(basicSubscriptions => { basicSubscriptions.init({ type: "NewsArticle", isPartOfType: ["Product"], isPartOfProductId: "CAow_bHHCw:openaccess", clientOptions: { theme: "light", lang: "fr" }, }); });` }} />
         <PageLoader />
         <RightClickProtection />
         <TopBar />
