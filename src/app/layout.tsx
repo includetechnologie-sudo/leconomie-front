@@ -64,10 +64,31 @@ export const metadata = {
   },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "NewsMediaOrganization",
+  "name": "L'Économie",
+  "url": "https://leconomie.info",
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://leconomie.info/images/favicon.png",
+    "width": 512,
+    "height": 512,
+  },
+  "sameAs": [
+    "https://www.facebook.com/leconomie.info",
+  ],
+  "description": "Le premier quotidien économique de la zone CEMAC",
+  "foundingDate": "2010",
+  "areaServed": ["CM", "GA", "CG", "TD", "CF", "GQ"],
+  "inLanguage": "fr",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={`${inter.variable} ${sourceSerif.variable}`}>
       <body className="font-sans antialiased">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
         <PageLoader />
         <RightClickProtection />
         <TopBar />

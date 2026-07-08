@@ -124,7 +124,6 @@ export default async function ArticlePage({
   if (!post) notFound();
 
   const category = post.categories?.nodes[0];
-  const image = post.featuredImage?.node?.sourceUrl || "/images/hero.jpg";
   const minutes = readingTime(post.content);
   // Article premium = tag "premium" dans WordPress
   const isPremium = post.tags?.nodes?.some(t => t.name.toLowerCase() === "premium") ?? false;
@@ -148,8 +147,34 @@ export default async function ArticlePage({
     latestJournal = jData.journaux.nodes[0] ?? null;
   } catch { /* fallback placeholder */ }
 
+  const articleUrl = `${SITE_URL}/article/${post.slug}`;
+  const coverImage = post.featuredImage?.node?.sourceUrl || "/images/hero.jpg";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": post.title,
+    "description": post.excerpt?.replace(/<[^>]*>/g, "").trim().slice(0, 160) || "",
+    "image": coverImage.startsWith("http") ? coverImage : `${SITE_URL}${coverImage}`,
+    "datePublished": post.date,
+    "dateModified": post.modified,
+    "author": {
+      "@type": "Person",
+      "name": post.author?.node?.name || "L'Économie",
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "L'Économie",
+      "logo": { "@type": "ImageObject", "url": `${SITE_URL}/images/favicon.png` },
+    },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": articleUrl },
+    "url": articleUrl,
+    "articleSection": post.categories?.nodes[0]?.name || "Actualité",
+    "inLanguage": "fr-FR",
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <TrackPageView slug={post.slug} />
       <div className="grid lg:grid-cols-[1fr_300px] gap-10">
 
@@ -212,7 +237,7 @@ export default async function ArticlePage({
           {/* Image principale */}
           <div className="relative rounded-lg overflow-hidden mb-8" style={{ aspectRatio: "16/9" }}>
             <Image
-              src={image}
+              src={coverImage}
               alt={post.featuredImage?.node?.altText || post.title}
               fill
               className="object-cover"
