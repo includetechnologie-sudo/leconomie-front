@@ -61,7 +61,7 @@ export default async function HeroSlider() {
             <p className="font-serif font-bold text-sm leading-tight">{numero}</p>
             {datePubli && <p className="text-gray-400 text-[10px] mt-0.5">{datePubli}</p>}
             <Link
-              href="/abonnement"
+              href="/magazine?tab=quotidien"
               className="mt-2 block w-full bg-red-600 text-white text-[11px] font-bold py-2 rounded text-center hover:bg-red-700 transition"
             >
               Acheter →
