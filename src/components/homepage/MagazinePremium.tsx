@@ -62,7 +62,7 @@ export default async function MagazinePremium() {
 
             <div className="flex flex-wrap gap-4 mt-8">
               <Link
-                href="/magazine"
+                href="/magazine?tab=magazines"
                 className="bg-red-600 px-8 py-4 rounded-lg font-semibold hover:bg-red-700 transition"
               >
                 Découvrir le magazine

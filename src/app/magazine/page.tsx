@@ -58,7 +58,7 @@ export default async function MagazinePage() {
     extrait: m.extrait || "",
     sommaire: m.sommaire ? m.sommaire.split("\n").filter(Boolean) : [],
     cover: m.featuredImage?.node?.sourceUrl || "/images/magazine-cover.jpg",
-    prix: 3000,
+    prix: 1000,
   }));
 
   return (
