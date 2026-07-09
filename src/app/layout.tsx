@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import MainMenu from "@/components/navigation/MainMenu";
 import RightClickProtection from "@/components/RightClickProtection";
 import PageLoader from "@/components/layout/PageLoader";
+import OnlineHeartbeat from "@/components/layout/OnlineHeartbeat";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -103,6 +104,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js" />
         <script dangerouslySetInnerHTML={{ __html: `(self.SWG_BASIC = self.SWG_BASIC || []).push(basicSubscriptions => { basicSubscriptions.init({ type: "NewsArticle", isPartOfType: ["Product"], isPartOfProductId: "CAow_bHHCw:openaccess", clientOptions: { theme: "light", lang: "fr" }, }); });` }} />
         <PageLoader />
+        <OnlineHeartbeat />
         <RightClickProtection />
         <TopBar />
         <BreakingNews />
