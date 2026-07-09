@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
 
   const subscribers: string[] = readJSON("newsletter-subscribers.json");
   const paiements: object[] = readJSON("paiements.json");
+  const abonnes: { plan?: string; achats?: object[] }[] = readJSON("abonnes.json");
   const devis: object[] = readJSON("devis.json");
   const visitsRaw: Record<string, number> = readJSON("visits.json", {});
   const articleViewsRaw: Record<string, number> = readJSON("article-views.json", {});
@@ -44,8 +45,10 @@ export async function GET(req: NextRequest) {
 
   // Revenus depuis paiements
   const revenus = (paiements as { amount?: number }[]).reduce((sum, p) => sum + (p.amount || 0), 0);
-  const mensuel = (paiements as { plan?: string }[]).filter(p => p.plan === "mensuel").length;
-  const annuel = (paiements as { plan?: string }[]).filter(p => p.plan === "annuel").length;
+  // Abonnés depuis abonnes.json (source de vérité)
+  const mensuel = abonnes.filter(a => a.plan === "mensuel").length;
+  const annuel = abonnes.filter(a => a.plan === "annuel").length;
+  const totalAchats = abonnes.reduce((sum, a) => sum + (a.achats?.length || 0), 0);
 
   // Visites : 7 derniers jours
   const last7: { date: string; count: number }[] = [];
@@ -67,7 +70,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     newsletter: { total: subscribers.length, list: subscribers },
-    paiements: { total: paiements.length, revenus, mensuel, annuel, recent: (paiements as object[]).slice(-10).reverse() },
+    paiements: { total: paiements.length, revenus, mensuel, annuel, totalAchats, recent: (paiements as object[]).slice(-10).reverse() },
     devis: { total: devis.length, recent: (devis as object[]).slice(-10).reverse() },
     articles,
     visits: { total: totalVisits, today: todayVisits, last7 },
