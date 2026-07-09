@@ -111,10 +111,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Bandeau publicitaire entre logo et navigation */}
         <div className="hidden lg:block bg-white border-b">
           <div className="max-w-7xl mx-auto px-4 py-2">
-            <a href="/abonnement" className="block">
+            <a href="/magazine?tab=magazines" className="block">
               <img
-                src="/images/bandeau-2026.jpg"
-                alt="Souscrivez à un abonnement numérique annuel à 50 000 FCFA"
+                src="https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/bandeau-magazine-2026-scaled.jpg"
+                alt="Votre magazine L'Économie International — disponible sur notre site web"
                 className="w-full h-auto object-contain max-h-[100px]"
               />
             </a>
