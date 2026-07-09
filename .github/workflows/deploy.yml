@@ -7,18 +7,13 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /var/www/leconomie-front
-            git pull origin main
-            npm ci --production=false
-            npm run build
-            pm2 restart leconomie-front || pm2 start npm --name leconomie-front -- start
-            pm2 save
+      - name: Deploy
+        run: |
+          cd /var/www/leconomie-front
+          git pull origin main
+          /usr/bin/npm ci --production=false
+          /usr/bin/npm run build
+          pm2 restart leconomie-front || pm2 start npm --name leconomie-front -- start
+          pm2 save
