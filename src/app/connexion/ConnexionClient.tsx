@@ -85,9 +85,9 @@ export default function ConnexionClient() {
                   className="w-4 h-4 accent-red-600 rounded" />
                 <span className="text-sm text-gray-600">Rester connecté</span>
               </label>
-              <button type="button" className="text-sm text-gray-500 hover:text-red-600 transition">
+              <Link href="/reset-password" className="text-sm text-gray-500 hover:text-red-600 transition">
                 Mot de passe oublié ?
-              </button>
+              </Link>
             </div>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg flex items-start gap-2">

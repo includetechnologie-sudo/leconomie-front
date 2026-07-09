@@ -20,7 +20,15 @@ async function tryLocalLogin(email: string, password: string): Promise<Response 
     const raw = await fs.readFile(DATA_FILE, "utf-8");
     const abonnes: LocalSubscriber[] = JSON.parse(raw);
     const sub = abonnes.find((a) => a.email === email);
-    if (!sub || !sub.passwordHash) return null;
+    if (!sub) return null;
+
+    // Compte existant mais sans mot de passe → demander de créer un mot de passe
+    if (!sub.passwordHash) {
+      return NextResponse.json({
+        error: "Vous n'avez pas encore créé de mot de passe. Cliquez sur \"Mot de passe oublié ?\" pour en créer un.",
+        no_password: true,
+      }, { status: 401 });
+    }
 
     const valid = await verifyPassword(password, sub.passwordHash);
     if (!valid) {
