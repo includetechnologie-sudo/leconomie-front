@@ -1,53 +1,120 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
-interface Subscriber {
-  email?: string;
-  token?: string;
-  createdAt?: number;
-}
+interface Achat { id: number; type: string; titre: string; ref: string; acheteLe: number; email?: string; name?: string; }
+interface Abonne { email?: string; name?: string; plan?: string; createdAt?: number; expiresAt?: number; achats?: Achat[]; }
+interface Paiement { email?: string; plan?: string; amount?: number; date?: string; type?: string; titre?: string; reference?: string; note?: string; }
+interface Subscriber { email?: string; token?: string; createdAt?: number; }
 
 interface Stats {
   newsletter: { total: number; list: (string | Subscriber)[] };
-  paiements: { total: number; revenus: number; mensuel: number; annuel: number; recent: { email?: string; plan?: string; amount?: number; date?: string }[] };
+  paiements: {
+    total: number; revenus: number; mensuel: number; annuel: number;
+    achatsJournal: number; achatsMagazine: number;
+    recent: Paiement[];
+    recentAbonnements: Paiement[]; recentJournal: Paiement[]; recentMagazine: Paiement[];
+    listeAchatsJournal: Achat[]; listeAchatsMagazine: Achat[];
+  };
+  abonnes: { total: number; list: Abonne[] };
   devis: { total: number; recent: { nom?: string; entreprise?: string; effectif?: string; email?: string; date?: string }[] };
   articles: { total: number; recent: { title: string; date: string; slug: string }[] };
-  visits: { total: number; today: number; last7: { date: string; count: number }[] };
+  visits: { total: number; today: number; last7: { date: string; count: number }[]; online: number };
   topArticles: { slug: string; views: number }[];
+}
+
+type Tab = "overview" | "newsletter" | "abonnements" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles";
+
+function fmt(n: number) { return n.toLocaleString("fr-FR") + " FCFA"; }
+function fmtDate(iso?: string | number) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function BarChart({ data, color = "#3b82f6" }: { data: { label: string; value: number }[]; color?: string }) {
+  const max = Math.max(...data.map(d => d.value), 1);
+  return (
+    <div className="flex items-end gap-1.5 h-28 w-full">
+      {data.map((d, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+          <span className="text-[10px] text-gray-500">{d.value || ""}</span>
+          <div className="w-full rounded-t transition-all" style={{ height: `${Math.max((d.value / max) * 100, d.value > 0 ? 8 : 2)}%`, backgroundColor: d.value > 0 ? color : "#374151" }} />
+          <span className="text-[9px] text-gray-600 truncate w-full text-center">{d.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StatCard({ icon, label, value, sub, color = "red" }: { icon: string; label: string; value: string | number; sub?: string; color?: string }) {
+  const colors: Record<string, string> = { red: "bg-red-600", blue: "bg-blue-600", green: "bg-green-600", yellow: "bg-yellow-500", purple: "bg-purple-600", teal: "bg-teal-600" };
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-start gap-4">
+      <div className={`w-10 h-10 ${colors[color] || colors.red} rounded-lg flex items-center justify-center text-lg shrink-0`}>{icon}</div>
+      <div>
+        <div className="text-2xl font-bold text-white leading-tight">{value}</div>
+        <div className="text-gray-400 text-xs mt-0.5">{label}</div>
+        {sub && <div className="text-gray-600 text-[10px] mt-0.5">{sub}</div>}
+      </div>
+    </div>
+  );
+}
+
+function Badge({ children, color }: { children: React.ReactNode; color: string }) {
+  const c: Record<string, string> = {
+    blue: "bg-blue-600/20 text-blue-400 border border-blue-600/30",
+    yellow: "bg-yellow-600/20 text-yellow-400 border border-yellow-600/30",
+    green: "bg-green-600/20 text-green-400 border border-green-600/30",
+    red: "bg-red-600/20 text-red-400 border border-red-600/30",
+    gray: "bg-gray-700 text-gray-300 border border-gray-600",
+  };
+  return <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${c[color] || c.gray}`}>{children}</span>;
 }
 
 export default function DashboardPage() {
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
   const [stats, setStats] = useState<Stats | null>(null);
+  const [online, setOnline] = useState(0);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "newsletter" | "paiements" | "devis" | "articles" | "visiteurs" | "top-articles">("overview");
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const uidRef = useRef<string>("");
 
   const fetchStats = useCallback(async (t: string) => {
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
-      const res = await fetch("/api/dashboard/stats", {
-        headers: { "x-dashboard-token": t },
-      });
+      const res = await fetch("/api/dashboard/stats", { headers: { "x-dashboard-token": t } });
       if (res.status === 401) { setError("Mot de passe incorrect"); setToken(""); return; }
       const data = await res.json();
       setStats(data);
-    } catch {
-      setError("Erreur de connexion");
-    } finally {
-      setLoading(false);
-    }
+      setOnline(data.visits?.online || 0);
+    } catch { setError("Erreur de connexion"); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
+    uidRef.current = Math.random().toString(36).slice(2);
     const saved = sessionStorage.getItem("dashboard_token");
     if (saved) { setToken(saved); fetchStats(saved); }
   }, [fetchStats]);
 
-  async function handleLogin(e: React.FormEvent) {
+  // Heartbeat visiteur + refresh online toutes les 15s
+  useEffect(() => {
+    if (!token) return;
+    const beat = async () => {
+      try {
+        const r = await fetch("/api/online", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: uidRef.current }) });
+        const d = await r.json();
+        setOnline(d.online || 0);
+      } catch {}
+    };
+    beat();
+    const iv = setInterval(beat, 15000);
+    return () => clearInterval(iv);
+  }, [token]);
+
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     sessionStorage.setItem("dashboard_token", password);
     setToken(password);
@@ -59,44 +126,25 @@ export default function DashboardPage() {
     setToken(""); setStats(null); setPassword("");
   }
 
-  function formatDate(iso?: string) {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
-  }
-
-  function formatAmount(n: number) {
-    return n.toLocaleString("fr-FR") + " FCFA";
-  }
-
   if (!token || !stats) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 w-full max-w-sm">
           <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <svg width="24" height="24" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
-                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
+            <div className="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <span className="text-white font-black text-2xl">É</span>
             </div>
             <h1 className="text-white font-bold text-xl">Dashboard Admin</h1>
             <p className="text-gray-500 text-sm mt-1">L&apos;Économie</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Mot de passe"
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-red-500"
-              required
-            />
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+              placeholder="Mot de passe" required
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-red-500" />
             {error && <p className="text-red-400 text-sm">{error}</p>}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-60"
-            >
-              {loading ? "Connexion…" : "Accéder"}
+            <button type="submit" disabled={loading}
+              className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-60">
+              {loading ? "Connexion…" : "Accéder au dashboard"}
             </button>
           </form>
         </div>
@@ -104,131 +152,331 @@ export default function DashboardPage() {
     );
   }
 
-  const TABS = [
+  const TABS: { id: Tab; label: string; count?: number }[] = [
     { id: "overview", label: "Vue d'ensemble" },
-    { id: "newsletter", label: `Newsletter (${stats.newsletter.total})` },
-    { id: "paiements", label: `Paiements (${stats.paiements.total})` },
-    { id: "devis", label: `Devis (${stats.devis.total})` },
-    { id: "articles", label: `Articles (${stats.articles.total})` },
-    { id: "visiteurs", label: `Visiteurs (${stats.visits?.today || 0} auj.)` },
-    { id: "top-articles", label: "Top articles" },
-  ] as const;
+    { id: "abonnements", label: "Abonnements", count: stats.paiements.mensuel + stats.paiements.annuel },
+    { id: "achats-journal", label: "Achats Journal", count: stats.paiements.achatsJournal },
+    { id: "achats-magazine", label: "Achats Magazine", count: stats.paiements.achatsMagazine },
+    { id: "newsletter", label: "Newsletter", count: stats.newsletter.total },
+    { id: "visiteurs", label: "Visiteurs", count: stats.visits.today },
+    { id: "top-articles", label: "Top Articles" },
+    { id: "articles", label: "Articles", count: stats.articles.total },
+    { id: "devis", label: "Devis", count: stats.devis.total },
+  ];
+
+  const totalAbonnes = stats.paiements.mensuel + stats.paiements.annuel;
+  const totalAchats = stats.paiements.achatsJournal + stats.paiements.achatsMagazine;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+      <div className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xs">É</span>
+            <span className="text-white font-black text-sm">É</span>
           </div>
-          <span className="font-bold text-white">Dashboard Admin</span>
+          <span className="font-bold text-white text-sm">Dashboard Admin</span>
+          <span className="hidden sm:flex items-center gap-1.5 bg-green-600/20 text-green-400 text-xs font-bold px-2 py-0.5 rounded-full border border-green-600/30">
+            <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+            {online} en ligne
+          </span>
         </div>
-        <div className="flex items-center gap-4">
-          <button onClick={() => fetchStats(token)} className="text-gray-400 hover:text-white text-sm transition">
-            ↺ Actualiser
+        <div className="flex items-center gap-3">
+          <button onClick={() => fetchStats(token)} className="text-gray-400 hover:text-white text-xs transition flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Actualiser
           </button>
-          <button onClick={handleLogout} className="text-gray-400 hover:text-red-400 text-sm transition">
-            Déconnexion
-          </button>
+          <button onClick={handleLogout} className="text-gray-500 hover:text-red-400 text-xs transition">Déconnexion</button>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="bg-gray-900 border-b border-gray-800 px-6">
-        <div className="flex gap-1 overflow-x-auto">
+        <div className="flex gap-0.5 overflow-x-auto scrollbar-none">
           {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition
-                ${activeTab === tab.id ? "border-red-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"}`}
-            >
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-3 text-xs font-semibold whitespace-nowrap border-b-2 transition flex items-center gap-1.5
+                ${activeTab === tab.id ? "border-red-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"}`}>
               {tab.label}
+              {tab.count !== undefined && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeTab === tab.id ? "bg-red-600 text-white" : "bg-gray-800 text-gray-400"}`}>
+                  {tab.count}
+                </span>
+              )}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
-        {/* VUE D'ENSEMBLE */}
+        {/* ── VUE D'ENSEMBLE ── */}
         {activeTab === "overview" && (
-          <div>
-            <h2 className="text-lg font-bold mb-6">Vue d&apos;ensemble</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              {[
-                { label: "Abonnés newsletter", value: stats.newsletter.total, icon: "📧" },
-                { label: "Visiteurs aujourd'hui", value: stats.visits?.today || 0, icon: "👁️" },
-                { label: "Revenus totaux", value: formatAmount(stats.paiements.revenus), icon: "💰" },
-                { label: "Demandes de devis", value: stats.devis.total, icon: "🏢" },
-              ].map(card => (
-                <div key={card.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                  <div className="text-2xl mb-2">{card.icon}</div>
-                  <div className="text-2xl font-bold text-white">{card.value}</div>
-                  <div className="text-gray-500 text-xs mt-1">{card.label}</div>
-                </div>
-              ))}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Vue d&apos;ensemble</h2>
+              <span className="text-gray-500 text-xs">{new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
+            {/* KPIs */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard icon="👥" label="Abonnés actifs" value={totalAbonnes} sub={`${stats.paiements.mensuel} mensuel · ${stats.paiements.annuel} annuel`} color="red" />
+              <StatCard icon="🛒" label="Achats à l'unité" value={totalAchats} sub={`${stats.paiements.achatsJournal} journaux · ${stats.paiements.achatsMagazine} magazines`} color="blue" />
+              <StatCard icon="💰" label="Revenus totaux" value={fmt(stats.paiements.revenus)} color="green" />
+              <StatCard icon="🟢" label="En ligne maintenant" value={online} sub="visiteurs actifs" color="teal" />
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard icon="📧" label="Abonnés newsletter" value={stats.newsletter.total} color="purple" />
+              <StatCard icon="👁️" label="Visiteurs aujourd'hui" value={stats.visits.today} sub={`${stats.visits.total} au total`} color="blue" />
+              <StatCard icon="📰" label="Articles publiés" value={stats.articles.total} color="yellow" />
+              <StatCard icon="🏢" label="Demandes de devis" value={stats.devis.total} color="purple" />
+            </div>
+
+            {/* Graphique visiteurs */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-sm font-bold text-gray-300">Visiteurs — 7 derniers jours</h3>
+                <span className="text-blue-400 font-bold text-lg">{stats.visits.today} auj.</span>
+              </div>
+              <BarChart color="#3b82f6" data={stats.visits.last7.map(d => ({
+                label: new Date(d.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+                value: d.count,
+              }))} />
+            </div>
+
+            {/* Répartition revenus */}
+            <div className="grid md:grid-cols-3 gap-4">
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <h3 className="font-semibold mb-4 text-sm text-gray-400 uppercase tracking-widest">Abonnements par plan</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Abonnements</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-300">Mensuel</span>
-                    <span className="font-bold text-white">{stats.paiements.mensuel}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                      <span className="text-sm text-gray-300">Mensuel</span>
+                    </div>
+                    <span className="font-bold text-white text-lg">{stats.paiements.mensuel}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-300">Annuel</span>
-                    <span className="font-bold text-white">{stats.paiements.annuel}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full" />
+                      <span className="text-sm text-gray-300">Annuel</span>
+                    </div>
+                    <span className="font-bold text-white text-lg">{stats.paiements.annuel}</span>
                   </div>
+                  {/* Barre de progression */}
+                  {totalAbonnes > 0 && (
+                    <div className="mt-2 h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(stats.paiements.mensuel / totalAbonnes) * 100}%` }} />
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <h3 className="font-semibold mb-4 text-sm text-gray-400 uppercase tracking-widest">Derniers articles</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Achats unitaires</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-red-500 rounded-full" />
+                      <span className="text-sm text-gray-300">Journal</span>
+                    </div>
+                    <span className="font-bold text-white text-lg">{stats.paiements.achatsJournal}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 bg-purple-500 rounded-full" />
+                      <span className="text-sm text-gray-300">Magazine</span>
+                    </div>
+                    <span className="font-bold text-white text-lg">{stats.paiements.achatsMagazine}</span>
+                  </div>
+                  {totalAchats > 0 && (
+                    <div className="mt-2 h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-red-500 rounded-full" style={{ width: `${(stats.paiements.achatsJournal / totalAchats) * 100}%` }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Derniers articles</h3>
                 <div className="space-y-2">
                   {stats.articles.recent.length === 0 && <p className="text-gray-600 text-sm">Aucun article</p>}
                   {stats.articles.recent.map((a, i) => (
-                    <div key={i} className="flex items-start justify-between gap-2">
-                      <p className="text-sm text-gray-300 line-clamp-1 flex-1">{a.title}</p>
-                      <span className="text-xs text-gray-600 shrink-0">{formatDate(a.date)}</span>
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-gray-700 text-xs mt-0.5 shrink-0">{i + 1}.</span>
+                      <p className="text-xs text-gray-300 line-clamp-2 flex-1">{a.title}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
+
+            {/* Top articles mini */}
+            {stats.topArticles.length > 0 && (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Top 5 articles les plus lus</h3>
+                <div className="space-y-3">
+                  {stats.topArticles.slice(0, 5).map((a, i) => {
+                    const maxViews = stats.topArticles[0].views;
+                    return (
+                      <div key={a.slug} className="flex items-center gap-3">
+                        <span className="text-gray-600 text-xs font-bold w-4 shrink-0">{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-gray-300 truncate">{a.slug.replace(/-/g, " ")}</p>
+                          <div className="mt-1 h-1 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-red-600 rounded-full" style={{ width: `${(a.views / maxViews) * 100}%` }} />
+                          </div>
+                        </div>
+                        <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">{a.views}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* NEWSLETTER */}
+        {/* ── ABONNEMENTS ── */}
+        {activeTab === "abonnements" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Abonnements</h2>
+              <div className="flex gap-3">
+                <div className="text-center"><div className="text-2xl font-bold text-blue-400">{stats.paiements.mensuel}</div><div className="text-xs text-gray-500">Mensuel</div></div>
+                <div className="text-center"><div className="text-2xl font-bold text-yellow-400">{stats.paiements.annuel}</div><div className="text-xs text-gray-500">Annuel</div></div>
+              </div>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {stats.abonnes.list.filter(a => a.plan === "mensuel" || a.plan === "annuel").length === 0 ? (
+                <p className="text-gray-500 text-sm p-6">Aucun abonné payant pour le moment</p>
+              ) : (
+                <table className="w-full">
+                  <thead><tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Abonné</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Plan</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Depuis</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Expiration</th>
+                  </tr></thead>
+                  <tbody>
+                    {stats.abonnes.list.filter(a => a.plan === "mensuel" || a.plan === "annuel").map((a, i) => (
+                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="px-5 py-3">
+                          <div className="text-sm text-white font-medium">{a.name || "—"}</div>
+                          <div className="text-xs text-gray-500">{a.email}</div>
+                        </td>
+                        <td className="px-5 py-3">
+                          <Badge color={a.plan === "annuel" ? "yellow" : "blue"}>{a.plan}</Badge>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-gray-400">{fmtDate(a.createdAt)}</td>
+                        <td className="px-5 py-3 text-sm text-gray-400">{fmtDate(a.expiresAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── ACHATS JOURNAL ── */}
+        {activeTab === "achats-journal" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Achats Journal à l&apos;unité</h2>
+              <span className="text-2xl font-bold text-red-400">{stats.paiements.achatsJournal}</span>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {stats.paiements.listeAchatsJournal.length === 0 ? (
+                <p className="text-gray-500 text-sm p-6">Aucun achat journal pour le moment</p>
+              ) : (
+                <table className="w-full">
+                  <thead><tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Client</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Journal</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Date</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Moyen</th>
+                  </tr></thead>
+                  <tbody>
+                    {stats.paiements.listeAchatsJournal.map((a, i) => (
+                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="px-5 py-3">
+                          <div className="text-sm text-white">{a.name || "—"}</div>
+                          <div className="text-xs text-gray-500">{a.email}</div>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-gray-300">{a.titre}</td>
+                        <td className="px-5 py-3 text-sm text-gray-400">{fmtDate(a.acheteLe)}</td>
+                        <td className="px-5 py-3"><Badge color="gray">Mobile Money</Badge></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── ACHATS MAGAZINE ── */}
+        {activeTab === "achats-magazine" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Achats Magazine à l&apos;unité</h2>
+              <span className="text-2xl font-bold text-purple-400">{stats.paiements.achatsMagazine}</span>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {stats.paiements.listeAchatsMagazine.length === 0 ? (
+                <p className="text-gray-500 text-sm p-6">Aucun achat magazine pour le moment</p>
+              ) : (
+                <table className="w-full">
+                  <thead><tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Client</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Magazine</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Date</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Moyen</th>
+                  </tr></thead>
+                  <tbody>
+                    {stats.paiements.listeAchatsMagazine.map((a, i) => (
+                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="px-5 py-3">
+                          <div className="text-sm text-white">{a.name || "—"}</div>
+                          <div className="text-xs text-gray-500">{a.email}</div>
+                        </td>
+                        <td className="px-5 py-3 text-sm text-gray-300">{a.titre}</td>
+                        <td className="px-5 py-3 text-sm text-gray-400">{fmtDate(a.acheteLe)}</td>
+                        <td className="px-5 py-3"><Badge color="gray">Mobile Money</Badge></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── NEWSLETTER ── */}
         {activeTab === "newsletter" && (
-          <div>
-            <h2 className="text-lg font-bold mb-6">Abonnés newsletter — {stats.newsletter.total} inscrits</h2>
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold">Newsletter — {stats.newsletter.total} inscrits</h2>
             <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
               {stats.newsletter.list.length === 0 ? (
                 <p className="text-gray-500 text-sm p-6">Aucun abonné</p>
               ) : (
                 <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">#</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Email</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Date</th>
-                    </tr>
-                  </thead>
+                  <thead><tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">#</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Email</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Inscrit le</th>
+                  </tr></thead>
                   <tbody>
                     {stats.newsletter.list.map((item, i) => {
-                      const email = typeof item === "string" ? item : item.email || "—";
-                      const date = typeof item === "object" && item.createdAt
-                        ? new Date(item.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })
-                        : "—";
+                      const email = typeof item === "string" ? item : (item as Subscriber).email || "—";
+                      const date = typeof item === "object" && (item as Subscriber).createdAt ? fmtDate((item as Subscriber).createdAt) : "—";
                       return (
                         <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
-                          <td className="px-6 py-3 text-gray-500 text-sm">{i + 1}</td>
-                          <td className="px-6 py-3 text-sm text-white">{email}</td>
-                          <td className="px-6 py-3 text-sm text-gray-500">{date}</td>
+                          <td className="px-5 py-3 text-gray-600 text-sm">{i + 1}</td>
+                          <td className="px-5 py-3 text-sm text-white">{email}</td>
+                          <td className="px-5 py-3 text-sm text-gray-500">{date}</td>
                         </tr>
                       );
                     })}
@@ -239,194 +487,117 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* PAIEMENTS */}
-        {activeTab === "paiements" && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold">Paiements — {stats.paiements.total} transactions</h2>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-green-400">{formatAmount(stats.paiements.revenus)}</div>
-                <div className="text-xs text-gray-500">Revenus totaux</div>
-              </div>
-            </div>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-              {stats.paiements.recent.length === 0 ? (
-                <p className="text-gray-500 text-sm p-6">Aucun paiement enregistré</p>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Email</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Plan</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Montant</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.paiements.recent.map((p, i) => (
-                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
-                        <td className="px-6 py-3 text-sm text-white">{p.email || "—"}</td>
-                        <td className="px-6 py-3 text-sm">
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${p.plan === "annuel" ? "bg-yellow-600 text-white" : "bg-blue-600 text-white"}`}>
-                            {p.plan || "—"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-3 text-sm text-green-400 font-mono">{p.amount ? formatAmount(p.amount) : "—"}</td>
-                        <td className="px-6 py-3 text-sm text-gray-500">{formatDate(p.date)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* DEVIS */}
-        {activeTab === "devis" && (
-          <div>
-            <h2 className="text-lg font-bold mb-6">Demandes de devis — {stats.devis.total} demandes</h2>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-              {stats.devis.recent.length === 0 ? (
-                <p className="text-gray-500 text-sm p-6">Aucune demande de devis</p>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Entreprise</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Contact</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Effectif</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.devis.recent.map((d, i) => (
-                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
-                        <td className="px-6 py-3 text-sm font-semibold text-white">{d.entreprise || "—"}</td>
-                        <td className="px-6 py-3 text-sm text-gray-300">
-                          <div>{d.nom}</div>
-                          <div className="text-xs text-gray-500">{d.email}</div>
-                        </td>
-                        <td className="px-6 py-3 text-sm">
-                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-purple-600 text-white">{d.effectif || "—"}</span>
-                        </td>
-                        <td className="px-6 py-3 text-sm text-gray-500">{formatDate(d.date)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ARTICLES */}
-        {activeTab === "articles" && (
-          <div>
-            <h2 className="text-lg font-bold mb-6">Articles publiés — {stats.articles.total} articles</h2>
-            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-              {stats.articles.recent.length === 0 ? (
-                <p className="text-gray-500 text-sm p-6">Aucun article</p>
-              ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Titre</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Date</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Lien</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.articles.recent.map((a, i) => (
-                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
-                        <td className="px-6 py-3 text-sm text-white">{a.title}</td>
-                        <td className="px-6 py-3 text-sm text-gray-500">{formatDate(a.date)}</td>
-                        <td className="px-6 py-3 text-sm">
-                          <a href={`https://leconomie.info/${a.slug}`} target="_blank" rel="noreferrer"
-                            className="text-red-400 hover:underline text-xs">
-                            Voir →
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* VISITEURS */}
+        {/* ── VISITEURS ── */}
         {activeTab === "visiteurs" && (
-          <div>
-            <div className="flex items-center justify-between mb-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">Visiteurs</h2>
-              <div className="flex gap-6 text-right">
-                <div>
-                  <div className="text-2xl font-bold text-blue-400">{stats.visits?.today || 0}</div>
-                  <div className="text-xs text-gray-500">Aujourd&apos;hui</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-white">{stats.visits?.total || 0}</div>
-                  <div className="text-xs text-gray-500">Total</div>
-                </div>
+              <div className="flex gap-4">
+                <div className="text-center"><div className="text-2xl font-bold text-green-400 flex items-center gap-2"><span className="w-2 h-2 bg-green-400 rounded-full animate-pulse inline-block" />{online}</div><div className="text-xs text-gray-500">En ligne</div></div>
+                <div className="text-center"><div className="text-2xl font-bold text-blue-400">{stats.visits.today}</div><div className="text-xs text-gray-500">Aujourd&apos;hui</div></div>
+                <div className="text-center"><div className="text-2xl font-bold text-white">{stats.visits.total}</div><div className="text-xs text-gray-500">Total</div></div>
               </div>
             </div>
-
-            {/* Graphique 7 jours */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-4">
-              <h3 className="text-sm text-gray-400 uppercase tracking-widest mb-4">7 derniers jours</h3>
-              <div className="flex items-end gap-2 h-32">
-                {(stats.visits?.last7 || []).map((d) => {
-                  const max = Math.max(...(stats.visits?.last7 || []).map(x => x.count), 1);
-                  const pct = Math.round((d.count / max) * 100);
-                  return (
-                    <div key={d.date} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-xs text-gray-500">{d.count}</span>
-                      <div
-                        className="w-full bg-blue-600 rounded-t transition-all"
-                        style={{ height: `${Math.max(pct, 4)}%` }}
-                      />
-                      <span className="text-xs text-gray-600">
-                        {new Date(d.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5">Visites — 7 derniers jours</h3>
+              <BarChart color="#3b82f6" data={stats.visits.last7.map(d => ({
+                label: new Date(d.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+                value: d.count,
+              }))} />
             </div>
           </div>
         )}
 
-        {/* TOP ARTICLES */}
+        {/* ── TOP ARTICLES ── */}
         {activeTab === "top-articles" && (
-          <div>
-            <h2 className="text-lg font-bold mb-6">Articles les plus lus</h2>
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold">Articles les plus lus</h2>
             <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-              {!stats.topArticles || stats.topArticles.length === 0 ? (
-                <p className="text-gray-500 text-sm p-6">Aucune donnée — les vues s&apos;accumulent au fil des visites.</p>
+              {stats.topArticles.length === 0 ? (
+                <p className="text-gray-500 text-sm p-6">Aucune donnée encore.</p>
               ) : (
                 <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-800">
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">#</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Article</th>
-                      <th className="text-left px-6 py-3 text-xs text-gray-500 uppercase">Vues</th>
-                    </tr>
-                  </thead>
+                  <thead><tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">#</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Article</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Vues</th>
+                  </tr></thead>
                   <tbody>
                     {stats.topArticles.map((a, i) => (
                       <tr key={a.slug} className="border-b border-gray-800 hover:bg-gray-800/50">
-                        <td className="px-6 py-3 text-gray-500 text-sm font-bold">{i + 1}</td>
-                        <td className="px-6 py-3 text-sm">
+                        <td className="px-5 py-3 text-gray-500 text-sm font-bold">{i + 1}</td>
+                        <td className="px-5 py-3">
                           <a href={`https://leconomie.info/article/${a.slug}`} target="_blank" rel="noreferrer"
-                            className="text-white hover:text-red-400 transition">
-                            {a.slug}
+                            className="text-sm text-white hover:text-red-400 transition line-clamp-1">
+                            {a.slug.replace(/-/g, " ")}
                           </a>
                         </td>
-                        <td className="px-6 py-3 text-sm">
-                          <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">{a.views}</span>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden max-w-[80px]">
+                              <div className="h-full bg-red-600 rounded-full" style={{ width: `${(a.views / (stats.topArticles[0]?.views || 1)) * 100}%` }} />
+                            </div>
+                            <Badge color="blue">{a.views}</Badge>
+                          </div>
                         </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── ARTICLES ── */}
+        {activeTab === "articles" && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold">Articles publiés — {stats.articles.total}</h2>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {stats.articles.recent.length === 0 ? <p className="text-gray-500 text-sm p-6">Aucun article</p> : (
+                <table className="w-full">
+                  <thead><tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Titre</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Date</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Lien</th>
+                  </tr></thead>
+                  <tbody>
+                    {stats.articles.recent.map((a, i) => (
+                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="px-5 py-3 text-sm text-white">{a.title}</td>
+                        <td className="px-5 py-3 text-sm text-gray-500">{fmtDate(a.date)}</td>
+                        <td className="px-5 py-3">
+                          <a href={`https://leconomie.info/article/${a.slug}`} target="_blank" rel="noreferrer" className="text-red-400 hover:underline text-xs">Voir →</a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── DEVIS ── */}
+        {activeTab === "devis" && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold">Demandes de devis — {stats.devis.total}</h2>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {stats.devis.recent.length === 0 ? <p className="text-gray-500 text-sm p-6">Aucune demande</p> : (
+                <table className="w-full">
+                  <thead><tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Entreprise</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Contact</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Effectif</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Date</th>
+                  </tr></thead>
+                  <tbody>
+                    {stats.devis.recent.map((d, i) => (
+                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="px-5 py-3 text-sm font-semibold text-white">{d.entreprise || "—"}</td>
+                        <td className="px-5 py-3"><div className="text-sm text-gray-300">{d.nom}</div><div className="text-xs text-gray-500">{d.email}</div></td>
+                        <td className="px-5 py-3"><Badge color="purple">{d.effectif || "—"}</Badge></td>
+                        <td className="px-5 py-3 text-sm text-gray-500">{fmtDate(d.date)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -18,11 +18,12 @@ export async function GET(req: NextRequest) {
   }
 
   const subscribers: string[] = readJSON("newsletter-subscribers.json");
-  const paiements: object[] = readJSON("paiements.json");
-  const abonnes: { plan?: string; achats?: object[] }[] = readJSON("abonnes.json");
+  const paiements: { email?: string; plan?: string; amount?: number; date?: string; type?: string; titre?: string; reference?: string; note?: string }[] = readJSON("paiements.json");
+  const abonnes: { email?: string; name?: string; plan?: string; createdAt?: number; expiresAt?: number; achats?: { id: number; type: string; titre: string; ref: string; acheteLe: number }[] }[] = readJSON("abonnes.json");
   const devis: object[] = readJSON("devis.json");
   const visitsRaw: Record<string, number> = readJSON("visits.json", {});
   const articleViewsRaw: Record<string, number> = readJSON("article-views.json", {});
+  const onlineRaw: Record<string, number> = readJSON("online.json", {});
 
   // Articles WordPress via GraphQL
   let articles = { total: 0, recent: [] as { title: string; date: string; slug: string }[] };
@@ -43,12 +44,22 @@ export async function GET(req: NextRequest) {
     articles.total = data?.data?.posts?.pageInfo?.total || 0;
   } catch {}
 
-  // Revenus depuis paiements
-  const revenus = (paiements as { amount?: number }[]).reduce((sum, p) => sum + (p.amount || 0), 0);
-  // Abonnés depuis abonnes.json (source de vérité)
+  // Revenus
+  const revenus = paiements.reduce((sum, p) => sum + (p.amount || 0), 0);
+  // Abonnés depuis abonnes.json
   const mensuel = abonnes.filter(a => a.plan === "mensuel").length;
   const annuel = abonnes.filter(a => a.plan === "annuel").length;
-  const totalAchats = abonnes.reduce((sum, a) => sum + (a.achats?.length || 0), 0);
+  // Achats unitaires (journal + magazine)
+  const allAchats = abonnes.flatMap(a => (a.achats || []).map(ac => ({ ...ac, email: a.email, name: a.name })));
+  const achatsJournal = allAchats.filter(a => a.type === "journal");
+  const achatsMagazine = allAchats.filter(a => a.type === "magazine");
+  // Paiements par type
+  const paiementsAbonnement = paiements.filter(p => p.plan === "mensuel" || p.plan === "annuel");
+  const paiementsJournal = paiements.filter(p => p.type === "journal");
+  const paiementsMagazine = paiements.filter(p => p.type === "magazine");
+  // Visiteurs en ligne
+  const now = Date.now();
+  const online = Object.values(onlineRaw).filter(t => now - t <= 30000).length;
 
   // Visites : 7 derniers jours
   const last7: { date: string; count: number }[] = [];
@@ -70,10 +81,24 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     newsletter: { total: subscribers.length, list: subscribers },
-    paiements: { total: paiements.length, revenus, mensuel, annuel, totalAchats, recent: (paiements as object[]).slice(-10).reverse() },
+    paiements: {
+      total: paiements.length,
+      revenus,
+      mensuel,
+      annuel,
+      achatsJournal: achatsJournal.length,
+      achatsMagazine: achatsMagazine.length,
+      recentAbonnements: paiementsAbonnement.slice(-10).reverse(),
+      recentJournal: paiementsJournal.slice(-10).reverse(),
+      recentMagazine: paiementsMagazine.slice(-10).reverse(),
+      recent: paiements.slice(-10).reverse(),
+      listeAchatsJournal: achatsJournal.slice(-20).reverse(),
+      listeAchatsMagazine: achatsMagazine.slice(-20).reverse(),
+    },
+    abonnes: { total: abonnes.length, list: abonnes.slice(-20).reverse() },
     devis: { total: devis.length, recent: (devis as object[]).slice(-10).reverse() },
     articles,
-    visits: { total: totalVisits, today: todayVisits, last7 },
+    visits: { total: totalVisits, today: todayVisits, last7, online },
     topArticles,
   });
 }
