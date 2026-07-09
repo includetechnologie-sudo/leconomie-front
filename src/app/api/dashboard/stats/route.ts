@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { checkDashboardAuth } from "@/lib/dashboard-auth";
 
 function readJSON(file: string, fallback: unknown = []) {
   try {
@@ -13,7 +14,7 @@ function readJSON(file: string, fallback: unknown = []) {
 
 export async function GET(req: NextRequest) {
   const auth = req.headers.get("x-dashboard-token");
-  if (auth !== process.env.DASHBOARD_PASSWORD) {
+  if (!checkDashboardAuth(auth)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

@@ -23,7 +23,7 @@ interface Stats {
   topArticles: { slug: string; views: number }[];
 }
 
-type Tab = "overview" | "newsletter" | "abonnements" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles";
+type Tab = "overview" | "newsletter" | "abonnements" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "settings";
 
 function fmt(n: number) { return n.toLocaleString("fr-FR") + " FCFA"; }
 function fmtDate(iso?: string | number) {
@@ -80,6 +80,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const uidRef = useRef<string>("");
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNew, setPwNew] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwMsg, setPwMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [pwLoading, setPwLoading] = useState(false);
 
   const fetchStats = useCallback(async (t: string) => {
     setLoading(true); setError("");
@@ -113,6 +118,27 @@ export default function DashboardPage() {
     const iv = setInterval(beat, 15000);
     return () => clearInterval(iv);
   }, [token]);
+
+  async function handlePasswordChange(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (pwNew !== pwConfirm) { setPwMsg({ type: "err", text: "Les deux nouveaux mots de passe ne correspondent pas" }); return; }
+    if (pwNew.length < 6) { setPwMsg({ type: "err", text: "Mot de passe trop court (minimum 6 caractères)" }); return; }
+    setPwLoading(true); setPwMsg(null);
+    try {
+      const res = await fetch("/api/dashboard/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-dashboard-token": token },
+        body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNew }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setPwMsg({ type: "err", text: data.error || "Erreur" }); return; }
+      setPwMsg({ type: "ok", text: "Mot de passe modifié avec succès !" });
+      sessionStorage.setItem("dashboard_token", pwNew);
+      setToken(pwNew);
+      setPwCurrent(""); setPwNew(""); setPwConfirm("");
+    } catch { setPwMsg({ type: "err", text: "Erreur réseau" }); }
+    finally { setPwLoading(false); }
+  }
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -162,6 +188,7 @@ export default function DashboardPage() {
     { id: "top-articles", label: "Top Articles" },
     { id: "articles", label: "Articles", count: stats.articles.total },
     { id: "devis", label: "Devis", count: stats.devis.total },
+    { id: "settings", label: "⚙ Paramètres" },
   ];
 
   const totalAbonnes = stats.paiements.mensuel + stats.paiements.annuel;
@@ -603,6 +630,76 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ── PARAMÈTRES ── */}
+        {activeTab === "settings" && (
+          <div className="space-y-6 max-w-xl">
+            <h2 className="text-lg font-bold">Paramètres</h2>
+
+            {/* Changer le mot de passe */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <h3 className="text-sm font-bold text-white mb-1">Changer le mot de passe</h3>
+              <p className="text-gray-500 text-xs mb-5">Le nouveau mot de passe prend effet immédiatement.</p>
+              <form onSubmit={handlePasswordChange} className="space-y-4">
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Mot de passe actuel</label>
+                  <input type="password" value={pwCurrent} onChange={e => setPwCurrent(e.target.value)} required
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Nouveau mot de passe</label>
+                  <input type="password" value={pwNew} onChange={e => setPwNew(e.target.value)} required minLength={6}
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Confirmer le nouveau mot de passe</label>
+                  <input type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} required
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+                </div>
+                {pwMsg && (
+                  <div className={`text-sm px-4 py-3 rounded-lg ${pwMsg.type === "ok" ? "bg-green-600/20 text-green-400 border border-green-600/30" : "bg-red-600/20 text-red-400 border border-red-600/30"}`}>
+                    {pwMsg.text}
+                  </div>
+                )}
+                <button type="submit" disabled={pwLoading}
+                  className="bg-red-600 text-white font-bold px-6 py-2.5 rounded-lg hover:bg-red-700 transition disabled:opacity-60 text-sm">
+                  {pwLoading ? "Enregistrement…" : "Changer le mot de passe"}
+                </button>
+              </form>
+            </div>
+
+            {/* Réinitialisation d'urgence */}
+            <div className="bg-gray-900 border border-yellow-600/30 rounded-xl p-6">
+              <div className="flex items-start gap-3">
+                <span className="text-yellow-500 text-xl">⚠</span>
+                <div>
+                  <h3 className="text-sm font-bold text-yellow-400 mb-2">Réinitialisation d&apos;urgence (mot de passe perdu)</h3>
+                  <p className="text-gray-400 text-xs leading-relaxed mb-3">
+                    Si tu as perdu ton mot de passe et ne peux plus te connecter, connecte-toi au VPS via SSH et exécute ces commandes :
+                  </p>
+                  <div className="bg-gray-950 rounded-lg p-4 font-mono text-xs text-green-400 space-y-1 select-all">
+                    <p>ssh root@187.127.11.239</p>
+                    <p>cd /var/www/leconomie-front</p>
+                    <p>{`echo '{"password":"NOUVEAU_MOT_DE_PASSE"}' > data/dashboard-config.json`}</p>
+                    <p>pm2 restart leconomie-front</p>
+                  </div>
+                  <p className="text-gray-600 text-xs mt-3">
+                    Remplace <span className="text-gray-400">NOUVEAU_MOT_DE_PASSE</span> par le mot de passe souhaité. Aucun redéploiement nécessaire.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Info session */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Session</h3>
+              <p className="text-gray-500 text-xs">La session est stockée dans <code className="text-gray-300">sessionStorage</code> — elle se termine automatiquement à la fermeture de l&apos;onglet.</p>
+              <button onClick={handleLogout} className="mt-4 text-red-400 hover:text-red-300 text-sm font-semibold transition">
+                Se déconnecter maintenant →
+              </button>
             </div>
           </div>
         )}
