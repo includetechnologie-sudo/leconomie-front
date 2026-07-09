@@ -16,7 +16,7 @@ export default function PubMagazineSidebar() {
 
   return (
     <Link
-      href="/magazine/32502"
+      href="/magazine?tab=magazines"
       className="block group relative overflow-hidden rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 cursor-pointer"
       style={{ width: "300px" }}
     >
