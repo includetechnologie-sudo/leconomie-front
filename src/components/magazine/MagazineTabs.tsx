@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -162,7 +163,15 @@ function getYears(items: { date: string; num: string }[]): string[] {
 }
 
 export default function MagazineTabs({ quotidiens, magazines, isConnected }: Props) {
-  const [tab, setTab] = useState<"quotidien" | "magazine">("quotidien");
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") === "magazines" ? "magazine" : "quotidien";
+  const [tab, setTab] = useState<"quotidien" | "magazine">(initialTab);
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t === "magazines") setTab("magazine");
+    else if (t === "quotidien") setTab("quotidien");
+  }, [searchParams]);
   const [extraitData, setExtraitData] = useState<{ text: string; titre: string } | null>(null);
   const [achatMag, setAchatMag] = useState<Magazine | null>(null);
   const [achatJournal, setAchatJournal] = useState<Quotidien | null>(null);
