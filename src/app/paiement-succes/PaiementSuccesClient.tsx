@@ -18,17 +18,26 @@ export default function PaiementSuccesClient() {
     const email = searchParams.get("customer_email") || searchParams.get("email") || "";
     const name  = searchParams.get("customer_name") || searchParams.get("name") || "";
 
-    // Détecter achat unitaire : leco-achat-{id}-{type}-{timestamp}
     const isAchatUnitaire = ref.startsWith("leco-achat-");
 
-    // Pour un achat unitaire, l'email peut être absent (retrouvé via le fichier pending)
-    if (!ref || (!email && !isAchatUnitaire)) {
-      setState("error");
+    if (!ref && !email) {
+      // Aucun paramètre → peut-être retour direct avec cookie déjà posé (webhook traité avant)
+      // On vérifie si l'utilisateur est connecté
+      fetch("/api/achat/mes-achats")
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data) {
+            router.replace("/mon-compte");
+          } else {
+            setState("error");
+          }
+        })
+        .catch(() => setState("error"));
       return;
     }
+
     if (isAchatUnitaire) {
-      // leco-achat-3512-journal-1234567890
-      const parts = ref.split("-"); // ["leco","achat","{id}","{type}","{ts}"]
+      const parts = ref.split("-");
       const id = Number(parts[2] || 0);
       const type = (parts[3] || "journal") as "journal" | "magazine";
       const titre = searchParams.get("titre") || `Numéro ${id}`;
@@ -40,10 +49,12 @@ export default function PaiementSuccesClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, name, id, type, titre, ref }),
       })
-        .then((r) => r.json())
-        .then((data) => {
+        .then(r => r.json())
+        .then(data => {
           if (data.success) {
-            setState("existing");
+            // hasPassword = false → nouveau compte, on propose de créer un mot de passe
+            // hasPassword = true  → compte existant, on redirige
+            setState(data.hasPassword ? "existing" : "new");
           } else {
             setState("error");
           }
@@ -64,8 +75,8 @@ export default function PaiementSuccesClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, name, plan, ref }),
     })
-      .then((r) => r.json())
-      .then((data) => {
+      .then(r => r.json())
+      .then(data => {
         if (data.hasPassword) {
           setState("existing");
         } else {
@@ -73,9 +84,9 @@ export default function PaiementSuccesClient() {
         }
       })
       .catch(() => setState("error"));
-  }, [searchParams]);
+  }, [searchParams, router]);
 
-  // Abonné existant : redirige automatiquement vers l'espace après 3 s
+  // Abonné existant → redirection automatique vers l'espace après 3s
   useEffect(() => {
     if (state !== "existing") return;
     const t = setTimeout(() => router.push("/mon-compte"), 3000);
@@ -97,9 +108,20 @@ export default function PaiementSuccesClient() {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center bg-white rounded-2xl border shadow-lg p-10">
-          <p className="text-gray-600 mb-4">Paiement reçu. Connectez-vous pour accéder à votre espace.</p>
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg width="32" height="32" fill="none" stroke="#16a34a" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Paiement reçu !</h1>
+          <p className="text-gray-500 text-sm mb-6">
+            Votre achat a bien été enregistré. Connectez-vous pour accéder à votre espace.
+          </p>
           <Link href="/connexion" className="block w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition text-sm">
             Se connecter
+          </Link>
+          <Link href="/mon-compte" className="block w-full mt-3 border border-gray-200 text-gray-600 font-semibold py-3 rounded-lg hover:bg-gray-50 transition text-sm">
+            Accéder à mon compte →
           </Link>
         </div>
       </div>
@@ -119,7 +141,7 @@ export default function PaiementSuccesClient() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Paiement confirmé !</h1>
           <p className="text-gray-500 text-sm mb-4">
-            {info.plan === "achat" ? "Votre numéro est disponible dans votre espace." : "Bienvenue dans L’Économie Premium."}
+            {info.plan === "achat" ? "Votre numéro est disponible dans votre espace." : "Bienvenue dans L'Économie Premium."}
           </p>
           <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-4">
             <p className="text-sm font-bold text-red-600">{info.planLabel}</p>
@@ -131,7 +153,7 @@ export default function PaiementSuccesClient() {
           {info.ref   && <p className="text-xs text-gray-400">Référence : {info.ref}</p>}
         </div>
 
-        {/* Compte existant */}
+        {/* Compte existant → redirection auto */}
         {state === "existing" ? (
           <div className="bg-white rounded-2xl border shadow-sm p-6 text-center">
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -139,16 +161,17 @@ export default function PaiementSuccesClient() {
                 <path d="M20 6L9 17l-5-5"/>
               </svg>
             </div>
-            <p className="font-bold text-gray-900 mb-1">Abonnement mis à jour</p>
-            <p className="text-sm text-gray-500 mb-2">Redirection vers votre espace…</p>
-            <p className="text-xs text-gray-400 mb-4">Vous serez redirigé automatiquement dans quelques secondes.</p>
+            <p className="font-bold text-gray-900 mb-1">
+              {info.plan === "achat" ? "Achat enregistré dans votre compte" : "Abonnement mis à jour"}
+            </p>
+            <p className="text-sm text-gray-500 mb-4">Redirection vers votre espace dans quelques secondes…</p>
             <Link href="/mon-compte"
               className="block w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition text-sm">
               Accéder à mon espace →
             </Link>
           </div>
         ) : (
-          /* Nouveau compte → créer mot de passe */
+          /* Nouveau compte → créer un mot de passe pour accéder aux achats */
           <div className="bg-white rounded-2xl border shadow-lg p-8">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center shrink-0">
@@ -159,7 +182,7 @@ export default function PaiementSuccesClient() {
               </div>
               <div>
                 <h2 className="font-bold text-gray-900 text-base">Créez votre mot de passe</h2>
-                <p className="text-xs text-gray-500">Pour accéder à votre espace abonné</p>
+                <p className="text-xs text-gray-500">Pour accéder à vos achats et publications</p>
               </div>
             </div>
             <CreatePasswordForm email={info.email} token={info.ref} />
@@ -167,10 +190,6 @@ export default function PaiementSuccesClient() {
         )}
 
         <div className="flex flex-col gap-2 mt-4">
-          <Link href="/lecture"
-            className="block w-full border border-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg hover:bg-gray-50 transition text-center text-sm">
-            Accéder au journal maintenant
-          </Link>
           <Link href="/"
             className="block w-full text-gray-400 hover:text-red-600 transition text-center text-xs py-1">
             Retour à l&apos;accueil
