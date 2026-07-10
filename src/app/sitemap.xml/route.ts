@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
 const WP = "https://teal-horse-411567.hostingersite.com";
+const SITE = "https://leconomie.info";
 
 export async function GET() {
   try {
     const res = await fetch(`${WP}/sitemap_index.xml`, { next: { revalidate: 3600 } });
     const xml = await res.text();
-    const fixed = xml.replaceAll(WP, "https://leconomie.info");
+    const fixed = xml.replaceAll(`${WP}/`, `${SITE}/api/sitemap/`);
     return new NextResponse(fixed, {
       headers: {
         "Content-Type": "application/xml; charset=utf-8",
