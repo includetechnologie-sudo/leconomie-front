@@ -16,8 +16,21 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
 
   async redirects() {
+    const WP = "https://teal-horse-411567.hostingersite.com";
     return [
       { source: "/contacts", destination: "/contact", permanent: true },
+      // Sitemaps WordPress
+      { source: "/sitemap_index.xml", destination: `${WP}/sitemap_index.xml`, permanent: false },
+      { source: "/sitemap.xml", destination: `${WP}/sitemap_index.xml`, permanent: false },
+      { source: "/:sitemap(post-sitemap\\d*\\.xml)", destination: `${WP}/:sitemap`, permanent: false },
+      { source: "/:sitemap(page-sitemap\\.xml)", destination: `${WP}/:sitemap`, permanent: false },
+      { source: "/:sitemap(category-sitemap\\.xml)", destination: `${WP}/:sitemap`, permanent: false },
+      { source: "/:sitemap(journal-sitemap\\.xml)", destination: `${WP}/:sitemap`, permanent: false },
+      { source: "/:sitemap(magazine-sitemap\\.xml)", destination: `${WP}/:sitemap`, permanent: false },
+      { source: "/:sitemap(author-sitemap\\.xml)", destination: `${WP}/:sitemap`, permanent: false },
+      { source: "/:sitemap(post_tag-sitemap\\d*\\.xml)", destination: `${WP}/:sitemap`, permanent: false },
+      // Robots.txt depuis WordPress
+      { source: "/robots.txt", destination: `${WP}/robots.txt`, permanent: false },
     ];
   },
 
