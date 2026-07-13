@@ -47,7 +47,7 @@ export async function GET(
     return NextResponse.json({ error: "PDF introuvable" }, { status: 404 });
   }
 
-  // Proxy sécurisé — l'URL réelle du PDF n'est jamais exposée au client
+  // Proxy sécurisé avec streaming — évite de charger tout le PDF en mémoire
   try {
     const pdfRes = await fetch(pdfUrl, {
       headers: { "User-Agent": "LeconomieApp/1.0" },
@@ -55,16 +55,22 @@ export async function GET(
     if (!pdfRes.ok) {
       return NextResponse.json({ error: "Fichier PDF introuvable sur le serveur" }, { status: 404 });
     }
-    const buffer = await pdfRes.arrayBuffer();
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": "inline",
-        "Cache-Control": "private, no-store",
-        "X-Robots-Tag": "noindex",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "inline",
+      // Cache privé 5 min — évite de retélécharger à chaque page tournée
+      "Cache-Control": "private, max-age=300",
+      "X-Robots-Tag": "noindex",
+      "X-Content-Type-Options": "nosniff",
+    };
+
+    // Transmettre la taille si disponible (aide le navigateur à afficher la progression)
+    const contentLength = pdfRes.headers.get("content-length");
+    if (contentLength) headers["Content-Length"] = contentLength;
+
+    // Stream direct : pas de chargement en mémoire côté serveur
+    return new NextResponse(pdfRes.body, { headers });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
