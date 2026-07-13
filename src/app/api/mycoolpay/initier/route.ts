@@ -1,4 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { promises as fs } from "fs";
+import path from "path";
+
+const PENDING_FILE = path.join(process.cwd(), "data", "achats-pending.json");
+
+async function savePendingAbonnement(ref: string, email: string, name: string, plan: string) {
+  try {
+    let pending: Record<string, unknown> = {};
+    try {
+      const raw = await fs.readFile(PENDING_FILE, "utf-8");
+      pending = JSON.parse(raw);
+    } catch { /* fichier absent au 1er run */ }
+    pending[ref] = { email, name, plan, type: "abonnement" };
+    await fs.mkdir(path.dirname(PENDING_FILE), { recursive: true });
+    await fs.writeFile(PENDING_FILE, JSON.stringify(pending, null, 2));
+  } catch (err) {
+    console.error("savePendingAbonnement error:", err);
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,6 +66,9 @@ export async function POST(req: NextRequest) {
         || JSON.stringify(data);
       return NextResponse.json({ error: errMsg }, { status: 500 });
     }
+
+    // Sauvegarde en pending pour que le callback puisse retrouver l'abonnement
+    await savePendingAbonnement(reference, email, name, plan);
 
     return NextResponse.json({ authorization_url: paymentUrl });
   } catch (err) {

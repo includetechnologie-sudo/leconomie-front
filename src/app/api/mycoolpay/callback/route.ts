@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import { promises as fsPromises } from "fs";
 import path from "path";
-import { readAbonnes, writeAbonnes } from "@/lib/abonnes";
+import { readAbonnes, writeAbonnes, saveSubscriber } from "@/lib/abonnes";
+import type { Plan } from "@/lib/subscription";
+
+type PendingAchat = { email: string; name: string; type: "journal" | "magazine"; id: number; titre: string };
+type PendingAbonnement = { email: string; name: string; type: "abonnement"; plan: Plan };
+type PendingEntry = PendingAchat | PendingAbonnement;
 
 const PENDING_FILE = path.join(process.cwd(), "data", "achats-pending.json");
 const PAIEMENTS_FILE = path.join(process.cwd(), "data", "paiements.json");
@@ -21,9 +26,7 @@ function savePaiement(data: object) {
   } catch {}
 }
 
-async function resolvePending(ref: string): Promise<{
-  email: string; name: string; id: number; type: "journal" | "magazine"; titre: string;
-} | null> {
+async function resolvePending(ref: string): Promise<PendingEntry | null> {
   try {
     const raw = await fsPromises.readFile(PENDING_FILE, "utf-8");
     const pending = JSON.parse(raw);
@@ -108,12 +111,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const { email, name, id, type, titre } = pending;
+    const { email, name } = pending;
 
-    // Enregistre le paiement
+    // ── Abonnement mensuel / annuel ──────────────────────────────────────────
+    if (pending.type === "abonnement") {
+      const plan = pending.plan as Plan;
+      savePaiement({ email, reference, plan, type: "abonnement", amount: body.transaction_amount });
+      await saveSubscriber(email, name || email.split("@")[0], plan, reference);
+      await deletePending(reference);
+      console.log(`MyCoolPay webhook: abonnement ${plan} confirmé pour ${email}`);
+      return NextResponse.json({ received: true });
+    }
+
+    // ── Achat unitaire journal / magazine ────────────────────────────────────
+    const { id, type, titre } = pending as PendingAchat;
+
     savePaiement({ email, reference, titre, id, type, amount: body.transaction_amount });
 
-    // Sauvegarde l'achat dans abonnes.json
     const abonnes = await readAbonnes();
     const idx = abonnes.findIndex((a) => a.email === email);
     const achat = { id, type, titre, ref: reference, acheteLe: Date.now() };
@@ -141,7 +155,6 @@ export async function POST(req: NextRequest) {
 
     await deletePending(reference);
 
-    // Envoie email de confirmation avec lien
     Promise.resolve().then(() => sendAchatEmail(email, name || email.split("@")[0], titre, id));
 
     console.log(`MyCoolPay webhook: achat confirmé pour ${email} — ${titre}`);
@@ -170,10 +183,21 @@ export async function GET(req: NextRequest) {
   if (isSuccess(status)) {
     const pending = await resolvePending(reference);
     const email = pending?.email || req.nextUrl.searchParams.get("email") || "";
-    const titre = pending?.titre || "";
 
     if (pending) {
-      const { id, name, type } = pending;
+      const { name } = pending;
+
+      // Abonnement mensuel / annuel
+      if (pending.type === "abonnement") {
+        const plan = pending.plan as Plan;
+        savePaiement({ email, reference, plan, type: "abonnement" });
+        await saveSubscriber(email, name || email.split("@")[0], plan, reference);
+        await deletePending(reference);
+        return NextResponse.redirect(new URL(`/paiement-succes?ref=${reference}&email=${encodeURIComponent(email)}&plan=${plan}`, req.url));
+      }
+
+      // Achat unitaire
+      const { id, type, titre } = pending as PendingAchat;
       savePaiement({ email, reference, titre, id, type });
 
       const abonnes = await readAbonnes();
@@ -205,9 +229,7 @@ export async function GET(req: NextRequest) {
       Promise.resolve().then(() => sendAchatEmail(email, name || email.split("@")[0], titre, id));
     }
 
-    const url = new URL("/mon-compte", req.url);
-    url.hash = "achats";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL(`/paiement-succes?ref=${reference}&email=${encodeURIComponent(email)}`, req.url));
   }
 
   return NextResponse.redirect(
