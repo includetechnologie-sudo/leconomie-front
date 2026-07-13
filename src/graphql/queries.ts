@@ -117,6 +117,9 @@ export const GET_POST_BY_SLUG = `
       tags {
         nodes { name }
       }
+      is_premium {
+        article
+      }
     }
   }
 `;

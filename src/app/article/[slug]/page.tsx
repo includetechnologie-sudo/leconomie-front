@@ -67,6 +67,7 @@ interface Post {
   categories?: { nodes: { name: string; slug: string }[] };
   author?: { node?: { name: string } };
   tags?: { nodes: { name: string }[] };
+  is_premium?: { article?: boolean | null };
 }
 
 interface RelatedPost {
@@ -125,8 +126,10 @@ export default async function ArticlePage({
 
   const category = post.categories?.nodes[0];
   const minutes = readingTime(post.content);
-  // Article premium = tag "premium" dans WordPress
-  const isPremium = post.tags?.nodes?.some(t => t.name.toLowerCase() === "premium") ?? false;
+  // Article premium = case ACF cochée OU tag "premium" dans WordPress
+  const isPremium = !!post.is_premium?.article
+    || post.tags?.nodes?.some(t => t.name.toLowerCase() === "premium")
+    || false;
   const showWall = isPremium && !hasPremiumAccess;
 
   let related: RelatedPost[] = [];
