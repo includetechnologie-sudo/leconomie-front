@@ -4,7 +4,7 @@ import CategoryGrid from "@/components/homepage/CategoryGrid";
 import JournalDuJour from "@/components/homepage/JournalDuJour";
 import AdvertisementSection from "@/components/homepage/AdvertisementSection";
 import LeconomieTV from "@/components/homepage/LeconomieTV";
-import CemacMapSvg from "@/components/homepage/CemacMapSvg";
+import RegionalMapsSection from "@/components/homepage/RegionalMapsSection";
 import MagazinePremium from "@/components/homepage/MagazinePremium";
 import PremiumSubscriptionSection from "@/components/homepage/PremiumSubscriptionSection";
 import RubriqueSection from "@/components/homepage/RubriqueSection";
@@ -40,8 +40,8 @@ export default function HomePage() {
       {/* Chaîne YouTube / TV */}
       <LeconomieTV />
 
-      {/* Actualités CEMAC + carte interactive */}
-      <CemacMapSvg />
+      {/* Actualités CEMAC + UEMOA — cartes interactives côte à côte */}
+      <RegionalMapsSection />
 
       {/* Magazine Premium */}
       <MagazinePremium />

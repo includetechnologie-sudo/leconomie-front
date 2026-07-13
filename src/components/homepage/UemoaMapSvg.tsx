@@ -6,14 +6,16 @@ import * as d3 from "d3";
 import * as topojson from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 
-// IDs Natural Earth (ISO numeric) des 6 pays CEMAC + voisins pour contexte
-const CEMAC_IDS: Record<number, string> = {
-  120: "cameroun",
-  148: "tchad",
-  140: "rca",
-  178: "congo",
-  266: "gabon",
-  226: "guinee",
+// IDs Natural Earth (ISO numeric) des 8 pays UEMOA
+const UEMOA_IDS: Record<number, string> = {
+  204: "benin",
+  854: "burkina",
+  384: "cotedivoire",
+  624: "guineebissau",
+  466: "mali",
+  562: "niger",
+  686: "senegal",
+  768: "togo",
 };
 
 type CountryInfo = {
@@ -22,7 +24,7 @@ type CountryInfo = {
   slug: string;
   articles: number;
   capital: string;
-  capitalCoords: [number, number]; // [lon, lat]
+  capitalCoords: [number, number];
   pib: string;
   flag: string;
   description: string;
@@ -30,53 +32,67 @@ type CountryInfo = {
 };
 
 const COUNTRIES: Record<string, CountryInfo> = {
-  cameroun: {
-    id: "cameroun", name: "Cameroun", slug: "/cemac/cameroun",
-    articles: 145, capital: "Yaoundé", capitalCoords: [11.516, 3.848],
-    pib: "44 Mds $", flag: "🇨🇲",
-    description: "Leader économique de la CEMAC avec une forte activité industrielle, agricole et commerciale.",
-    color: "#2563eb",
-  },
-  tchad: {
-    id: "tchad", name: "Tchad", slug: "/cemac/tchad",
-    articles: 39, capital: "N'Djaména", capitalCoords: [15.044, 12.107],
-    pib: "11 Mds $", flag: "🇹🇩",
-    description: "Économie en croissance soutenue par les secteurs pétrolier et agricole.",
+  benin: {
+    id: "benin", name: "Bénin", slug: "/uemoa/benin",
+    articles: 28, capital: "Porto-Novo", capitalCoords: [2.617, 6.365],
+    pib: "17 Mds $", flag: "🇧🇯",
+    description: "Économie en croissance portée par le commerce, l'agriculture et les services.",
     color: "#16a34a",
   },
-  rca: {
-    id: "rca", name: "Rép. Centrafricaine", slug: "/cemac/rca",
-    articles: 25, capital: "Bangui", capitalCoords: [18.555, 4.361],
-    pib: "2,4 Mds $", flag: "🇨🇫",
-    description: "Développement des infrastructures et du secteur minier au cœur de la sous-région.",
+  burkina: {
+    id: "burkina", name: "Burkina Faso", slug: "/uemoa/burkina-faso",
+    articles: 32, capital: "Ouagadougou", capitalCoords: [-1.516, 12.366],
+    pib: "19 Mds $", flag: "🇧🇫",
+    description: "Secteur agricole dominant et développement du secteur minier aurifère.",
     color: "#b91c1c",
   },
-  congo: {
-    id: "congo", name: "Congo", slug: "/cemac/congo",
-    articles: 54, capital: "Brazzaville", capitalCoords: [15.283, -4.269],
-    pib: "9,2 Mds $", flag: "🇨🇬",
-    description: "Développement industriel soutenu par d'importants investissements énergétiques.",
-    color: "#92400e",
+  cotedivoire: {
+    id: "cotedivoire", name: "Côte d'Ivoire", slug: "/uemoa/cote-d-ivoire",
+    articles: 87, capital: "Abidjan", capitalCoords: [-4.008, 5.354],
+    pib: "70 Mds $", flag: "🇨🇮",
+    description: "Première économie de l'UEMOA, leader du cacao et hub financier régional.",
+    color: "#f97316",
   },
-  gabon: {
-    id: "gabon", name: "Gabon", slug: "/cemac/gabon",
-    articles: 62, capital: "Libreville", capitalCoords: [9.452, 0.39],
-    pib: "16,6 Mds $", flag: "🇬🇦",
-    description: "Économie portée par le pétrole, le manganèse et la forêt équatoriale.",
+  guineebissau: {
+    id: "guineebissau", name: "Guinée-Bissau", slug: "/uemoa/guinee-bissau",
+    articles: 8, capital: "Bissau", capitalCoords: [-15.597, 11.863],
+    pib: "1,6 Mds $", flag: "🇬🇼",
+    description: "Économie fragile en cours de diversification, principalement agricole.",
+    color: "#7c3aed",
+  },
+  mali: {
+    id: "mali", name: "Mali", slug: "/uemoa/mali",
+    articles: 45, capital: "Bamako", capitalCoords: [-8.0, 12.65],
+    pib: "22 Mds $", flag: "🇲🇱",
+    description: "Vaste territoire riche en or et coton, carrefour historique de l'Afrique de l'Ouest.",
     color: "#0f766e",
   },
-  guinee: {
-    id: "guinee", name: "Guinée Équatoriale", slug: "/cemac/guinee-equatoriale",
-    articles: 18, capital: "Malabo", capitalCoords: [8.782, 3.75],
-    pib: "10,3 Mds $", flag: "🇬🇶",
-    description: "Secteur pétrolier dominant et diversification économique en cours.",
-    color: "#7c3aed",
+  niger: {
+    id: "niger", name: "Niger", slug: "/uemoa/niger",
+    articles: 31, capital: "Niamey", capitalCoords: [2.114, 13.515],
+    pib: "14 Mds $", flag: "🇳🇪",
+    description: "Potentiel énergétique (uranium, pétrole) et développement agricole en cours.",
+    color: "#ca8a04",
+  },
+  senegal: {
+    id: "senegal", name: "Sénégal", slug: "/uemoa/senegal",
+    articles: 74, capital: "Dakar", capitalCoords: [-17.444, 14.693],
+    pib: "28 Mds $", flag: "🇸🇳",
+    description: "Hub économique et financier ouest-africain, en forte croissance grâce au pétrole et gaz.",
+    color: "#2563eb",
+  },
+  togo: {
+    id: "togo", name: "Togo", slug: "/uemoa/togo",
+    articles: 22, capital: "Lomé", capitalCoords: [1.221, 6.137],
+    pib: "8,9 Mds $", flag: "🇹🇬",
+    description: "Plateforme logistique régionale avec le port de Lomé, 1er port en eau profonde.",
+    color: "#0891b2",
   },
 };
 
-export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean } = {}) {
+export default function UemoaMapSvg({ noWrapper = false }: { noWrapper?: boolean } = {}) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [selected, setSelected] = useState<CountryInfo>(COUNTRIES.cameroun);
+  const [selected, setSelected] = useState<CountryInfo>(COUNTRIES.cotedivoire);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -86,10 +102,10 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    // Projection centrée sur la CEMAC
+    // Projection centrée sur l'UEMOA (Afrique de l'Ouest)
     const projection = d3.geoMercator()
-      .center([17, 5])
-      .scale(560)
+      .center([-3, 12])
+      .scale(540)
       .translate([W / 2, H / 2]);
 
     const path = d3.geoPath().projection(projection);
@@ -110,7 +126,7 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
           .selectAll("path")
           .data((countries as GeoJSON.FeatureCollection).features.filter(f => {
             const id = Number(f.id);
-            return !CEMAC_IDS[id] && isNeighbour(id);
+            return !UEMOA_IDS[id] && isNeighbour(id);
           }))
           .join("path")
           .attr("d", path as never)
@@ -118,19 +134,19 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
           .attr("stroke", "#fff")
           .attr("stroke-width", 0.5);
 
-        // Pays CEMAC
-        const cemacFeatures = (countries as GeoJSON.FeatureCollection).features.filter(
-          f => CEMAC_IDS[Number(f.id)]
+        // Pays UEMOA
+        const uemoaFeatures = (countries as GeoJSON.FeatureCollection).features.filter(
+          f => UEMOA_IDS[Number(f.id)]
         );
 
-        const cemacGroup = svg.append("g");
+        const uemoaGroup = svg.append("g");
 
-        cemacGroup.selectAll("path")
-          .data(cemacFeatures)
+        uemoaGroup.selectAll("path")
+          .data(uemoaFeatures)
           .join("path")
           .attr("d", path as never)
           .attr("fill", f => {
-            const key = CEMAC_IDS[Number(f.id)];
+            const key = UEMOA_IDS[Number(f.id)];
             return key === selected.id ? d3.color(COUNTRIES[key].color)!.darker(0.3).toString() : COUNTRIES[key].color;
           })
           .attr("stroke", "#fff")
@@ -138,7 +154,7 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
           .attr("stroke-linejoin", "round")
           .style("cursor", "pointer")
           .style("transition", "filter 0.15s")
-          .attr("data-key", f => CEMAC_IDS[Number(f.id)])
+          .attr("data-key", f => UEMOA_IDS[Number(f.id)])
           .on("mouseenter", function() {
             d3.select(this).attr("filter", "brightness(1.15)");
           })
@@ -146,13 +162,13 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
             d3.select(this).attr("filter", null);
           })
           .on("click", (_, f) => {
-            const key = CEMAC_IDS[Number(f.id)];
+            const key = UEMOA_IDS[Number(f.id)];
             setSelected(COUNTRIES[key]);
           });
 
-        // Contours CEMAC (bordures plus épaisses)
-        cemacGroup.selectAll("path.border")
-          .data(cemacFeatures)
+        // Contours UEMOA
+        uemoaGroup.selectAll("path.border")
+          .data(uemoaFeatures)
           .join("path")
           .attr("d", path as never)
           .attr("fill", "none")
@@ -161,34 +177,41 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
           .style("pointer-events", "none");
 
         // Labels pays
-        cemacFeatures.forEach(f => {
-          const key = CEMAC_IDS[Number(f.id)];
+        uemoaFeatures.forEach(f => {
+          const key = UEMOA_IDS[Number(f.id)];
           const centroid = path.centroid(f as never);
           if (!centroid || isNaN(centroid[0])) return;
 
-          // Ajustements manuels des labels
           const offsets: Record<string, [number, number]> = {
-            tchad: [0, -10],
-            cameroun: [-5, 5],
-            rca: [5, 0],
-            congo: [5, 10],
-            gabon: [0, 5],
-            guinee: [0, -8],
+            mali: [0, -15],
+            niger: [10, 5],
+            burkina: [0, 0],
+            senegal: [-5, 0],
+            cotedivoire: [0, 5],
+            benin: [0, 0],
+            togo: [0, 0],
+            guineebissau: [-5, 0],
           };
           const [ox, oy] = offsets[key] ?? [0, 0];
+
+          const labelMap: Record<string, string> = {
+            cotedivoire: "C.D'IVOIRE",
+            guineebissau: "G-BISSAU",
+            burkina: "BURKINA",
+          };
 
           svg.append("text")
             .attr("x", centroid[0] + ox)
             .attr("y", centroid[1] + oy)
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "middle")
-            .attr("font-size", key === "guinee" ? 7 : key === "rca" ? 8.5 : 9.5)
+            .attr("font-size", key === "guineebissau" ? 6.5 : key === "togo" || key === "benin" ? 7.5 : 9)
             .attr("font-weight", "700")
             .attr("fill", "#fff")
             .attr("font-family", "sans-serif")
             .style("pointer-events", "none")
             .style("text-shadow", "0 1px 3px rgba(0,0,0,0.7)")
-            .text(key === "guinee" ? "G.ÉQ." : key === "rca" ? "RCA" : COUNTRIES[key].name.toUpperCase());
+            .text(labelMap[key] ?? COUNTRIES[key].name.toUpperCase());
         });
 
         // Points capitales
@@ -196,13 +219,11 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
           const [cx, cy] = projection(c.capitalCoords) ?? [0, 0];
           if (!cx) return;
 
-          // Halo blanc
           svg.append("circle")
             .attr("cx", cx).attr("cy", cy).attr("r", 5)
             .attr("fill", "white").attr("opacity", 0.4)
             .style("pointer-events", "none");
 
-          // Point
           svg.append("circle")
             .attr("cx", cx).attr("cy", cy).attr("r", 3)
             .attr("fill", "white")
@@ -218,12 +239,12 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
           .attr("font-size", 9)
           .attr("fill", "rgba(255,255,255,0.5)")
           .attr("font-family", "sans-serif")
-          .text("Zone CEMAC — cliquez sur un pays");
+          .text("Zone UEMOA — cliquez sur un pays");
 
         setReady(true);
       })
       .catch(err => {
-        console.error("Map load error:", err);
+        console.error("UEMOA Map load error:", err);
         setReady(true);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -246,9 +267,9 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <span className="w-1 h-7 bg-red-600 inline-block" />
-          <h2 className="font-serif text-2xl font-bold uppercase tracking-wide">Actualités CEMAC</h2>
+          <h2 className="font-serif text-2xl font-bold uppercase tracking-wide">Actualités UEMOA</h2>
         </div>
-        <Link href="/cemac" className="text-red-600 text-sm font-semibold hover:underline">
+        <Link href="/uemoa" className="text-red-600 text-sm font-semibold hover:underline">
           Voir toutes les actualités →
         </Link>
       </div>
@@ -273,7 +294,6 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
         {/* ── Panneau infos ── */}
         <div className="bg-white rounded-xl border shadow-sm p-6 flex flex-col">
 
-          {/* En-tête pays sélectionné */}
           <div className="flex items-center gap-3 mb-4">
             <div
               className="w-3 h-12 rounded-full shrink-0"
@@ -349,26 +369,22 @@ export default function CemacMapSvg({ noWrapper = false }: { noWrapper?: boolean
   );
 }
 
-// Pays voisins à afficher pour le contexte géographique (ISO numeric)
+// Pays voisins à afficher pour le contexte géographique
 function isNeighbour(id: number): boolean {
   const neighbours = new Set([
-    566, // Nigeria
-    180, // RDC
-    728, // Soudan du Sud
-    736, // Soudan
-    894, // Zambie
-    24,  // Angola
-    854, // Burkina Faso
-    288, // Ghana
-    384, // Côte d'Ivoire
-    562, // Niger
-    204, // Bénin
-    768, // Togo
-    800, // Ouganda
-    646, // Rwanda
-    108, // Burundi
-    404, // Kenya
-    834, // Tanzanie
+    288,  // Ghana
+    566,  // Nigeria
+    324,  // Guinée
+    694,  // Sierra Leone
+    430,  // Liberia
+    466,  // Mauritanie (si pas UEMOA)
+    504,  // Maroc
+    12,   // Algérie
+    434,  // Libye
+    729,  // Soudan
+    120,  // Cameroun
+    204,  // Bénin (déjà UEMOA mais au cas où)
+    706,  // Somalie
   ]);
   return neighbours.has(id);
 }
