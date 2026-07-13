@@ -33,8 +33,9 @@ export default function HomePage() {
       <RubriqueSection title="Interview"      displayTitle="Interviews" />
 
 <RubriqueSection title="Événement"      displayTitle="Événements" />
-      <RubriqueSection title="Décideur"       displayTitle="Décideurs" />
-      <RubriqueSection title="Infrastructure" displayTitle="Infrastructures" />
+      <RubriqueSection title="Décideur"          displayTitle="Décideurs" />
+      <RubriqueSection title="bourse-marches"   displayTitle="Bourse &amp; Marchés" categorySlug="bourse-marches" />
+      <RubriqueSection title="Infrastructure"   displayTitle="Infrastructures" />
 
       {/* Chaîne YouTube / TV */}
       <LeconomieTV />

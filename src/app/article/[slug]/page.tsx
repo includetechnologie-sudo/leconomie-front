@@ -351,7 +351,7 @@ export default async function ArticlePage({
                 href={`/magazine?achat=${latestJournal?.databaseId ?? ""}`}
                 className="block w-full bg-red-600 text-white text-center py-2 rounded-lg font-bold text-xs hover:bg-red-700 transition"
               >
-                Achetez votre journal — 300 FCFA
+                Achetez votre journal — 200 FCFA
               </Link>
               <p className="text-[10px] text-gray-400 text-center mt-1.5">www.leconomie.info</p>
             </div>

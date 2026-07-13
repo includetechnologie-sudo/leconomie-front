@@ -16,7 +16,7 @@ interface Video {
 
 function parseRSS(xml: string): Video[] {
   const entries = xml.match(/<entry>([\s\S]*?)<\/entry>/g) || [];
-  return entries.slice(0, 6).map((entry) => {
+  return entries.slice(0, 3).map((entry) => {
     const videoId = (entry.match(/<yt:videoId>([^<]+)<\/yt:videoId>/) || [])[1] || "";
     const title = (entry.match(/<media:title>([^<]+)<\/media:title>/) || [])[1] || "";
     const thumbnail = (entry.match(/url="([^"]+hqdefault\.jpg)"/) || [])[1] ||

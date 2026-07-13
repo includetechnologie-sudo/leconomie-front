@@ -4,8 +4,9 @@ import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_CATEGORY_POSTS } from "@/graphql/queries";
 
 interface RubriqueSectionProps {
-  title: string;        // slug WordPress (inchangé)
-  displayTitle?: string; // titre affiché sur la page
+  title: string;          // nom de catégorie WordPress pour GraphQL
+  displayTitle?: string;  // titre affiché sur la page
+  categorySlug?: string;  // slug pour le lien "Voir plus" (si différent du title)
 }
 
 interface CategoryPost {
@@ -25,10 +26,12 @@ interface CategoryData {
   };
 }
 
-export default async function RubriqueSection({ title, displayTitle }: RubriqueSectionProps) {
+export default async function RubriqueSection({ title, displayTitle, categorySlug }: RubriqueSectionProps) {
+  // Pour la query GraphQL, on utilise le slug si fourni, sinon le title
+  const queryCategory = categorySlug || title;
   let data: CategoryData;
   try {
-    data = await graphqlFetch<CategoryData>(GET_CATEGORY_POSTS, { category: title });
+    data = await graphqlFetch<CategoryData>(GET_CATEGORY_POSTS, { category: queryCategory });
   } catch (err) {
     console.error(`RubriqueSection fetch error (${title}):`, err);
     return null;
@@ -42,8 +45,10 @@ export default async function RubriqueSection({ title, displayTitle }: RubriqueS
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">{displayTitle || title}</h2>
 
-        <Link href={`/${title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-")}`}
-          className="text-red-600 font-semibold hover:underline transition">
+        <Link
+          href={`/${categorySlug || title.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, "-")}`}
+          className="text-red-600 font-semibold hover:underline transition"
+        >
           Voir plus →
         </Link>
       </div>

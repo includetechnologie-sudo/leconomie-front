@@ -72,7 +72,18 @@ export const GET_HERO_SIDEBAR_POSTS = `
 
 export const GET_MOST_READ_POSTS = `
   query GetMostReadPosts {
-    posts(first: 5) {
+    posts(first: 5, where: { orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        title
+        slug
+      }
+    }
+  }
+`;
+
+export const GET_POSTS_BY_SLUGS = `
+  query GetPostsBySlugs($slugs: [String!]!) {
+    posts(where: { slugIn: $slugs }, first: 10) {
       nodes {
         title
         slug
