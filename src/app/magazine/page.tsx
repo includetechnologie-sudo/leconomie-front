@@ -46,7 +46,7 @@ export default async function MagazinePage() {
     description: j.extrait || "",
     extrait: j.extrait || "",
     cover: j.featuredImage?.node?.sourceUrl || "/images/journal-cover.jpg",
-    prix: 300,
+    prix: 200,
   }));
 
   const magazinesList = magazines.map((m) => ({
