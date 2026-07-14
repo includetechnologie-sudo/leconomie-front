@@ -10,6 +10,8 @@ interface Subscriber {
   plan: Plan;
   ref: string;
   expiresAt: number;
+  autoRenew?: boolean;
+  commentaire?: string;
 }
 
 const DATA_FILE = path.join(process.cwd(), "data", "abonnes.json");
@@ -89,14 +91,20 @@ export async function POST(req: NextRequest) {
   const updated = abonnes.map((sub) => {
     const daysLeft = Math.ceil((sub.expiresAt - now) / (1000 * 60 * 60 * 24));
 
-    // Notification J-7
-    if (daysLeft === 7 || daysLeft === 3 || daysLeft === 1) {
+    // Auto-renouvellement (Partenaires / Ami DP) — pas d'alerte, on renouvelle
+    if (sub.autoRenew && daysLeft <= 0 && sub.plan !== "gratuit") {
+      const newExpires = now + 365 * 24 * 60 * 60 * 1000;
+      return { ...sub, expiresAt: newExpires };
+    }
+
+    // Notification J-7, J-3, J-1 (uniquement pour les non-autoRenew)
+    if (!sub.autoRenew && (daysLeft === 7 || daysLeft === 3 || daysLeft === 1)) {
       sendRenewalEmail(sub, daysLeft).catch(console.error);
       notified++;
     }
 
-    // Expiration — notification et basculement
-    if (daysLeft <= 0 && sub.plan !== "gratuit") {
+    // Expiration — notification et basculement (uniquement non-autoRenew)
+    if (!sub.autoRenew && daysLeft <= 0 && sub.plan !== "gratuit") {
       sendRenewalEmail({ ...sub }, 0).catch(console.error);
       expired++;
       return { ...sub, plan: "gratuit" as Plan };

@@ -1,0 +1,710 @@
+[
+  {
+    "email": "info@elite-capitalgroup.com",
+    "name": "Elite Capital",
+    "plan": "annuel",
+    "ref": "import-2026-001",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Partenaire",
+    "autoRenew": true
+  },
+  {
+    "email": "p.zumbach@interprogress.org",
+    "name": "Pierre Zumbach (FIP)",
+    "plan": "annuel",
+    "ref": "import-2026-002",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Partenaire",
+    "autoRenew": true
+  },
+  {
+    "email": "jdmonefong@yahoo.fr",
+    "name": "Joel Monefong",
+    "plan": "annuel",
+    "ref": "import-2026-003",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Ami DP Partenaire",
+    "autoRenew": true
+  },
+  {
+    "email": "adamou_petouonchi@afrilandfirstbank.com",
+    "name": "Adamou (AFB)",
+    "plan": "annuel",
+    "ref": "import-2026-004",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Partenaire",
+    "autoRenew": true
+  },
+  {
+    "email": "josiane.tchoungui@gmail.com",
+    "name": "Josiane Tchoungui",
+    "plan": "annuel",
+    "ref": "import-2026-005",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "communication@beac.int",
+    "name": "BEAC / Hayatou",
+    "plan": "annuel",
+    "ref": "import-2026-006",
+    "expiresAt": 1814399999000,
+    "createdAt": 1780272000000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "jamalmoustapha53@yahoo.fr",
+    "name": "Djamal Moustapha (Maetur PCA)",
+    "plan": "annuel",
+    "ref": "import-2026-007",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "manga_lr@yahoo.fr",
+    "name": "Manga Louis Roger (Maetur DG)",
+    "plan": "annuel",
+    "ref": "import-2026-008",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "akumejulius9@gmail.com",
+    "name": "Akume Julius (Maetur Adm.)",
+    "plan": "annuel",
+    "ref": "import-2026-009",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "mbine.mbong@yahoo.com",
+    "name": "Mbong Michael Mbine (Maetur DGA)",
+    "plan": "annuel",
+    "ref": "import-2026-010",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "abandajeanroger@gmail.com",
+    "name": "Abanda Jean Roger (Maetur DP)",
+    "plan": "annuel",
+    "ref": "import-2026-011",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "pondibat@yahoo.fr",
+    "name": "Pondi Batoum Paul (Maetur DSC)",
+    "plan": "annuel",
+    "ref": "import-2026-012",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "arthurovitali@yahoo.fr",
+    "name": "Arthur Sosso (Maetur DCT)",
+    "plan": "annuel",
+    "ref": "import-2026-013",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "vronsat@yahoo.fr",
+    "name": "Nsa Atangana Rosalie (Maetur DIDA)",
+    "plan": "annuel",
+    "ref": "import-2026-014",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "ndzenguefrederic@gmail.com",
+    "name": "Ndzengue Onana Frederic (Maetur DRH)",
+    "plan": "annuel",
+    "ref": "import-2026-015",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "tsimiayissij@yahoo.fr",
+    "name": "Tsimi Ayissi Joel Roger (Maetur DE)",
+    "plan": "annuel",
+    "ref": "import-2026-016",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "jacko.ekane237@gmail.com",
+    "name": "Ndoumbe Jacques (Maetur Controleur)",
+    "plan": "annuel",
+    "ref": "import-2026-017",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "marielyse26@gmail.com",
+    "name": "Bikoi Marlyse (Maetur Qualite)",
+    "plan": "annuel",
+    "ref": "import-2026-018",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "enkene@yahoo.fr",
+    "name": "Nkene Esther (Maetur SI)",
+    "plan": "annuel",
+    "ref": "import-2026-019",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "ayongbisong@yahoo.com",
+    "name": "Ayong Bisong (Arsel)",
+    "plan": "annuel",
+    "ref": "import-2026-020",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "xinhouajournal@gmail.com",
+    "name": "Claude",
+    "plan": "annuel",
+    "ref": "import-2026-021",
+    "expiresAt": 1830297599000,
+    "createdAt": 1796083200000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "m.nguille@yahoo.fr",
+    "name": "M. Nguille",
+    "plan": "annuel",
+    "ref": "import-2026-022",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "valentin.mbozoo@gimac-afr.org",
+    "name": "Valentin Mbozoo (DG GIMAC)",
+    "plan": "annuel",
+    "ref": "import-2026-023",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Partenaire",
+    "autoRenew": true
+  },
+  {
+    "email": "grace.vouillon@prometal-cm.com",
+    "name": "Grace Vouillon",
+    "plan": "annuel",
+    "ref": "import-2026-024",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "eric.dako@prometal-cm.com",
+    "name": "Eric Dako",
+    "plan": "annuel",
+    "ref": "import-2026-025",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "anne.elong@prometal-cm.com",
+    "name": "Anne Elong",
+    "plan": "annuel",
+    "ref": "import-2026-026",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "marie-paulette.boum@prometal-cm.com",
+    "name": "M.P Boum",
+    "plan": "annuel",
+    "ref": "import-2026-027",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "olivin.notue@prometal-cm.com",
+    "name": "Olivin Notue",
+    "plan": "annuel",
+    "ref": "import-2026-028",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "yves.etobe@prometal-cm.com",
+    "name": "Yves Etobe",
+    "plan": "annuel",
+    "ref": "import-2026-029",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "rosemarie.bilai@prometal-cm.com",
+    "name": "Rose Marie Bilai",
+    "plan": "annuel",
+    "ref": "import-2026-030",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "fabrice.mandjeck@prometal-cm.com",
+    "name": "Fabrice Mandjeck",
+    "plan": "annuel",
+    "ref": "import-2026-031",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "cyrille.ntamack@prometal-cm.com",
+    "name": "Cyrille Ntamack",
+    "plan": "annuel",
+    "ref": "import-2026-032",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "rosine.abang@prometal-cm.com",
+    "name": "Rosine Abang",
+    "plan": "annuel",
+    "ref": "import-2026-033",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "bfondufe@stvgroup.com",
+    "name": "B. Fondufe",
+    "plan": "annuel",
+    "ref": "import-2026-034",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "mokom.ndzah@stoneshed-am.com",
+    "name": "Mme Mokam",
+    "plan": "annuel",
+    "ref": "import-2026-035",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "woo.francois@yahoo.fr",
+    "name": "Woo Francois",
+    "plan": "annuel",
+    "ref": "import-2026-036",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "secretariat@okfoods-cam.com",
+    "name": "OK Foods",
+    "plan": "annuel",
+    "ref": "import-2026-037",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "zinga.valentin@gmail.com",
+    "name": "Valentin Zinga",
+    "plan": "annuel",
+    "ref": "import-2026-038",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Partenaire",
+    "autoRenew": true
+  },
+  {
+    "email": "etibert.mobambo@b2b-communication.com",
+    "name": "Etibert Mobambo",
+    "plan": "annuel",
+    "ref": "import-2026-039",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "rachelngah2000@yahoo.fr",
+    "name": "Rachel Ngah (CAA)",
+    "plan": "annuel",
+    "ref": "import-2026-040",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "fomukongmantoh@gmail.com",
+    "name": "Liliane Fomukong (CAA)",
+    "plan": "annuel",
+    "ref": "import-2026-041",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "grace_lydie@yahoo.fr",
+    "name": "Mimbe Meka Grace (CAA)",
+    "plan": "annuel",
+    "ref": "import-2026-042",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "contact@newsstand-online.com",
+    "name": "Newsstand Online",
+    "plan": "annuel",
+    "ref": "import-2026-043",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "marley.mboungou@numeris.consulting",
+    "name": "Marley Mboungou",
+    "plan": "annuel",
+    "ref": "import-2026-044",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "publishers-support@cafeyn.co",
+    "name": "Cafeyn (Publishers)",
+    "plan": "annuel",
+    "ref": "import-2026-045",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "freshnel.massock@nexah.net",
+    "name": "Freshnel Massock",
+    "plan": "annuel",
+    "ref": "import-2026-046",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "m.kamgaing@hamgt.com",
+    "name": "M. Kamgaing",
+    "plan": "annuel",
+    "ref": "import-2026-047",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "j.ntoumba@hamgt.com",
+    "name": "J. Ntoumba",
+    "plan": "annuel",
+    "ref": "import-2026-048",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "support.sodipresse@sonapresse.com",
+    "name": "Sodipresse / Sonapresse",
+    "plan": "annuel",
+    "ref": "import-2026-049",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "abdoulaye_h2002@yahoo.fr",
+    "name": "Abdoulaye H.",
+    "plan": "annuel",
+    "ref": "import-2026-050",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "murieleloundou@yahoo.com",
+    "name": "Muriel Eloundou",
+    "plan": "annuel",
+    "ref": "import-2026-051",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "lumundam@yahoo.com",
+    "name": "Lumunda M.",
+    "plan": "annuel",
+    "ref": "import-2026-052",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "alico_at@yahoo.fr",
+    "name": "Alico A.T.",
+    "plan": "annuel",
+    "ref": "import-2026-053",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "tchom_j_p@yahoo.fr",
+    "name": "Tchom J.P.",
+    "plan": "annuel",
+    "ref": "import-2026-054",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "jaberta2005@yahoo.fr",
+    "name": "Jaberta",
+    "plan": "annuel",
+    "ref": "import-2026-055",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "cfe.avocats@outlook.com",
+    "name": "CFE Avocats",
+    "plan": "annuel",
+    "ref": "import-2026-056",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "francis.ebiangne@richemont-delviso.com",
+    "name": "Francis Ebiangne",
+    "plan": "annuel",
+    "ref": "import-2026-057",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "febiangne.avocat@outlook.fr",
+    "name": "F. Ebiangne (Avocat)",
+    "plan": "annuel",
+    "ref": "import-2026-058",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "employes-cec@groupe-cible.com",
+    "name": "Employes CEC (Groupe Cible)",
+    "plan": "annuel",
+    "ref": "import-2026-059",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "cible@groupe-cible.com",
+    "name": "Groupe Cible",
+    "plan": "annuel",
+    "ref": "import-2026-060",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "hketano@gmail.com",
+    "name": "H. Ketano",
+    "plan": "annuel",
+    "ref": "import-2026-061",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "doualasyndustricam@yahoo.fr",
+    "name": "Douala Syndustricam",
+    "plan": "annuel",
+    "ref": "import-2026-062",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "newsstandonline6@gmail.com",
+    "name": "Newsstand Online 6",
+    "plan": "annuel",
+    "ref": "import-2026-063",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "babette.sandjo@eneo.cm",
+    "name": "Babette Sandjo",
+    "plan": "annuel",
+    "ref": "import-2026-064",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "doly.mondomobe@contacturer.com",
+    "name": "Doly Mondomobe",
+    "plan": "annuel",
+    "ref": "import-2026-065",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "ngondiekwel@yahoo.com",
+    "name": "Ngondie Kwel",
+    "plan": "annuel",
+    "ref": "import-2026-066",
+    "expiresAt": 1803859199000,
+    "createdAt": 1769904000000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "ennoubissie@yahoo.com",
+    "name": "Ennoubissie",
+    "plan": "annuel",
+    "ref": "import-2026-067",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "hassanbelibi@gmail.com",
+    "name": "Hassan Belibi",
+    "plan": "annuel",
+    "ref": "import-2026-068",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "kamgatengho@yahoo.fr",
+    "name": "Kamga Tengho",
+    "plan": "annuel",
+    "ref": "import-2026-069",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "aurelien.bakehe@inq.inc",
+    "name": "Aurelien Bakehe",
+    "plan": "annuel",
+    "ref": "import-2026-070",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "coface.westafrica@coface.com",
+    "name": "Coface West Africa",
+    "plan": "annuel",
+    "ref": "import-2026-071",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "anelflo@hotmail.fr",
+    "name": "Anelflo",
+    "plan": "annuel",
+    "ref": "import-2026-072",
+    "expiresAt": 1801439999000,
+    "createdAt": 1767225600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "communication.yaounde-amba@diplomatie.gouv.fr",
+    "name": "Ambassade de France",
+    "plan": "annuel",
+    "ref": "import-2026-073",
+    "expiresAt": 1809129599000,
+    "createdAt": 1775001600000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "yvanovottou@yahoo.fr",
+    "name": "Yvan Ovottou",
+    "plan": "annuel",
+    "ref": "import-2026-074",
+    "expiresAt": 1814399999000,
+    "createdAt": 1780272000000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "ambalgcmr@gmail.com",
+    "name": "Ambassade (LG CMR)",
+    "plan": "annuel",
+    "ref": "import-2026-075",
+    "expiresAt": 1814399999000,
+    "createdAt": 1780272000000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "herve.fopa@yahoo.fr",
+    "name": "Herve Fopa",
+    "plan": "annuel",
+    "ref": "import-2026-076",
+    "expiresAt": 1815609599000,
+    "createdAt": 1783987200000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "josephelvisbengonozang@gmail.com",
+    "name": "Joseph Elvis Bengono Zang",
+    "plan": "annuel",
+    "ref": "import-2026-077",
+    "expiresAt": 1815609599000,
+    "createdAt": 1783987200000,
+    "commentaire": "Abonne Annuel"
+  },
+  {
+    "email": "ekoutib@gmail.com",
+    "name": "Ekouti B.",
+    "plan": "annuel",
+    "ref": "import-2026-078",
+    "expiresAt": 1815609599000,
+    "createdAt": 1783987200000,
+    "commentaire": "Abonne Annuel"
+  }
+]

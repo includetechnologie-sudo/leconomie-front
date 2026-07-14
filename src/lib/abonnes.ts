@@ -12,6 +12,8 @@ export interface Subscriber {
   expiresAt: number;
   createdAt: number;
   passwordHash?: string;
+  commentaire?: string;
+  autoRenew?: boolean;
   achats?: { id: number; type: "journal" | "magazine"; titre: string; ref: string; acheteLe: number }[];
 }
 
