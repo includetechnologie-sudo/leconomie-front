@@ -12,7 +12,8 @@ jobs:
       - name: Deploy
         run: |
           cd /var/www/leconomie-front
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
           /usr/bin/npm ci --production=false
           /usr/bin/npm run build
           pm2 restart leconomie-front || pm2 start npm --name leconomie-front -- start
