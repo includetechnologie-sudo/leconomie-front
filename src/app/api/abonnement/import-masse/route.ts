@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readAbonnes, writeAbonnes, type Subscriber } from "@/lib/abonnes";
+import { readAbonnes, type Subscriber } from "@/lib/abonnes";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import { promises as fs } from "fs";
@@ -29,18 +29,25 @@ export async function POST(req: NextRequest) {
   }
 
   const abonnes = await readAbonnes();
-  const existingEmails = new Set(abonnes.map(a => a.email.toLowerCase()));
+
+  const tokens = await readTokens();
+  const now = Date.now();
+
+  // Emails qui ont deja un token valide (non expire) = deja traites
+  const alreadySent = new Set(
+    Object.values(tokens)
+      .filter(t => t.expiresAt > now)
+      .map(t => t.email.toLowerCase())
+  );
 
   const newAccounts: Subscriber[] = [];
-  const upgraded: string[] = [];
 
   for (const sub of abonnes) {
-    if (!sub.passwordHash) {
+    if (!sub.passwordHash && !alreadySent.has(sub.email.toLowerCase())) {
       newAccounts.push(sub);
     }
   }
 
-  const tokens = await readTokens();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
   let emailsSent = 0;
 
