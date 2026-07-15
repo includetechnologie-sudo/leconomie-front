@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
           <div style="background:#dc2626;padding:20px;text-align:center;border-radius:8px 8px 0 0">
-            <h1 style="color:white;margin:0;font-size:24px">L'Economie</h1>
+            <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:50px;width:auto;" />
           </div>
           <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:30px;border-radius:0 0 8px 8px">
             <p>Bonjour <strong>${newSub.name}</strong>,</p>

@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
           <div style="text-align:center;margin-bottom:24px;">
-            <span style="background:#dc2626;color:white;font-weight:900;font-size:22px;padding:8px 18px;border-radius:8px;">É</span>
+            <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:60px;width:auto;" />
           </div>
           <h2 style="color:#111;text-align:center;">Réinitialisation du mot de passe</h2>
           <p style="color:#555;">Bonjour <strong>${sub.name || sub.email}</strong>,</p>
