@@ -23,7 +23,7 @@ interface Stats {
   topArticles: { slug: string; views: number }[];
 }
 
-type Tab = "overview" | "newsletter" | "abonnements" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "settings";
+type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "settings";
 
 function fmt(n: number) { return n.toLocaleString("fr-FR") + " FCFA"; }
 function fmtDate(iso?: string | number) {
@@ -85,6 +85,14 @@ export default function DashboardPage() {
   const [pwConfirm, setPwConfirm] = useState("");
   const [pwMsg, setPwMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [pwLoading, setPwLoading] = useState(false);
+
+  // Gérer abonnés
+  const [gAbEmail, setGAbEmail] = useState("");
+  const [gAbName, setGAbName] = useState("");
+  const [gAbPlan, setGAbPlan] = useState<"annuel" | "mensuel">("annuel");
+  const [gAbMsg, setGAbMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [gAbLoading, setGAbLoading] = useState(false);
+  const [gAbSearch, setGAbSearch] = useState("");
 
   const fetchStats = useCallback(async (t: string) => {
     setLoading(true); setError("");
@@ -188,6 +196,7 @@ export default function DashboardPage() {
     { id: "top-articles", label: "Top Articles" },
     { id: "articles", label: "Articles", count: stats.articles.total },
     { id: "devis", label: "Devis", count: stats.devis.total },
+    { id: "gerer-abonnes", label: "Gérer Abonnés" },
     { id: "settings", label: "⚙ Paramètres" },
   ];
 
@@ -630,6 +639,122 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ── GÉRER ABONNÉS ── */}
+        {activeTab === "gerer-abonnes" && (
+          <div className="space-y-6">
+            <h2 className="text-lg font-bold">Gérer les Abonnés</h2>
+
+            {/* Formulaire ajout */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-xl">
+              <h3 className="text-sm font-bold text-gray-300 mb-4">Ajouter un abonné</h3>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!gAbEmail) return;
+                setGAbLoading(true); setGAbMsg(null);
+                try {
+                  const res = await fetch("/api/dashboard/abonnes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "x-dashboard-token": token },
+                    body: JSON.stringify({ email: gAbEmail, name: gAbName, plan: gAbPlan }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) { setGAbMsg({ type: "err", text: data.error || "Erreur" }); return; }
+                  setGAbMsg({ type: "ok", text: data.action === "upgraded" ? `${gAbEmail} mis à jour` : `${gAbEmail} ajouté — email envoyé${data.emailSent ? "" : " (échec email)"}` });
+                  setGAbEmail(""); setGAbName("");
+                  // Refresh la liste
+                  const r2 = await fetch("/api/dashboard/stats", { headers: { "x-dashboard-token": token } });
+                  if (r2.ok) { const d = await r2.json(); setStats(d); }
+                } catch { setGAbMsg({ type: "err", text: "Erreur réseau" }); }
+                finally { setGAbLoading(false); }
+              }} className="space-y-3">
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Email *</label>
+                  <input type="email" required value={gAbEmail} onChange={e => setGAbEmail(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none" placeholder="email@example.com" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Nom</label>
+                  <input type="text" value={gAbName} onChange={e => setGAbName(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none" placeholder="Nom complet" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Plan *</label>
+                  <select value={gAbPlan} onChange={e => setGAbPlan(e.target.value as "annuel" | "mensuel")}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none">
+                    <option value="annuel">Annuel (365 jours)</option>
+                    <option value="mensuel">Mensuel (31 jours)</option>
+                  </select>
+                </div>
+                <button type="submit" disabled={gAbLoading}
+                  className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-2.5 rounded-lg text-sm transition">
+                  {gAbLoading ? "En cours..." : "Ajouter et envoyer l'email"}
+                </button>
+                {gAbMsg && (
+                  <p className={`text-sm ${gAbMsg.type === "ok" ? "text-green-400" : "text-red-400"}`}>{gAbMsg.text}</p>
+                )}
+              </form>
+            </div>
+
+            {/* Liste des abonnés */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-gray-300">Liste des abonnés ({stats?.abonnes?.list?.length || 0})</h3>
+                <input type="text" value={gAbSearch} onChange={e => setGAbSearch(e.target.value)}
+                  placeholder="Rechercher..." className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-xs w-48 focus:ring-2 focus:ring-red-500 outline-none" />
+              </div>
+              <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-gray-900">
+                    <tr className="text-gray-500 border-b border-gray-800">
+                      <th className="text-left py-2 px-2">Email</th>
+                      <th className="text-left py-2 px-2">Nom</th>
+                      <th className="text-left py-2 px-2">Plan</th>
+                      <th className="text-left py-2 px-2">Expire le</th>
+                      <th className="text-right py-2 px-2">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(stats?.abonnes?.list || [])
+                      .filter(a => {
+                        if (!gAbSearch) return true;
+                        const s = gAbSearch.toLowerCase();
+                        return (a.email || "").toLowerCase().includes(s) || (a.name || "").toLowerCase().includes(s);
+                      })
+                      .map((a, i) => (
+                        <tr key={i} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                          <td className="py-2 px-2 text-gray-300">{a.email}</td>
+                          <td className="py-2 px-2 text-gray-400">{a.name || "—"}</td>
+                          <td className="py-2 px-2">
+                            <Badge color={a.plan === "annuel" ? "blue" : a.plan === "mensuel" ? "green" : "gray"}>
+                              {a.plan || "gratuit"}
+                            </Badge>
+                          </td>
+                          <td className="py-2 px-2 text-gray-400">{fmtDate(a.expiresAt)}</td>
+                          <td className="py-2 px-2 text-right">
+                            <button onClick={async () => {
+                              if (!confirm(`Supprimer ${a.email} ?`)) return;
+                              const res = await fetch("/api/dashboard/abonnes", {
+                                method: "DELETE",
+                                headers: { "Content-Type": "application/json", "x-dashboard-token": token },
+                                body: JSON.stringify({ email: a.email }),
+                              });
+                              if (res.ok) {
+                                const r2 = await fetch("/api/dashboard/stats", { headers: { "x-dashboard-token": token } });
+                                if (r2.ok) { const d = await r2.json(); setStats(d); }
+                              }
+                            }} className="text-red-400 hover:text-red-300 font-bold transition">
+                              Supprimer
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
