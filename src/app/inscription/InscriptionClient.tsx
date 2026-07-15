@@ -53,7 +53,7 @@ export default function InscriptionClient() {
 
           <h1 className="font-serif text-2xl font-bold text-center mb-1">Créer un compte</h1>
           <p className="text-gray-500 text-sm text-center mb-7">
-            Accédez aux articles gratuits et aux newsletters de L&apos;Économie
+            Accédez aux articles gratuits et aux newsletters de L&apos;Economie
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -164,7 +164,7 @@ export default function InscriptionClient() {
           </p>
         </div>
       </div>
-      <p className="text-center text-xs text-gray-400 pb-6">© Copyright L&apos;Économie 2026. Tous Droits Réservés.</p>
+      <p className="text-center text-xs text-gray-400 pb-6">© Copyright L&apos;Economie 2026. Tous Droits Réservés.</p>
     </div>
   );
 }

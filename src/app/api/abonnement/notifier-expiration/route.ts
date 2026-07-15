@@ -40,17 +40,17 @@ async function sendRenewalEmail(sub: Subscriber, daysLeft: number) {
 
   const planLabel = PLAN_LABELS[sub.plan] || sub.plan;
   const subject = daysLeft <= 0
-    ? "Votre abonnement L'Économie a expiré"
-    : `Votre abonnement L'Économie expire dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}`;
+    ? "Votre abonnement L'Economie a expiré"
+    : `Votre abonnement L'Economie expire dans ${daysLeft} jour${daysLeft > 1 ? "s" : ""}`;
 
   await transporter.sendMail({
-    from: `"L'Économie" <${process.env.SMTP_USER}>`,
+    from: `"L'Economie" <${process.env.SMTP_USER}>`,
     to: sub.email,
     subject,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
         <div style="background:#dc2626;padding:20px;text-align:center;border-radius:8px 8px 0 0">
-          <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:50px;width:auto;" />
+          <img src="https://leconomie.info/images/favicon.png" alt="L'Economie" style="height:50px;width:auto;" />
           <p style="color:#fca5a5;margin:8px 0 0;font-size:12px">Le Premier quotidien économique de la zone CEMAC</p>
         </div>
         <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:30px;border-radius:0 0 8px 8px">

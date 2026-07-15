@@ -65,7 +65,7 @@ export default function PageLoader() {
         <div className="loader-logo">
           <Image
             src="/images/logo.png"
-            alt="L'Économie"
+            alt="L'Economie"
             width={200}
             height={80}
             priority

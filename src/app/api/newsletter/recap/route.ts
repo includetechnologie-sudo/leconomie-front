@@ -50,11 +50,11 @@ function buildRecapEmail(articles: Article[], dateStr: string): string {
   return `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;">
       <div style="background:#dc2626;padding:24px;text-align:center;border-radius:8px 8px 0 0;">
-        <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:50px;width:auto;" />
+        <img src="https://leconomie.info/images/favicon.png" alt="L'Economie" style="height:50px;width:auto;" />
         <p style="color:#fca5a5;margin:8px 0 0;font-size:11px;">Le Premier quotidien économique de la zone CEMAC</p>
       </div>
       <div style="background:#1f2937;padding:12px 24px;text-align:center;">
-        <span style="color:#fff;font-size:13px;font-weight:bold;letter-spacing:1px;">RÉCAPITULATIF DU ${dateStr}</span>
+        <span style="color:#fff;font-size:13px;font-weight:bold;letter-spacing:1px;">NEWSLETTER DU ${dateStr}</span>
       </div>
       <div style="padding:24px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -67,8 +67,8 @@ function buildRecapEmail(articles: Article[], dateStr: string): string {
         </a>
       </div>
       <div style="background:#f9fafb;padding:20px 24px;text-align:center;border-top:1px solid #e5e7eb;border-radius:0 0 8px 8px;">
-        <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:30px;width:auto;margin-bottom:8px;" />
-        <p style="color:#6b7280;font-size:11px;margin:0;">© 2026 L'Économie — Tous droits réservés</p>
+        <img src="https://leconomie.info/images/favicon.png" alt="L'Economie" style="height:30px;width:auto;margin-bottom:8px;" />
+        <p style="color:#6b7280;font-size:11px;margin:0;">© 2026 L'Economie — Tous droits réservés</p>
         <p style="color:#9ca3af;font-size:10px;margin:6px 0 0;">
           <a href="https://leconomie.info" style="color:#dc2626;text-decoration:none;">leconomie.info</a>
         </p>
@@ -96,7 +96,7 @@ async function sendBroadcast(recipients: string[], subject: string, html: string
     for (const email of batch) {
       try {
         await transporter.sendMail({
-          from: `"L'Économie" <${process.env.SMTP_USER}>`,
+          from: `"L'Economie" <${process.env.SMTP_USER}>`,
           to: email,
           subject,
           html,
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
 
   const today = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }).toUpperCase();
   const html = buildRecapEmail(articles, today);
-  const subject = `L'Économie — Récapitulatif du ${today}`;
+  const subject = `L'Economie — Newsletter du ${today}`;
 
   // Collecter les destinataires
   let recipients: string[] = [];
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
     });
 
     await transporter.sendMail({
-      from: `"L'Économie" <${process.env.SMTP_USER}>`,
+      from: `"L'Economie" <${process.env.SMTP_USER}>`,
       to: recipients[0],
       subject,
       html,

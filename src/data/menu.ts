@@ -1,6 +1,6 @@
 export const menuItems = [
   {
-    label: "ÉCONOMIE",
+    label: "ECONOMIE",
     children: [
       "Macroéconomie",
       "Croissance",

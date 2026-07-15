@@ -35,7 +35,7 @@ function buildEmail(article: {
   imageUrl?: string;
 }, unsubscribeUrl: string): string {
   const articleUrl = `https://leconomie.info/article/${article.slug}`;
-  const category = article.category?.toUpperCase() || "ACTUALITÉ";
+  const category = article.category?.toUpperCase() || "ACTUALITE";
   const excerpt = article.excerpt?.replace(/<[^>]+>/g, "").slice(0, 200) || "";
 
   return `
@@ -43,7 +43,7 @@ function buildEmail(article: {
       <!-- Header -->
       <div style="background:#dc2626;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;">
         <div>
-          <h1 style="color:#fff;margin:0;font-size:22px;font-weight:bold;">L'ÉCONOMIE</h1>
+          <h1 style="color:#fff;margin:0;font-size:22px;font-weight:bold;">L'ECONOMIE</h1>
           <p style="color:#fff;opacity:0.8;margin:2px 0 0;font-size:11px;">Le Premier quotidien économique de la zone CEMAC</p>
         </div>
         <span style="background:#fff;color:#dc2626;font-size:10px;font-weight:bold;padding:4px 10px;border-radius:20px;text-transform:uppercase;">${category}</span>
@@ -71,7 +71,7 @@ function buildEmail(article: {
       <!-- Footer -->
       <div style="background:#f9fafb;padding:16px 24px;text-align:center;border-top:1px solid #e5e7eb;">
         <a href="https://leconomie.info" style="color:#dc2626;text-decoration:none;font-weight:bold;font-size:13px;">leconomie.info</a>
-        <p style="color:#9ca3af;font-size:11px;margin:8px 0 4px;">© 2026 L'Économie — Tous droits réservés</p>
+        <p style="color:#9ca3af;font-size:11px;margin:8px 0 4px;">© 2026 L'Economie — Tous droits réservés</p>
         <a href="${unsubscribeUrl}" style="color:#9ca3af;font-size:11px;text-decoration:underline;">Se désabonner de la newsletter</a>
       </div>
     </div>
@@ -143,9 +143,9 @@ export async function POST(req: NextRequest) {
         batch.map((sub) => {
           const unsubUrl = buildUnsubscribeUrl(sub.email, sub.token);
           return transporter.sendMail({
-            from: `"L'Économie" <${process.env.SMTP_USER}>`,
+            from: `"L'Economie" <${process.env.SMTP_USER}>`,
             to: sub.email,
-            subject: `[L'Économie] ${title}`,
+            subject: `[L'Economie] ${title}`,
             html: buildEmail({ title, excerpt, slug, category, imageUrl }, unsubUrl),
           }).then(() => { sent++; });
         })

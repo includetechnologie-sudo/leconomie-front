@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     });
 
     await transporter.sendMail({
-      from: `"L'Économie Contact" <${process.env.SMTP_USER}>`,
+      from: `"L'Economie Contact" <${process.env.SMTP_USER}>`,
       to: process.env.SMTP_USER,
       replyTo: email,
       subject: `[Contact] ${sujet} — ${nom}`,

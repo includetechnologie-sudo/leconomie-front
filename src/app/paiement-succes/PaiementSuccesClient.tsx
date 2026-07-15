@@ -141,7 +141,7 @@ export default function PaiementSuccesClient() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Paiement confirmé !</h1>
           <p className="text-gray-500 text-sm mb-4">
-            {info.plan === "achat" ? "Votre numéro est disponible dans votre espace." : "Bienvenue dans L'Économie Premium."}
+            {info.plan === "achat" ? "Votre numéro est disponible dans votre espace." : "Bienvenue dans L'Economie Premium."}
           </p>
           <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-4">
             <p className="text-sm font-bold text-red-600">{info.planLabel}</p>

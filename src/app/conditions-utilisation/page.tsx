@@ -15,7 +15,7 @@ export default function ConditionsUtilisation() {
 
         <h2>1. Présentation du site</h2>
         <p>
-          Le site <strong>leconomie.info</strong> est édité par le journal <strong>L'Économie</strong>,
+          Le site <strong>leconomie.info</strong> est édité par le journal <strong>L'Economie</strong>,
           premier quotidien économique de la zone CEMAC, dont le siège est situé à Douala, Cameroun.
           Le site propose des contenus informatifs, économiques et financiers relatifs à la zone CEMAC
           (Cameroun, Gabon, Congo, Tchad, République Centrafricaine, Guinée Équatoriale).
@@ -32,7 +32,7 @@ export default function ConditionsUtilisation() {
         <h2>3. Propriété intellectuelle</h2>
         <p>
           L'ensemble des contenus présents sur leconomie.info (textes, images, vidéos, graphiques, logos)
-          sont la propriété exclusive de <strong>L'Économie</strong> ou de ses partenaires et sont protégés
+          sont la propriété exclusive de <strong>L'Economie</strong> ou de ses partenaires et sont protégés
           par les lois relatives à la propriété intellectuelle. Toute reproduction, représentation,
           modification, publication ou adaptation, totale ou partielle, est strictement interdite
           sans l'accord écrit préalable de la rédaction.
@@ -49,7 +49,7 @@ export default function ConditionsUtilisation() {
 
         <h2>5. Responsabilité</h2>
         <p>
-          L'Économie s'efforce de fournir des informations exactes et à jour. Toutefois, la rédaction
+          L'Economie s'efforce de fournir des informations exactes et à jour. Toutefois, la rédaction
           ne peut être tenue responsable des erreurs, omissions ou résultats obtenus suite à l'utilisation
           de ces informations. Les informations publiées ne constituent pas des conseils financiers,
           juridiques ou professionnels.
@@ -57,13 +57,13 @@ export default function ConditionsUtilisation() {
 
         <h2>6. Liens hypertextes</h2>
         <p>
-          Le site peut contenir des liens vers des sites tiers. L'Économie n'exerce aucun contrôle
+          Le site peut contenir des liens vers des sites tiers. L'Economie n'exerce aucun contrôle
           sur ces sites et décline toute responsabilité quant à leur contenu ou leurs pratiques.
         </p>
 
         <h2>7. Modification des conditions</h2>
         <p>
-          L'Économie se réserve le droit de modifier les présentes conditions d'utilisation à tout moment.
+          L'Economie se réserve le droit de modifier les présentes conditions d'utilisation à tout moment.
           Les utilisateurs sont invités à les consulter régulièrement. L'utilisation continue du site
           après modification vaut acceptation des nouvelles conditions.
         </p>

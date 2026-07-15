@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   const payload = {
     app_id: process.env.ONESIGNAL_APP_ID,
     included_segments: ["All"],
-    headings: { fr: "L'Économie", en: "L'Économie" },
+    headings: { fr: "L'Economie", en: "L'Economie" },
     contents: { fr: title, en: title },
     subtitle: {
       fr: excerpt ? excerpt.replace(/<[^>]+>/g, "").slice(0, 100) : "Nouvelle publication",

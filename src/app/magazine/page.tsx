@@ -6,7 +6,7 @@ import MagazineTabs from "@/components/magazine/MagazineTabs";
 
 export const metadata = {
   title: "Journal & Magazine",
-  description: "Achetez le journal quotidien et le magazine mensuel de L'Économie en version numérique.",
+  description: "Achetez le journal quotidien et le magazine mensuel de L'Economie en version numérique.",
   alternates: { canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info"}/magazine` },
 };
 

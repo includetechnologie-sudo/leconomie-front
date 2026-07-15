@@ -94,7 +94,7 @@ export default function VideoPlayerClient({ videos }: Props) {
             {/* Infos */}
             <div className="p-4 flex flex-col flex-1">
               <p className="text-red-600 text-xs font-semibold mb-1 uppercase tracking-wide">
-                L&apos;Économie TV · {timeAgo(video.published)}
+                L&apos;Economie TV · {timeAgo(video.published)}
               </p>
               <h3 className="font-serif font-bold text-sm leading-snug line-clamp-2 mb-2 flex-1">
                 {video.title}

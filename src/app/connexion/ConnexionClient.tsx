@@ -132,7 +132,7 @@ export default function ConnexionClient() {
           Retourner à la page d&apos;accueil
         </Link>
       </div>
-      <p className="text-center text-xs text-gray-400 pb-6">© Copyright L&apos;Économie 2026. Tous Droits Réservés.</p>
+      <p className="text-center text-xs text-gray-400 pb-6">© Copyright L&apos;Economie 2026. Tous Droits Réservés.</p>
     </div>
   );
 }

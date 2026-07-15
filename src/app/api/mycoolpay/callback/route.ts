@@ -58,13 +58,13 @@ async function sendAchatEmail(email: string, name: string, titre: string, id: nu
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
 
     await transporter.sendMail({
-      from: `"L'Économie" <${process.env.SMTP_USER}>`,
+      from: `"L'Economie" <${process.env.SMTP_USER}>`,
       to: email,
       subject: `Votre achat — ${titre}`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px">
           <div style="background:#dc2626;padding:20px;text-align:center;border-radius:8px 8px 0 0">
-            <h1 style="color:white;margin:0;font-size:24px">L'Économie</h1>
+            <h1 style="color:white;margin:0;font-size:24px">L'Economie</h1>
           </div>
           <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:30px;border-radius:0 0 8px 8px">
             <p>Bonjour <strong>${name}</strong>,</p>

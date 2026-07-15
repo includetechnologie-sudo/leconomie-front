@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       email,
       amount,
       currency: currency || "XAF",
-      description: `Abonnement L'Économie – Plan ${plan}`,
+      description: `Abonnement L'Economie – Plan ${plan}`,
       reference,
       callback: callbackUrl,
       success_url: successUrl,

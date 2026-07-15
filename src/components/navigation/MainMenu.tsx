@@ -26,7 +26,7 @@ const menuItems: MenuItem[] = [
       { label: "🇨🇫 Rép. Centrafricaine", href: "/cemac/rca" },
     ],
   },
-  { label: "Économie",          href: "/economie" },
+  { label: "Economie",          href: "/economie" },
   { label: "Politiques publiques", href: "/politiques-publiques" },
   { label: "Entreprises",       href: "/entreprises" },
   { label: "Assurances",        href: "/assurances" },
@@ -173,7 +173,7 @@ export default function MainMenu() {
               </svg>
             </button>
             <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-              <Image src="/images/logo.png" alt="L'Économie" width={130} height={34} priority />
+              <Image src="/images/logo.png" alt="L'Economie" width={130} height={34} priority />
             </Link>
             <div className="flex items-center gap-3">
               <Link href="/connexion" className="text-gray-700 hover:text-red-600 transition" aria-label="Mon compte">
@@ -208,7 +208,7 @@ export default function MainMenu() {
                 </svg>
               </button>
               <Link href="/" onClick={() => setMobileOpen(false)}>
-                <Image src="/images/logo.png" alt="L'Économie" width={120} height={30} />
+                <Image src="/images/logo.png" alt="L'Economie" width={120} height={30} />
               </Link>
               <Link href="/connexion" onClick={() => setMobileOpen(false)} aria-label="Mon compte" className="text-gray-600 hover:text-red-600 transition">
                 <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

@@ -16,7 +16,7 @@ export default function Confidentialite() {
         <h2>1. Responsable du traitement</h2>
         <p>
           Le responsable du traitement des données personnelles collectées sur <strong>leconomie.info</strong>
-          est le journal <strong>L'Économie</strong>, situé à Douala, Cameroun.
+          est le journal <strong>L'Economie</strong>, situé à Douala, Cameroun.
           Contact : <strong>contact@leconomie.info</strong>
         </p>
 

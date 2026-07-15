@@ -168,10 +168,10 @@ export default function DashboardPage() {
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 w-full max-w-sm">
           <div className="text-center mb-6">
             <div className="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-white font-black text-2xl">É</span>
+              <span className="text-white font-black text-2xl">E</span>
             </div>
             <h1 className="text-white font-bold text-xl">Dashboard Admin</h1>
-            <p className="text-gray-500 text-sm mt-1">L&apos;Économie</p>
+            <p className="text-gray-500 text-sm mt-1">L&apos;Economie</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="password" value={password} onChange={e => setPassword(e.target.value)}
@@ -211,7 +211,7 @@ export default function DashboardPage() {
       <div className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-black text-sm">É</span>
+            <span className="text-white font-black text-sm">E</span>
           </div>
           <span className="font-bold text-white text-sm">Dashboard Admin</span>
           <span className="hidden sm:flex items-center gap-1.5 bg-green-600/20 text-green-400 text-xs font-bold px-2 py-0.5 rounded-full border border-green-600/30">
@@ -678,7 +678,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ── GÉRER ABONNÉS ── */}
+        {/* ── GERER ABONNES ── */}
         {activeTab === "gerer-abonnes" && (
           <div className="space-y-6">
             <h2 className="text-lg font-bold">Gérer les Abonnés</h2>

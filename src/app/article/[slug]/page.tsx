@@ -162,11 +162,11 @@ export default async function ArticlePage({
     "dateModified": post.modified,
     "author": {
       "@type": "Person",
-      "name": post.author?.node?.name || "L'Économie",
+      "name": post.author?.node?.name || "L'Economie",
     },
     "publisher": {
       "@type": "Organization",
-      "name": "L'Économie",
+      "name": "L'Economie",
       "logo": { "@type": "ImageObject", "url": `${SITE_URL}/images/favicon.png` },
     },
     "mainEntityOfPage": { "@type": "WebPage", "@id": articleUrl },
@@ -249,7 +249,7 @@ export default async function ArticlePage({
             {/* Filigrane */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" style={{ opacity: 0.10 }}>
               <span className="text-white font-serif font-bold tracking-widest rotate-[-30deg]" style={{ fontSize: "clamp(24px, 4vw, 48px)", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
-                L'ÉCONOMIE
+                L'ECONOMIE
               </span>
             </div>
           </div>
@@ -332,7 +332,7 @@ export default async function ArticlePage({
               <div className="relative w-full rounded-lg overflow-hidden shadow-md mb-3" style={{ aspectRatio: "3/4" }}>
                 <Image
                   src={latestJournal?.featuredImage?.node?.sourceUrl || "/images/journal-cover.jpg"}
-                  alt="Dernière édition du journal L'Économie"
+                  alt="Dernière édition du journal L'Economie"
                   fill
                   className="object-cover"
                 />
@@ -365,7 +365,7 @@ export default async function ArticlePage({
             <div className="relative rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
               <Image
                 src="/images/pub-maison.jpg"
-                alt="Abonnement numérique L'Économie"
+                alt="Abonnement numérique L'Economie"
                 width={300}
                 height={400}
                 className="w-full h-auto object-cover"

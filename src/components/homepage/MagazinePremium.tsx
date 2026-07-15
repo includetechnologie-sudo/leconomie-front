@@ -30,7 +30,7 @@ export default async function MagazinePremium() {
           <div className="flex justify-center">
             <Image
               src={cover}
-              alt="Magazine L'Économie International"
+              alt="Magazine L'Economie International"
               width={350}
               height={500}
               className="rounded-xl shadow-2xl hover:scale-105 transition"

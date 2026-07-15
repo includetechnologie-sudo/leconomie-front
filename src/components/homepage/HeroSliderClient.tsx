@@ -87,7 +87,7 @@ export default function HeroSliderClient({ posts }: Props) {
       {/* Filigrane */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" style={{ opacity: 0.10 }}>
         <span className="text-white font-serif font-bold tracking-widest rotate-[-30deg]" style={{ fontSize: "clamp(28px, 5vw, 56px)", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
-          L'ÉCONOMIE
+          L'ECONOMIE
         </span>
       </div>
 

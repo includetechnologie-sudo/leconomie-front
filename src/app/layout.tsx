@@ -29,14 +29,14 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "L'Économie — Le premier quotidien économique de la zone CEMAC",
-    template: "%s — L'Économie",
+    default: "L'Economie — Le premier quotidien économique de la zone CEMAC",
+    template: "%s — L'Economie",
   },
   description: "Actualités économiques, financières et politiques de la zone CEMAC. Cameroun, Gabon, Congo, Tchad, RCA, Guinée Équatoriale.",
   keywords: ["économie", "CEMAC", "Cameroun", "finance", "actualités", "Afrique centrale", "journal"],
-  authors: [{ name: "L'Économie", url: SITE_URL }],
-  creator: "L'Économie",
-  publisher: "L'Économie",
+  authors: [{ name: "L'Economie", url: SITE_URL }],
+  creator: "L'Economie",
+  publisher: "L'Economie",
   icons: {
     icon: "/images/favicon.png",
     apple: "/images/favicon.png",
@@ -45,20 +45,20 @@ export const metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "L'Économie",
+    title: "L'Economie",
   },
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: SITE_URL,
-    siteName: "L'Économie",
-    title: "L'Économie — Le premier quotidien économique de la zone CEMAC",
+    siteName: "L'Economie",
+    title: "L'Economie — Le premier quotidien économique de la zone CEMAC",
     description: "Actualités économiques, financières et politiques de la zone CEMAC.",
-    images: [{ url: "/images/og-default.jpg", width: 1200, height: 630, alt: "L'Économie" }],
+    images: [{ url: "/images/og-default.jpg", width: 1200, height: 630, alt: "L'Economie" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "L'Économie — Le premier quotidien économique de la zone CEMAC",
+    title: "L'Economie — Le premier quotidien économique de la zone CEMAC",
     description: "Actualités économiques, financières et politiques de la zone CEMAC.",
     images: ["/images/og-default.jpg"],
   },
@@ -75,7 +75,7 @@ export const metadata = {
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "NewsMediaOrganization",
-  "name": "L'Économie",
+  "name": "L'Economie",
   "url": "https://leconomie.info",
   "logo": {
     "@type": "ImageObject",
@@ -118,7 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/magazine?tab=magazines" className="block">
               <img
                 src="https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/bandeau-magazine-2026-scaled.jpg"
-                alt="Votre magazine L'Économie International — disponible sur notre site web"
+                alt="Votre magazine L'Economie International — disponible sur notre site web"
                 className="w-full h-auto object-contain max-h-[100px]"
               />
             </a>

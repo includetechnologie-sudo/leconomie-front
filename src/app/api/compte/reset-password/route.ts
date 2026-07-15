@@ -80,13 +80,13 @@ export async function POST(req: NextRequest) {
     });
 
     await transporter.sendMail({
-      from: `"L'Économie" <${process.env.SMTP_USER}>`,
+      from: `"L'Economie" <${process.env.SMTP_USER}>`,
       to: sub.email,
-      subject: "Réinitialisation de votre mot de passe — L'Économie",
+      subject: "Réinitialisation de votre mot de passe — L'Economie",
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
           <div style="text-align:center;margin-bottom:24px;">
-            <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:60px;width:auto;" />
+            <img src="https://leconomie.info/images/favicon.png" alt="L'Economie" style="height:60px;width:auto;" />
           </div>
           <h2 style="color:#111;text-align:center;">Réinitialisation du mot de passe</h2>
           <p style="color:#555;">Bonjour <strong>${sub.name || sub.email}</strong>,</p>
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
             </a>
           </div>
           <p style="color:#888;font-size:12px;">Ce lien est valable <strong>1 heure</strong>. Si vous n'avez pas fait cette demande, ignorez cet email.</p>
-          <p style="color:#aaa;font-size:11px;text-align:center;margin-top:32px;">© L'Économie 2026 — leconomie.info</p>
+          <p style="color:#aaa;font-size:11px;text-align:center;margin-top:32px;">© L'Economie 2026 — leconomie.info</p>
         </div>
       `,
     });

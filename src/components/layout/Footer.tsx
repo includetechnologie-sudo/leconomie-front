@@ -4,7 +4,7 @@ import NewsletterForm from "@/components/newsletter/NewsletterForm";
 
 const navLinks = [
   { label: "Accueil", href: "/" },
-  { label: "Économie", href: "/economie" },
+  { label: "Economie", href: "/economie" },
   { label: "Finance", href: "/finance" },
   { label: "CEMAC", href: "/cemac" },
   { label: "Infrastructure", href: "/infrastructure" },

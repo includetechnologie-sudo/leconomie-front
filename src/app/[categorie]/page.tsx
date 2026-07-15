@@ -54,7 +54,7 @@ export async function generateMetadata(
   const label = CATEGORY_MAP[categorie] || categorie;
   return {
     title: `${label} — Actualités`,
-    description: `Toute l'actualité ${label} de la zone CEMAC sur L'Économie.`,
+    description: `Toute l'actualité ${label} de la zone CEMAC sur L'Economie.`,
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info"}/${categorie}`,
     },

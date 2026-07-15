@@ -48,17 +48,17 @@ export default function BreakingNewsTicker({ posts }: { posts: Post[] }) {
         </div>
       </div>
 
-      {/* Logo L'Économie Business Summit — bouton cliquable */}
+      {/* Logo L'Economie Business Summit — bouton cliquable */}
       <a
         href="https://leconomiebusinesssummit.fr/"
         target="_blank"
         rel="noopener noreferrer"
         className="shrink-0 mx-1 flex items-center transition-all duration-200 hover:scale-105 hover:brightness-110"
-        title="L'Économie Business Summit 2026 — 4e Édition"
+        title="L'Economie Business Summit 2026 — 4e Édition"
       >
         <Image
           src="/images/summit-logo.png"
-          alt="L'Économie Business Summit 2026"
+          alt="L'Economie Business Summit 2026"
           width={32}
           height={32}
           className="rounded-full object-contain"

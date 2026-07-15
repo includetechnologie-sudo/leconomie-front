@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     });
 
     await transporter.sendMail({
-      from: `"L'Économie" <${process.env.SMTP_USER}>`,
+      from: `"L'Economie" <${process.env.SMTP_USER}>`,
       to: process.env.SMTP_USER,
       replyTo: email,
       subject: `[Devis Entreprise] ${entreprise} — ${effectif} utilisateurs`,

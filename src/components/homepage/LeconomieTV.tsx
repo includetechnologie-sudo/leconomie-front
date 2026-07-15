@@ -64,7 +64,7 @@ export default async function LeconomieTV() {
         <div className="flex items-center gap-3">
           <span className="w-1 h-7 bg-red-600 inline-block"></span>
           <h2 className="font-serif text-2xl font-bold uppercase tracking-wide">
-            L&apos;Économie TV
+            L&apos;Economie TV
           </h2>
         </div>
         <Link

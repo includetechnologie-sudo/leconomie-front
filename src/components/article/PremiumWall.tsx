@@ -56,7 +56,7 @@ export default function PremiumWall({ content }: Props) {
             Lisez la suite de cet article
           </h3>
           <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto leading-relaxed">
-            Rejoignez les abonnés de <strong>L&apos;Économie</strong> et accédez à l&apos;intégralité des articles, analyses exclusives, archives et magazines numériques.
+            Rejoignez les abonnés de <strong>L&apos;Economie</strong> et accédez à l&apos;intégralité des articles, analyses exclusives, archives et magazines numériques.
           </p>
 
           {/* Avantages */}

@@ -24,7 +24,7 @@ export default function PubMagazineSidebar() {
       <div className="relative w-full" style={{ aspectRatio: "300/400" }}>
         <Image
           src="https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/pub-magazine-international.jpg"
-          alt="L'Économie International N°049"
+          alt="L'Economie International N°049"
           fill
           className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
         />
@@ -50,7 +50,7 @@ export default function PubMagazineSidebar() {
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <p className="text-white/70 text-[10px] uppercase tracking-widest font-bold mb-1">Magazine</p>
           <p className="text-white font-black text-lg leading-tight mb-1">
-            L&apos;ÉCONOMIE<br />
+            L&apos;ECONOMIE<br />
             <span className="text-red-400 font-black">International</span>
           </p>
           <p className="text-white/80 text-xs mb-3">N°049 — Déjà disponible en kiosque</p>

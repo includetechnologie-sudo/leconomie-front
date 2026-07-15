@@ -28,7 +28,7 @@ export default async function HeroSlider() {
           <Link href="/magazine?tab=magazines" className="block w-full h-full relative rounded-lg overflow-hidden group bg-[#f5ede8]">
             <Image
               src="https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/Banniere-publicitaire-magazine.jpg"
-              alt="L'Économie International N°049"
+              alt="L'Economie International N°049"
               fill
               className="object-contain group-hover:scale-105 transition-transform duration-500"
               priority

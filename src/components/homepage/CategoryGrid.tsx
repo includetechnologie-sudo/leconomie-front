@@ -3,7 +3,7 @@ import Link from "next/link";
 import { graphqlFetch } from "@/lib/graphql-fetch";
 
 const CATEGORIES = [
-  { label: "ÉCONOMIE", slug: "economie", name: "Economie" },
+  { label: "ECONOMIE", slug: "economie", name: "Economie" },
   { label: "FINANCE", slug: "finance", name: "Finance" },
   { label: "POLITIQUES PUBLIQUES", slug: "politiques-publiques", name: "Politiques publiques" },
   { label: "INTERVIEW", slug: "interview", name: "Interview" },
