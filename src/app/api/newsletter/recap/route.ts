@@ -18,8 +18,8 @@ const GRAPHQL_URL = "https://teal-horse-411567.hostingersite.com/graphql";
 function stripHtml(html: string): string {
   return html.replace(/<div class="sharedaddy[\s\S]*?<\/div><\/div><\/div>/g, "")
     .replace(/<[^>]+>/g, "")
-    .replace(/&rsquo;/g, "’")
-    .replace(/&lsquo;/g, "‘")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&lsquo;/g, "'")
     .replace(/&nbsp;/g, " ")
     .replace(/&#8211;/g, "–")
     .trim()
@@ -68,13 +68,56 @@ function buildRecapEmail(articles: Article[], dateStr: string): string {
       </div>
       <div style="background:#f9fafb;padding:20px 24px;text-align:center;border-top:1px solid #e5e7eb;border-radius:0 0 8px 8px;">
         <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:30px;width:auto;margin-bottom:8px;" />
-        <p style="color:#6b7280;font-size:11px;margin:0;">© 2026 L’Économie — Tous droits réservés</p>
+        <p style="color:#6b7280;font-size:11px;margin:0;">© 2026 L'Économie — Tous droits réservés</p>
         <p style="color:#9ca3af;font-size:10px;margin:6px 0 0;">
           <a href="https://leconomie.info" style="color:#dc2626;text-decoration:none;">leconomie.info</a>
         </p>
       </div>
     </div>
   `;
+}
+
+async function sendBroadcast(recipients: string[], subject: string, html: string) {
+  const BATCH_SIZE = 10;
+  const DELAY_BETWEEN_EMAILS = 3000;
+  const DELAY_BETWEEN_BATCHES = 30000;
+  let sent = 0;
+
+  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+    const batch = recipients.slice(i, i + BATCH_SIZE);
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: true,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+
+    for (const email of batch) {
+      try {
+        await transporter.sendMail({
+          from: `"L'Économie" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject,
+          html,
+        });
+        sent++;
+      } catch (err) {
+        console.error("Recap email error for", email, err);
+      }
+      if (batch.indexOf(email) < batch.length - 1) {
+        await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
+      }
+    }
+
+    transporter.close();
+
+    if (i + BATCH_SIZE < recipients.length) {
+      await new Promise(r => setTimeout(r, DELAY_BETWEEN_BATCHES));
+    }
+  }
+
+  console.log(`[Recap] Broadcast terminé : ${sent}/${recipients.length} emails envoyés`);
 }
 
 export async function POST(req: NextRequest) {
@@ -132,16 +175,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Aucun destinataire" }, { status: 400 });
   }
 
-  // Envoi par batch de 10, 3s entre emails, 30s entre batchs
-  const BATCH_SIZE = 10;
-  const DELAY_BETWEEN_EMAILS = 3000;
-  const DELAY_BETWEEN_BATCHES = 30000;
-  let sent = 0;
-  let errors = 0;
-
-  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-    const batch = recipients.slice(i, i + BATCH_SIZE);
-
+  // Mode single : envoi direct et attente
+  if (!broadcast) {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 465),
@@ -149,35 +184,24 @@ export async function POST(req: NextRequest) {
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
 
-    for (const email of batch) {
-      try {
-        await transporter.sendMail({
-          from: `"L'Économie" <${process.env.SMTP_USER}>`,
-          to: email,
-          subject,
-          html,
-        });
-        sent++;
-      } catch (err) {
-        console.error("Recap email error for", email, err);
-        errors++;
-      }
-      if (batch.indexOf(email) < batch.length - 1) {
-        await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
-      }
-    }
-
+    await transporter.sendMail({
+      from: `"L'Économie" <${process.env.SMTP_USER}>`,
+      to: recipients[0],
+      subject,
+      html,
+    });
     transporter.close();
-
-    if (i + BATCH_SIZE < recipients.length) {
-      await new Promise(r => setTimeout(r, DELAY_BETWEEN_BATCHES));
-    }
+    return NextResponse.json({ success: true, sent: 1, total: 1, articlesCount: articles.length });
   }
+
+  // Mode broadcast : répondre immédiatement, envoyer en arrière-plan
+  sendBroadcast(recipients, subject, html).catch(err => {
+    console.error("[Recap] Broadcast error:", err);
+  });
 
   return NextResponse.json({
     success: true,
-    sent,
-    errors,
+    message: `Envoi lancé en arrière-plan à ${recipients.length} destinataires`,
     total: recipients.length,
     articlesCount: articles.length,
   });

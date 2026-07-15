@@ -288,7 +288,7 @@ export default function DashboardPage() {
                       body: JSON.stringify({ broadcast: true }),
                     });
                     const data = await res.json();
-                    if (res.ok) setRecapStatus(`ok:${data.sent}/${data.total}`);
+                    if (res.ok) setRecapStatus(`ok:${data.total}`);
                     else setRecapStatus(`err:${data.error}`);
                   } catch { setRecapStatus("err:Erreur réseau"); }
                 }}
@@ -300,7 +300,7 @@ export default function DashboardPage() {
             </div>
             {recapStatus && recapStatus !== "loading" && (
               <p className={`text-sm ${recapStatus.startsWith("ok") ? "text-green-400" : "text-red-400"}`}>
-                {recapStatus.startsWith("ok") ? `Envoyé avec succès (${recapStatus.split(":")[1]} emails)` : recapStatus.split(":")[1]}
+                {recapStatus.startsWith("ok") ? `Envoi lancé à ${recapStatus.split(":")[1]} destinataires (arrière-plan)` : recapStatus.split(":")[1]}
               </p>
             )}
 
