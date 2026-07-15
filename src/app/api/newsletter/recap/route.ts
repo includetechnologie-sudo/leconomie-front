@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { checkDashboardAuth } from "@/lib/dashboard-auth";
+import { readAbonnes } from "@/lib/abonnes";
+import { readSubscribers } from "@/lib/newsletter";
 
 interface Article {
   title: string;
@@ -47,35 +49,26 @@ function buildRecapEmail(articles: Article[], dateStr: string): string {
 
   return `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;">
-      <!-- Header -->
       <div style="background:#dc2626;padding:24px;text-align:center;border-radius:8px 8px 0 0;">
         <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:50px;width:auto;" />
         <p style="color:#fca5a5;margin:8px 0 0;font-size:11px;">Le Premier quotidien économique de la zone CEMAC</p>
       </div>
-
-      <!-- Date banner -->
       <div style="background:#1f2937;padding:12px 24px;text-align:center;">
         <span style="color:#fff;font-size:13px;font-weight:bold;letter-spacing:1px;">RÉCAPITULATIF DU ${dateStr}</span>
       </div>
-
-      <!-- Articles -->
       <div style="padding:24px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           ${articleBlocks}
         </table>
       </div>
-
-      <!-- CTA -->
       <div style="padding:0 24px 32px;text-align:center;">
         <a href="https://leconomie.info" style="background:#dc2626;color:#fff;padding:14px 36px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:14px;display:inline-block;">
           Voir tous les articles sur leconomie.info
         </a>
       </div>
-
-      <!-- Footer -->
       <div style="background:#f9fafb;padding:20px 24px;text-align:center;border-top:1px solid #e5e7eb;border-radius:0 0 8px 8px;">
         <img src="https://leconomie.info/images/favicon.png" alt="L'Économie" style="height:30px;width:auto;margin-bottom:8px;" />
-        <p style="color:#6b7280;font-size:11px;margin:0;">© 2026 L'Économie — Tous droits réservés</p>
+        <p style="color:#6b7280;font-size:11px;margin:0;">© 2026 L’Économie — Tous droits réservés</p>
         <p style="color:#9ca3af;font-size:10px;margin:6px 0 0;">
           <a href="https://leconomie.info" style="color:#dc2626;text-decoration:none;">leconomie.info</a>
         </p>
@@ -90,8 +83,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const { to } = await req.json();
-  if (!to) return NextResponse.json({ error: "Adresse email requise" }, { status: 400 });
+  const body = await req.json();
+  const { to, broadcast } = body;
+
+  if (!to && !broadcast) {
+    return NextResponse.json({ error: "Paramètre 'to' ou 'broadcast: true' requis" }, { status: 400 });
+  }
 
   // Récupérer les 5 derniers articles via GraphQL
   const gqlRes = await fetch(GRAPHQL_URL, {
@@ -109,21 +106,79 @@ export async function POST(req: NextRequest) {
   if (articles.length === 0) return NextResponse.json({ error: "Aucun article trouvé" }, { status: 404 });
 
   const today = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }).toUpperCase();
+  const html = buildRecapEmail(articles, today);
+  const subject = `L'Économie — Récapitulatif du ${today}`;
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 465),
-    secure: true,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  // Collecter les destinataires
+  let recipients: string[] = [];
+
+  if (broadcast) {
+    const abonnes = await readAbonnes();
+    const newsletterSubs = await readSubscribers();
+
+    const abonnesEmails = abonnes
+      .filter(a => a.plan === "annuel" || a.plan === "mensuel")
+      .map(a => a.email.toLowerCase());
+
+    const newsletterEmails = newsletterSubs.map(s => s.email.toLowerCase());
+
+    const allEmails = new Set([...abonnesEmails, ...newsletterEmails]);
+    recipients = Array.from(allEmails);
+  } else {
+    recipients = [to];
+  }
+
+  if (recipients.length === 0) {
+    return NextResponse.json({ error: "Aucun destinataire" }, { status: 400 });
+  }
+
+  // Envoi par batch de 10, 3s entre emails, 30s entre batchs
+  const BATCH_SIZE = 10;
+  const DELAY_BETWEEN_EMAILS = 3000;
+  const DELAY_BETWEEN_BATCHES = 30000;
+  let sent = 0;
+  let errors = 0;
+
+  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+    const batch = recipients.slice(i, i + BATCH_SIZE);
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 465),
+      secure: true,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+
+    for (const email of batch) {
+      try {
+        await transporter.sendMail({
+          from: `"L'Économie" <${process.env.SMTP_USER}>`,
+          to: email,
+          subject,
+          html,
+        });
+        sent++;
+      } catch (err) {
+        console.error("Recap email error for", email, err);
+        errors++;
+      }
+      if (batch.indexOf(email) < batch.length - 1) {
+        await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
+      }
+    }
+
+    transporter.close();
+
+    if (i + BATCH_SIZE < recipients.length) {
+      await new Promise(r => setTimeout(r, DELAY_BETWEEN_BATCHES));
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    sent,
+    errors,
+    total: recipients.length,
+    articlesCount: articles.length,
   });
-
-  await transporter.sendMail({
-    from: `"L'Économie" <${process.env.SMTP_USER}>`,
-    to,
-    subject: `L'Économie — Récapitulatif du ${today}`,
-    html: buildRecapEmail(articles, today),
-  });
-
-  transporter.close();
-  return NextResponse.json({ success: true, to, articlesCount: articles.length });
 }

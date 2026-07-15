@@ -86,6 +86,8 @@ export default function DashboardPage() {
   const [pwMsg, setPwMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [pwLoading, setPwLoading] = useState(false);
 
+  const [recapStatus, setRecapStatus] = useState<string>("");
+
   // Gérer abonnés
   const [gAbEmail, setGAbEmail] = useState("");
   const [gAbName, setGAbName] = useState("");
@@ -268,6 +270,39 @@ export default function DashboardPage() {
               <StatCard icon="📰" label="Articles publiés" value={stats.articles.total} color="yellow" />
               <StatCard icon="🏢" label="Demandes de devis" value={stats.devis.total} color="purple" />
             </div>
+
+            {/* Bouton récap newsletter */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-gray-300">Newsletter récapitulative</h3>
+                <p className="text-gray-500 text-xs mt-1">Envoyer les 5 derniers articles à tous les abonnés + newsletter</p>
+              </div>
+              <button
+                onClick={async () => {
+                  if (!confirm("Envoyer le récapitulatif des derniers articles à TOUS les abonnés et inscrits newsletter ?")) return;
+                  setRecapStatus("loading");
+                  try {
+                    const res = await fetch("/api/newsletter/recap", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", "x-dashboard-token": token },
+                      body: JSON.stringify({ broadcast: true }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) setRecapStatus(`ok:${data.sent}/${data.total}`);
+                    else setRecapStatus(`err:${data.error}`);
+                  } catch { setRecapStatus("err:Erreur réseau"); }
+                }}
+                disabled={recapStatus === "loading"}
+                className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-lg text-sm transition whitespace-nowrap"
+              >
+                {recapStatus === "loading" ? "Envoi en cours..." : "Envoyer le récap"}
+              </button>
+            </div>
+            {recapStatus && recapStatus !== "loading" && (
+              <p className={`text-sm ${recapStatus.startsWith("ok") ? "text-green-400" : "text-red-400"}`}>
+                {recapStatus.startsWith("ok") ? `Envoyé avec succès (${recapStatus.split(":")[1]} emails)` : recapStatus.split(":")[1]}
+              </p>
+            )}
 
             {/* Graphique visiteurs */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
