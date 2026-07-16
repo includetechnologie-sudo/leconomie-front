@@ -14,6 +14,13 @@ function writeJSON(file: string, data: object) {
   } catch {}
 }
 
+export async function GET(req: NextRequest) {
+  const slug = req.nextUrl.searchParams.get("slug");
+  if (!slug) return NextResponse.json({ views: 0 });
+  const views = readJSON("article-views.json") as Record<string, number>;
+  return NextResponse.json({ views: views[slug] || 0 });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { slug } = await req.json();

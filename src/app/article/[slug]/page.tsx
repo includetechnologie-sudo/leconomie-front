@@ -7,6 +7,7 @@ import { GET_POST_BY_SLUG, GET_RELATED_POSTS, GET_JOURNAUX } from "@/graphql/que
 import PremiumWall from "@/components/article/PremiumWall";
 import NewsletterForm from "@/components/newsletter/NewsletterForm";
 import TrackPageView from "@/components/TrackPageView";
+import ViewCount from "@/components/article/ViewCount";
 import { parseAccessCookie, canAccess } from "@/lib/subscription";
 import type { JournalWP } from "@/lib/types";
 import type { Metadata } from "next";
@@ -235,6 +236,7 @@ export default async function ArticlePage({
               </svg>
               Temps de lecture {minutes} min
             </span>
+            <ViewCount slug={post.slug} />
           </div>
 
           {/* Image principale */}
