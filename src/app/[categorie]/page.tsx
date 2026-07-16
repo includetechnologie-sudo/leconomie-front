@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_POSTS_BY_CATEGORY } from "@/graphql/queries";
+import LoadMorePosts from "@/components/category/LoadMorePosts";
 import type { Metadata } from "next";
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -79,12 +80,18 @@ export default async function CategoriePage({
   }
 
   let posts: CatPost[] = [];
+  let hasNextPage = false;
+  let endCursor: string | null = null;
   try {
-    const data = await graphqlFetch<{ posts: { nodes: CatPost[] } }>(
-      GET_POSTS_BY_CATEGORY,
-      { category: categoryName }
-    );
+    const data = await graphqlFetch<{
+      posts: {
+        pageInfo: { hasNextPage: boolean; endCursor: string | null };
+        nodes: CatPost[];
+      };
+    }>(GET_POSTS_BY_CATEGORY, { category: categoryName });
     posts = data.posts.nodes;
+    hasNextPage = data.posts.pageInfo.hasNextPage;
+    endCursor = data.posts.pageInfo.endCursor;
   } catch { /* silence, affiche page vide */ }
 
   return (
@@ -105,33 +112,40 @@ export default async function CategoriePage({
           <Link href="/" className="text-red-600 mt-4 inline-block hover:underline">← Retour à l'accueil</Link>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
-            <Link key={post.slug} href={`/article/${post.slug}`} className="group">
-              <div className="relative h-[200px] rounded-lg overflow-hidden mb-4">
-                <Image
-                  src={post.featuredImage?.node?.sourceUrl || "/images/hero.jpg"}
-                  alt={post.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition duration-300"
+        <>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {posts.map((post) => (
+              <Link key={post.slug} href={`/article/${post.slug}`} className="group">
+                <div className="relative h-[200px] rounded-lg overflow-hidden mb-4">
+                  <Image
+                    src={post.featuredImage?.node?.sourceUrl || "/images/hero.jpg"}
+                    alt={post.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition duration-300"
+                  />
+                  {post.categories?.nodes[0] && (
+                    <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1">
+                      {post.categories.nodes[0].name}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mb-1">{formatDate(post.date)}</p>
+                <h2 className="font-bold text-lg leading-snug group-hover:text-red-600 transition line-clamp-2 mb-2">
+                  {post.title}
+                </h2>
+                <div
+                  className="text-sm text-gray-600 line-clamp-2"
+                  dangerouslySetInnerHTML={{ __html: post.excerpt }}
                 />
-                {post.categories?.nodes[0] && (
-                  <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1">
-                    {post.categories.nodes[0].name}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mb-1">{formatDate(post.date)}</p>
-              <h2 className="font-bold text-lg leading-snug group-hover:text-red-600 transition line-clamp-2 mb-2">
-                {post.title}
-              </h2>
-              <div
-                className="text-sm text-gray-600 line-clamp-2"
-                dangerouslySetInnerHTML={{ __html: post.excerpt }}
-              />
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+          <LoadMorePosts
+            categoryName={categoryName}
+            initialCursor={endCursor}
+            initialHasNext={hasNextPage}
+          />
+        </>
       )}
     </div>
   );
