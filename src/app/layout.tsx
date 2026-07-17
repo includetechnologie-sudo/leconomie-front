@@ -10,6 +10,7 @@ import RightClickProtection from "@/components/RightClickProtection";
 import PageLoader from "@/components/layout/PageLoader";
 import OnlineHeartbeat from "@/components/layout/OnlineHeartbeat";
 import OneSignalInit from "@/components/layout/OneSignalInit";
+import HeaderBanner from "@/components/layout/HeaderBanner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -113,17 +114,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
 
         {/* Bandeau publicitaire entre logo et navigation */}
-        <div className="hidden lg:block bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 py-2">
-            <a href="/magazine?tab=magazines" className="block">
-              <img
-                src="https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/bandeau-magazine-2026-scaled.jpg"
-                alt="Votre magazine L'Economie International — disponible sur notre site web"
-                className="w-full h-auto object-contain max-h-[100px]"
-              />
-            </a>
-          </div>
-        </div>
+        <HeaderBanner />
 
         <MainMenu />
         <main>{children}</main>

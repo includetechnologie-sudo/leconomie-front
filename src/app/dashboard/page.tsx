@@ -23,7 +23,7 @@ interface Stats {
   topArticles: { slug: string; views: number }[];
 }
 
-type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "settings";
+type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "banners" | "settings";
 
 function fmt(n: number) { return n.toLocaleString("fr-FR") + " FCFA"; }
 function fmtDate(iso?: string | number) {
@@ -69,6 +69,200 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
     gray: "bg-gray-700 text-gray-300 border border-gray-600",
   };
   return <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${c[color] || c.gray}`}>{children}</span>;
+}
+
+interface BannerItem {
+  id: string;
+  label: string;
+  imageUrl: string;
+  linkUrl: string;
+  alt: string;
+  active: boolean;
+}
+
+function BannersManager({ token }: { token: string }) {
+  const [banners, setBanners] = useState<BannerItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [form, setForm] = useState<Partial<BannerItem>>({});
+  const [msg, setMsg] = useState("");
+
+  const fetchBanners = useCallback(async () => {
+    const res = await fetch("/api/banners", { headers: { "x-dashboard-token": token } });
+    const data = await res.json();
+    setBanners(data);
+    setLoading(false);
+  }, [token]);
+
+  useEffect(() => { fetchBanners(); }, [fetchBanners]);
+
+  async function saveBanner(banner: BannerItem) {
+    await fetch("/api/banners", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", "x-dashboard-token": token },
+      body: JSON.stringify(banner),
+    });
+    setMsg("Enregistré !");
+    setTimeout(() => setMsg(""), 3000);
+    fetchBanners();
+    setEditing(null);
+  }
+
+  async function deleteBanner(id: string) {
+    if (!confirm("Supprimer ce bandeau ?")) return;
+    await fetch("/api/banners", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", "x-dashboard-token": token },
+      body: JSON.stringify({ id }),
+    });
+    fetchBanners();
+  }
+
+  function startEdit(b: BannerItem) {
+    setEditing(b.id);
+    setForm(b);
+  }
+
+  function startNew() {
+    const id = "banner-" + Date.now();
+    setEditing(id);
+    setForm({ id, label: "", imageUrl: "", linkUrl: "", alt: "", active: true });
+  }
+
+  if (loading) return <p className="text-gray-400 text-sm">Chargement…</p>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">Bandeaux &amp; Publicités</h2>
+        <button onClick={startNew} className="bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition">
+          + Ajouter un bandeau
+        </button>
+      </div>
+
+      {msg && <div className="bg-green-600/20 text-green-400 border border-green-600/30 px-4 py-2 rounded-lg text-sm">{msg}</div>}
+
+      {banners.map((b) => (
+        <div key={b.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
+          {editing === b.id ? (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Nom / emplacement</label>
+                <input value={form.label || ""} onChange={e => setForm({ ...form, label: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">URL de l&apos;image</label>
+                <input value={form.imageUrl || ""} onChange={e => setForm({ ...form, imageUrl: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm" placeholder="https://..." />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Lien de redirection</label>
+                <input value={form.linkUrl || ""} onChange={e => setForm({ ...form, linkUrl: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm" placeholder="/magazine ou https://..." />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Texte alternatif (alt)</label>
+                <input value={form.alt || ""} onChange={e => setForm({ ...form, alt: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                  <input type="checkbox" checked={form.active ?? true} onChange={e => setForm({ ...form, active: e.target.checked })}
+                    className="w-4 h-4 rounded" />
+                  Actif (visible sur le site)
+                </label>
+              </div>
+              {form.imageUrl && (
+                <div className="border border-gray-700 rounded-lg overflow-hidden">
+                  <img src={form.imageUrl} alt="Aperçu" className="w-full h-auto max-h-24 object-contain bg-white" />
+                </div>
+              )}
+              <div className="flex gap-3">
+                <button onClick={() => saveBanner(form as BannerItem)}
+                  className="bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                  Enregistrer
+                </button>
+                <button onClick={() => setEditing(null)}
+                  className="text-gray-400 text-xs font-bold px-4 py-2 hover:text-white transition">
+                  Annuler
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white">{b.label}</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">ID: {b.id} — Lien: {b.linkUrl}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${b.active ? "bg-green-600/20 text-green-400 border border-green-600/30" : "bg-gray-700 text-gray-400 border border-gray-600"}`}>
+                    {b.active ? "Actif" : "Inactif"}
+                  </span>
+                  <button onClick={() => startEdit(b)} className="text-blue-400 hover:text-blue-300 text-xs font-bold">Modifier</button>
+                  <button onClick={() => deleteBanner(b.id)} className="text-red-400 hover:text-red-300 text-xs font-bold">Supprimer</button>
+                </div>
+              </div>
+              {b.imageUrl && (
+                <div className="border border-gray-700 rounded-lg overflow-hidden">
+                  <img src={b.imageUrl} alt={b.alt} className="w-full h-auto max-h-20 object-contain bg-white" />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      ))}
+
+      {editing && !banners.find(b => b.id === editing) && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3">
+          <h3 className="text-sm font-bold text-white mb-2">Nouveau bandeau</h3>
+          <div>
+            <label className="text-xs text-gray-400 block mb-1">Nom / emplacement</label>
+            <input value={form.label || ""} onChange={e => setForm({ ...form, label: e.target.value })}
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 block mb-1">URL de l&apos;image</label>
+            <input value={form.imageUrl || ""} onChange={e => setForm({ ...form, imageUrl: e.target.value })}
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm" placeholder="https://..." />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 block mb-1">Lien de redirection</label>
+            <input value={form.linkUrl || ""} onChange={e => setForm({ ...form, linkUrl: e.target.value })}
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm" placeholder="/magazine ou https://..." />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 block mb-1">Texte alternatif</label>
+            <input value={form.alt || ""} onChange={e => setForm({ ...form, alt: e.target.value })}
+              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+              <input type="checkbox" checked={form.active ?? true} onChange={e => setForm({ ...form, active: e.target.checked })}
+                className="w-4 h-4 rounded" />
+              Actif
+            </label>
+          </div>
+          {form.imageUrl && (
+            <div className="border border-gray-700 rounded-lg overflow-hidden">
+              <img src={form.imageUrl} alt="Aperçu" className="w-full h-auto max-h-24 object-contain bg-white" />
+            </div>
+          )}
+          <div className="flex gap-3">
+            <button onClick={() => saveBanner(form as BannerItem)}
+              className="bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-green-700 transition">
+              Enregistrer
+            </button>
+            <button onClick={() => setEditing(null)}
+              className="text-gray-400 text-xs font-bold px-4 py-2 hover:text-white transition">
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -199,6 +393,7 @@ export default function DashboardPage() {
     { id: "articles", label: "Articles", count: stats.articles.total },
     { id: "devis", label: "Devis", count: stats.devis.total },
     { id: "gerer-abonnes", label: "Gérer Abonnés" },
+    { id: "banners", label: "Bandeaux / Pubs" },
     { id: "settings", label: "⚙ Paramètres" },
   ];
 
@@ -792,6 +987,11 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ── BANDEAUX / PUBS ── */}
+        {activeTab === "banners" && (
+          <BannersManager token={token} />
         )}
 
         {/* ── PARAMÈTRES ── */}

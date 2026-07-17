@@ -1,0 +1,18 @@
+[
+  {
+    "id": "header",
+    "label": "Bandeau en-tête (sous le logo)",
+    "imageUrl": "https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/Bandeau-achat-du-journal-dans-le-site-scaled.png",
+    "linkUrl": "/magazine",
+    "alt": "Achetez désormais votre journal en ligne sur www.leconomie.info en toute sécurité",
+    "active": true
+  },
+  {
+    "id": "homepage-mid",
+    "label": "Pub milieu de page (homepage)",
+    "imageUrl": "https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/bandeau-summit-scaled.jpg",
+    "linkUrl": "https://www.leconomiebusinesssummit.fr",
+    "alt": "L'Economie Business Summit 4e édition — Paris",
+    "active": true
+  }
+]
