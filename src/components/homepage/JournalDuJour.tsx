@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_JOURNAUX } from "@/graphql/queries";
+import { parseAccessCookie, canAccess } from "@/lib/subscription";
 import type { JournalWP } from "@/lib/types";
 
 export default async function JournalDuJour() {
@@ -15,6 +17,15 @@ export default async function JournalDuJour() {
   const numero = journal?.numero ? `N° ${journal.numero}` : "Édition du jour";
   const datePubli = journal?.datePublication || "";
   const journalId = journal?.databaseId;
+
+  const cookieStore = await cookies();
+  const raw = cookieStore.get("leconomie_access")?.value;
+  const user = raw ? parseAccessCookie(decodeURIComponent(raw)) : null;
+  const hasJournalAccess = user && canAccess(user.plan, "journal") && !user.isExpired;
+
+  const journalHref = hasJournalAccess
+    ? `/lecture/${journalId}`
+    : "/magazine?tab=quotidien";
 
   return (
     <section className="max-w-7xl mx-auto px-4 mt-10">
@@ -35,10 +46,10 @@ export default async function JournalDuJour() {
             {/* Bouton achat mobile uniquement */}
             {journalId && (
               <Link
-                href={`/lecture/${journalId}`}
+                href={journalHref}
                 className="mt-3 md:hidden inline-block bg-red-600 text-white text-xs font-bold px-4 py-2 rounded hover:bg-red-700 transition text-center"
               >
-                Acheter ce numéro
+                {hasJournalAccess ? "Lire ce numéro" : "Acheter ce numéro"}
               </Link>
             )}
           </div>
