@@ -24,13 +24,13 @@ export default function HeaderBanner() {
   const isExternal = banner.linkUrl.startsWith("http");
 
   return (
-    <div className="hidden lg:block bg-white border-b">
-      <div className="max-w-7xl mx-auto px-4 py-3">
+    <div className="bg-white border-b">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-3">
         <a
           href={banner.linkUrl}
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noreferrer" : undefined}
-          className="block w-full overflow-hidden rounded-lg hover:opacity-95 transition"
+          className="block w-full overflow-hidden rounded-md sm:rounded-lg hover:opacity-95 transition"
         >
           <img
             src={banner.imageUrl}
