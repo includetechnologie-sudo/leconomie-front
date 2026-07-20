@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
+import fs from "fs";
+import path from "path";
 import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_POST_BY_SLUG, GET_RELATED_POSTS, GET_JOURNAUX } from "@/graphql/queries";
 import PremiumWall from "@/components/article/PremiumWall";
@@ -11,6 +13,22 @@ import ViewCount from "@/components/article/ViewCount";
 import { parseAccessCookie, canAccess } from "@/lib/subscription";
 import type { JournalWP } from "@/lib/types";
 import type { Metadata } from "next";
+
+interface Banner {
+  id: string;
+  imageUrl: string;
+  linkUrl: string;
+  alt: string;
+  active: boolean;
+}
+
+function getBanner(id: string): Banner | null {
+  try {
+    const file = path.join(process.cwd(), "data", "banners.json");
+    const banners: Banner[] = JSON.parse(fs.readFileSync(file, "utf-8"));
+    return banners.find(b => b.id === id && b.active) || null;
+  } catch { return null; }
+}
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
 
@@ -454,18 +472,30 @@ export default async function ArticlePage({
         </div>
       )}
 
-      {/* ── BANDEAU 2026 — pleine largeur sous l'article ── */}
-      <div className="mt-12">
-        <Link href="/abonnement" className="block hover:opacity-95 transition rounded-lg overflow-hidden">
-          <Image
-            src="/images/bandeau-2026.jpg"
-            alt="Souscrivez à un abonnement numérique annuel à 50 000 FCFA"
-            width={1400}
-            height={224}
-            className="w-full h-auto object-cover"
-          />
-        </Link>
-      </div>
+      {/* ── BANDEAU BAS D'ARTICLE — géré depuis le dashboard ── */}
+      {(() => {
+        const articleBanner = getBanner("article-bottom");
+        if (!articleBanner) return null;
+        const isExt = articleBanner.linkUrl.startsWith("http");
+        return (
+          <div className="mt-12">
+            <a
+              href={articleBanner.linkUrl}
+              target={isExt ? "_blank" : undefined}
+              rel={isExt ? "noreferrer" : undefined}
+              className="block hover:opacity-95 transition rounded-lg overflow-hidden"
+            >
+              <Image
+                src={articleBanner.imageUrl}
+                alt={articleBanner.alt}
+                width={1400}
+                height={224}
+                className="w-full h-auto object-cover"
+              />
+            </a>
+          </div>
+        );
+      })()}
 
     </div>
   );

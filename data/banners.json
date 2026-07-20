@@ -14,5 +14,13 @@
     "linkUrl": "https://www.leconomiebusinesssummit.fr",
     "alt": "L'Economie Business Summit 4e édition — Paris",
     "active": true
+  },
+  {
+    "id": "article-bottom",
+    "label": "Bandeau bas d'article",
+    "imageUrl": "/images/bandeau-2026.jpg",
+    "linkUrl": "/abonnement",
+    "alt": "Souscrivez à un abonnement numérique annuel à 50 000 FCFA",
+    "active": true
   }
 ]
