@@ -25,17 +25,17 @@ export default function HeaderBanner() {
 
   return (
     <div className="hidden lg:block bg-white border-b">
-      <div className="max-w-7xl mx-auto px-4 py-2">
+      <div className="max-w-7xl mx-auto px-4 py-3">
         <a
           href={banner.linkUrl}
           target={isExternal ? "_blank" : undefined}
           rel={isExternal ? "noreferrer" : undefined}
-          className="block"
+          className="block w-full overflow-hidden rounded-lg hover:opacity-95 transition"
         >
           <img
             src={banner.imageUrl}
             alt={banner.alt}
-            className="w-full h-auto object-contain max-h-[100px]"
+            className="w-full h-auto object-cover"
           />
         </a>
       </div>
