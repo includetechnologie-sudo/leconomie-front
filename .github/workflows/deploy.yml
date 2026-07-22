@@ -12,8 +12,17 @@ jobs:
       - name: Deploy
         run: |
           cd /var/www/leconomie-front
+
+          # Sauvegarder les données vivantes (modifiées depuis le dashboard)
+          cp -r data /tmp/leconomie-data-backup
+
           git fetch origin main
           git reset --hard origin/main
+
+          # Restaurer les données vivantes après le reset
+          cp -r /tmp/leconomie-data-backup/* data/
+          rm -rf /tmp/leconomie-data-backup
+
           /usr/bin/npm ci --production=false
           /usr/bin/npm run build
           pm2 restart leconomie-front || pm2 start npm --name leconomie-front -- start
