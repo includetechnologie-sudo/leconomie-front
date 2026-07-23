@@ -53,9 +53,7 @@ export async function POST(req: NextRequest) {
       customer_lang: "fr",
     };
 
-    if (isCard) {
-      body.payment_channel = "card";
-    } else {
+    if (!isCard) {
       const digits = phone.replace(/\D/g, "");
       body.customer_phone_number = digits;
     }
