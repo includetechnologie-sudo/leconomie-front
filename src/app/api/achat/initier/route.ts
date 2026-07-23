@@ -17,7 +17,7 @@ async function savePending(ref: string, data: object) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, phone, id, type, titre, amount } = await req.json() as {
+    const { email, name, phone, id, type, titre, amount, paymentMethod } = await req.json() as {
       email: string;
       name: string;
       phone: string;
@@ -25,31 +25,40 @@ export async function POST(req: NextRequest) {
       type: "journal" | "magazine";
       titre: string;
       amount: number;
+      paymentMethod?: "mobile" | "card";
     };
 
-    if (!email || !name || !phone || !id || !type || !amount) {
+    const isCard = paymentMethod === "card";
+
+    if (!email || !name || !id || !type || !amount) {
       return NextResponse.json({ error: "Paramètres manquants." }, { status: 400 });
+    }
+    if (!isCard && !phone) {
+      return NextResponse.json({ error: "Numéro de téléphone requis." }, { status: 400 });
     }
 
     const reference = `leco-achat-${id}-${type}-${Date.now()}`;
     const publicKey = process.env.MYCOOLPAY_PUBLIC_KEY!;
 
-    const digits = phone.replace(/\D/g, "");
-    const formattedPhone = digits.startsWith("237") ? digits : `237${digits}`;
-
     // Sauvegarde l'intention d'achat pour retrouver email/infos au retour
     await savePending(reference, { email, name, id, type, titre });
 
-    const body = {
+    const body: Record<string, unknown> = {
       transaction_amount: amount,
       transaction_currency: "XAF",
       transaction_reason: `Achat numéro – ${titre}`,
       app_transaction_ref: reference,
-      customer_phone_number: formattedPhone,
       customer_name: name,
       customer_email: email,
       customer_lang: "fr",
     };
+
+    if (isCard) {
+      body.payment_channel = "card";
+    } else {
+      const digits = phone.replace(/\D/g, "");
+      body.customer_phone_number = digits;
+    }
 
     const res = await fetch(`https://my-coolpay.com/api/${publicKey}/paylink`, {
       method: "POST",

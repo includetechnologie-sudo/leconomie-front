@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import PaymentMethodSelector, { MOBILE_MONEY_COUNTRIES, type PaymentMethod, type CountryOption } from "@/components/payment/PaymentMethodSelector";
 
 interface Quotidien {
   id: string;
@@ -84,23 +85,28 @@ function AchatModal({ magazine, onClose }: { magazine: Magazine; onClose: () => 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>("mobile");
+  const [country, setCountry] = useState<CountryOption>(MOBILE_MONEY_COUNTRIES[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function handleAchat() {
-    if (!email || !name || !phone) { setError("Veuillez remplir tous les champs."); return; }
+    if (!email || !name) { setError("Veuillez remplir tous les champs."); return; }
+    if (method === "mobile" && !phone) { setError("Veuillez renseigner votre numéro."); return; }
     setError("");
     setLoading(true);
     try {
+      const fullPhone = method === "mobile" ? `${country.dial}${phone}` : "";
       const res = await fetch("/api/achat/initier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email, name, phone,
+          email, name, phone: fullPhone,
           id: Number(magazine.id),
           type: "magazine",
           titre: magazine.titre,
           amount: magazine.prix,
+          paymentMethod: method,
         }),
       });
       const data = await res.json();
@@ -134,15 +140,21 @@ function AchatModal({ magazine, onClose }: { magazine: Magazine; onClose: () => 
             className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-500" />
           <input type="email" placeholder="Votre email" value={email} onChange={e => setEmail(e.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-          <input type="tel" placeholder="Numéro Mobile Money (6XXXXXXXX)" value={phone} onChange={e => setPhone(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+          <PaymentMethodSelector
+            method={method}
+            onMethodChange={setMethod}
+            country={country}
+            onCountryChange={setCountry}
+            phone={phone}
+            onPhoneChange={setPhone}
+          />
         </div>
         {error && <p className="text-red-600 text-xs mb-3">{error}</p>}
         <button onClick={handleAchat} disabled={loading}
           className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition text-sm disabled:opacity-60 mb-2">
           {loading ? "Redirection…" : `Acheter — ${formatPrice(magazine.prix)}`}
         </button>
-        <p className="text-xs text-gray-400 text-center">Paiement sécurisé via MyCoolPay · Mobile Money</p>
+        <p className="text-xs text-gray-400 text-center">Paiement sécurisé via MyCoolPay · Mobile Money &amp; Carte bancaire</p>
       </div>
     </div>
   );
@@ -594,23 +606,28 @@ function AchatJournalModal({ journal, onClose }: { journal: Quotidien; onClose: 
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>("mobile");
+  const [country, setCountry] = useState<CountryOption>(MOBILE_MONEY_COUNTRIES[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function handleAchat() {
-    if (!email || !name || !phone) { setError("Veuillez remplir tous les champs."); return; }
+    if (!email || !name) { setError("Veuillez remplir tous les champs."); return; }
+    if (method === "mobile" && !phone) { setError("Veuillez renseigner votre numéro."); return; }
     setError("");
     setLoading(true);
     try {
+      const fullPhone = method === "mobile" ? `${country.dial}${phone}` : "";
       const res = await fetch("/api/achat/initier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email, name, phone,
+          email, name, phone: fullPhone,
           id: Number(journal.id),
           type: "journal",
           titre: journal.titre,
           amount: journal.prix,
+          paymentMethod: method,
         }),
       });
       const data = await res.json();
@@ -655,8 +672,14 @@ function AchatJournalModal({ journal, onClose }: { journal: Quotidien; onClose: 
             className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-500" />
           <input type="email" placeholder="Votre email" value={email} onChange={e => setEmail(e.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-          <input type="tel" placeholder="Numéro Mobile Money (6XXXXXXXX)" value={phone} onChange={e => setPhone(e.target.value)}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+          <PaymentMethodSelector
+            method={method}
+            onMethodChange={setMethod}
+            country={country}
+            onCountryChange={setCountry}
+            phone={phone}
+            onPhoneChange={setPhone}
+          />
         </div>
 
         {error && <p className="text-red-600 text-xs mb-3">{error}</p>}
@@ -673,7 +696,7 @@ function AchatJournalModal({ journal, onClose }: { journal: Quotidien; onClose: 
           </a>
         </div>
 
-        <p className="text-xs text-gray-400 text-center mt-3">Paiement sécurisé via MyCoolPay · Mobile Money</p>
+        <p className="text-xs text-gray-400 text-center mt-3">Paiement sécurisé via MyCoolPay · Mobile Money &amp; Carte bancaire</p>
       </div>
     </div>
   );

@@ -21,29 +21,36 @@ async function savePendingAbonnement(ref: string, email: string, name: string, p
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, phone, plan, amount } = await req.json();
+    const { email, name, phone, plan, amount, paymentMethod } = await req.json();
 
-    if (!email || !name || !phone || !plan || !amount) {
+    const isCard = paymentMethod === "card";
+
+    if (!email || !name || !plan || !amount) {
       return NextResponse.json({ error: "Paramètres manquants." }, { status: 400 });
+    }
+    if (!isCard && !phone) {
+      return NextResponse.json({ error: "Numéro de téléphone requis." }, { status: 400 });
     }
 
     const reference = `leco-${plan}-${Date.now()}`;
     const publicKey = process.env.MYCOOLPAY_PUBLIC_KEY!;
 
-    // MyCoolPay requiert le format international sans + : 237XXXXXXXXX
-    const digits = phone.replace(/\D/g, "");
-    const formattedPhone = digits.startsWith("237") ? digits : `237${digits}`;
-
-    const body = {
+    const body: Record<string, unknown> = {
       transaction_amount: amount,
       transaction_currency: "XAF",
       transaction_reason: `Abonnement L'Economie – Plan ${plan}`,
       app_transaction_ref: reference,
-      customer_phone_number: formattedPhone,
       customer_name: name,
       customer_email: email,
       customer_lang: "fr",
     };
+
+    if (isCard) {
+      body.payment_channel = "card";
+    } else {
+      const digits = phone.replace(/\D/g, "");
+      body.customer_phone_number = digits;
+    }
 
     const res = await fetch(`https://my-coolpay.com/api/${publicKey}/paylink`, {
       method: "POST",
