@@ -29,12 +29,11 @@ export default function HomePage() {
       <AdvertisementSection />
 
       {/* Rubriques approfondies depuis WordPress */}
-      <RubriqueSection title="Opinion"        displayTitle="Opinions & Débats" />
-      <RubriqueSection title="Interview"      displayTitle="Interviews" />
-
-<RubriqueSection title="Événement"      displayTitle="Événements" />
-      <RubriqueSection title="Décideur"          displayTitle="Décideurs" />
       <RubriqueSection title="bourse-marches"   displayTitle="Bourse &amp; Marchés" categorySlug="bourse-marches" />
+      <RubriqueSection title="Interview"      displayTitle="Interviews" />
+      <RubriqueSection title="Événement"      displayTitle="Événements" />
+      <RubriqueSection title="Décideur"          displayTitle="Décideurs" />
+      <RubriqueSection title="Opinion"        displayTitle="Opinions & Débats" />
       <RubriqueSection title="Infrastructure"   displayTitle="Infrastructures" />
 
       {/* Chaîne YouTube / TV */}
