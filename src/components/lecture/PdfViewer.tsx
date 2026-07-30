@@ -16,6 +16,7 @@ export default function PdfViewer({ pdfUrl }: Props) {
   const pdfRef = useRef<any>(null);
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const baseScaleRef = useRef(1.4);
 
   const renderPage = useCallback(async (pageNum: number, sc: number) => {
     if (!pdfRef.current || !canvasRef.current) return;
@@ -52,7 +53,18 @@ export default function PdfViewer({ pdfUrl }: Props) {
         pdfRef.current = pdf;
         setNumPages(pdf.numPages);
         setStatus("ready");
-        await renderPage(1, scale);
+
+        // Calculer le zoom pour que le PDF tienne en largeur
+        const page = await pdf.getPage(1);
+        const containerWidth = containerRef.current?.clientWidth || window.innerWidth;
+        const padding = 32;
+        const availableWidth = containerWidth - padding;
+        const pageWidth = page.getViewport({ scale: 1 }).width;
+        const fitScale = availableWidth / pageWidth;
+        const initialScale = window.innerWidth < 768 ? fitScale : 1.4;
+        baseScaleRef.current = initialScale;
+        setScale(initialScale);
+        await renderPage(1, initialScale);
       } catch {
         if (!cancelled) setStatus("error");
       }
@@ -73,16 +85,28 @@ export default function PdfViewer({ pdfUrl }: Props) {
 
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const isSwiping = useRef(false);
 
   function handleTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (isSwiping.current) return;
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartX.current);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY.current);
+    if (deltaX > 20 && deltaX > deltaY) {
+      isSwiping.current = true;
+      e.preventDefault();
+    }
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
+    if (!isSwiping.current) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    if (Math.abs(deltaX) < 50 || Math.abs(deltaY) > Math.abs(deltaX)) return;
+    if (Math.abs(deltaX) < 50) return;
     if (deltaX < 0) goTo(currentPage + 1);
     else goTo(currentPage - 1);
   }
@@ -155,10 +179,11 @@ export default function PdfViewer({ pdfUrl }: Props) {
       {/* Zone d'affichage */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto flex items-start justify-center py-6 px-4"
-        style={{ userSelect: "none", WebkitUserSelect: "none" }}
+        className="flex-1 overflow-auto md:overflow-auto overflow-x-hidden flex items-start justify-center py-6 px-4"
+        style={{ userSelect: "none", WebkitUserSelect: "none", touchAction: "pan-y" }}
         onContextMenu={(e) => e.preventDefault()}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         {/* Spinner chargement */}
