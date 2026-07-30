@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 
 interface Props {
   pdfUrl: string;
@@ -69,6 +69,22 @@ export default function PdfViewer({ pdfUrl }: Props) {
   function goTo(page: number) {
     const p = Math.max(1, Math.min(page, numPages));
     setCurrentPage(p);
+  }
+
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(deltaX) < 50 || Math.abs(deltaY) > Math.abs(deltaX)) return;
+    if (deltaX < 0) goTo(currentPage + 1);
+    else goTo(currentPage - 1);
   }
 
   return (
@@ -142,6 +158,8 @@ export default function PdfViewer({ pdfUrl }: Props) {
         className="flex-1 overflow-auto flex items-start justify-center py-6 px-4"
         style={{ userSelect: "none", WebkitUserSelect: "none" }}
         onContextMenu={(e) => e.preventDefault()}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Spinner chargement */}
         {status === "loading" && (
