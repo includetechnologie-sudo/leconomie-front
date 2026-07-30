@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import MainMenu from "@/components/navigation/MainMenu";
 import RightClickProtection from "@/components/RightClickProtection";
 import SupportChat from "@/components/SupportChat";
+import CookieBanner from "@/components/CookieBanner";
 import PageLoader from "@/components/layout/PageLoader";
 import OnlineHeartbeat from "@/components/layout/OnlineHeartbeat";
 import OneSignalInit from "@/components/layout/OneSignalInit";
@@ -121,6 +122,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main>{children}</main>
         <Footer />
         <SupportChat />
+        <CookieBanner />
       </body>
     </html>
   );
