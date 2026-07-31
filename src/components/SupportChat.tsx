@@ -203,35 +203,30 @@ export default function SupportChat() {
       {/* Bouton flottant */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-5 right-5 z-50 w-14 h-14 bg-green-500 hover:bg-green-600 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
+        className={`fixed bottom-5 right-5 z-[9999] w-14 h-14 bg-red-600 hover:bg-red-700 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
           showButton && !isOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
         }`}
         aria-label="Support"
       >
-        <svg width="26" height="26" fill="white" viewBox="0 0 24 24">
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
-          <path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
-        </svg>
-        <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+        <span className="text-white font-serif font-bold text-2xl leading-none">E</span>
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse" />
       </button>
 
       {/* Fenêtre de chat */}
       {isOpen && (
         <div
-          className={`fixed z-50 transition-all duration-300 ease-out ${
+          className={`fixed z-[9999] transition-all duration-300 ease-out ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           } bottom-0 right-0 sm:bottom-5 sm:right-5 w-full sm:w-[380px] h-full sm:h-[520px] sm:max-h-[80vh] sm:rounded-2xl overflow-hidden shadow-2xl border border-gray-200 bg-white flex flex-col`}
         >
           {/* Header */}
-          <div className="bg-green-600 text-white px-4 py-3 flex items-center gap-3 shrink-0">
+          <div className="bg-red-600 text-white px-4 py-3 flex items-center gap-3 shrink-0">
             <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
-              <svg width="20" height="20" fill="white" viewBox="0 0 24 24">
-                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-              </svg>
+              <span className="text-white font-serif font-bold text-lg">E</span>
             </div>
             <div className="flex-1">
               <p className="font-bold text-sm leading-tight">Support L&apos;Économie</p>
-              <p className="text-xs text-green-100">En ligne • Répond instantanément</p>
+              <p className="text-xs text-red-100">En ligne • Répond instantanément</p>
             </div>
             <button
               onClick={handleClose}
@@ -252,7 +247,7 @@ export default function SupportChat() {
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line ${
                     msg.from === "user"
-                      ? "bg-green-600 text-white rounded-br-md"
+                      ? "bg-red-600 text-white rounded-br-md"
                       : "bg-white text-gray-800 shadow-sm border border-gray-100 rounded-bl-md"
                   }`}
                 >
@@ -268,7 +263,7 @@ export default function SupportChat() {
                   <button
                     key={opt}
                     onClick={() => handleOption(opt)}
-                    className="bg-white border border-green-200 text-green-700 text-sm px-3 py-1.5 rounded-full hover:bg-green-50 hover:border-green-400 transition shadow-sm"
+                    className="bg-white border border-red-200 text-red-700 text-sm px-3 py-1.5 rounded-full hover:bg-red-50 hover:border-red-400 transition shadow-sm"
                   >
                     {opt}
                   </button>
@@ -281,7 +276,7 @@ export default function SupportChat() {
           {/* Footer */}
           <div className="bg-white border-t border-gray-100 px-4 py-2.5 text-center shrink-0">
             <p className="text-xs text-gray-400">
-              Propulsé par L&apos;Économie • <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" className="text-green-600 hover:underline">WhatsApp direct</a>
+              Propulsé par L&apos;Économie • <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" className="text-red-600 hover:underline">WhatsApp direct</a>
             </p>
           </div>
         </div>
