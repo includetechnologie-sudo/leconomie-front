@@ -203,12 +203,12 @@ export default function SupportChat() {
       {/* Bouton flottant */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-5 right-5 z-[9999] w-14 h-14 bg-red-600 hover:bg-red-700 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
+        className={`fixed bottom-5 right-5 z-[9999] w-14 h-14 bg-white hover:bg-gray-50 rounded-full shadow-lg border-2 border-red-600 flex items-center justify-center transition-all duration-300 ${
           showButton && !isOpen ? "scale-100 opacity-100" : "scale-0 opacity-0"
         }`}
         aria-label="Support"
       >
-        <span className="text-white font-serif font-bold text-2xl leading-none">E</span>
+        <img src="/images/favicon.png" alt="Support" className="w-9 h-9 object-contain" />
         <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse" />
       </button>
 
@@ -221,8 +221,8 @@ export default function SupportChat() {
         >
           {/* Header */}
           <div className="bg-red-600 text-white px-4 py-3 flex items-center gap-3 shrink-0">
-            <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
-              <span className="text-white font-serif font-bold text-lg">E</span>
+            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center">
+              <img src="/images/favicon.png" alt="" className="w-6 h-6 object-contain" />
             </div>
             <div className="flex-1">
               <p className="font-bold text-sm leading-tight">Support L&apos;Économie</p>
