@@ -6,17 +6,24 @@ interface Props {
   pdfUrl: string;
 }
 
+type ZoomMode = "normal" | "loupe";
+
 export default function PdfViewer({ pdfUrl }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1.4);
+  const [zoomMode, setZoomMode] = useState<ZoomMode>("normal");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const pdfRef = useRef<any>(null);
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const baseScaleRef = useRef(1.4);
+
+  const pinchStartDist = useRef(0);
+  const pinchStartScale = useRef(1.4);
+  const isPinching = useRef(false);
 
   const renderPage = useCallback(async (pageNum: number, sc: number) => {
     if (!pdfRef.current || !canvasRef.current) return;
@@ -54,7 +61,6 @@ export default function PdfViewer({ pdfUrl }: Props) {
         setNumPages(pdf.numPages);
         setStatus("ready");
 
-        // Calculer le zoom pour que le PDF tienne en largeur
         const page = await pdf.getPage(1);
         const containerWidth = containerRef.current?.clientWidth || window.innerWidth;
         const padding = 32;
@@ -83,27 +89,64 @@ export default function PdfViewer({ pdfUrl }: Props) {
     setCurrentPage(p);
   }
 
+  function toggleLoupe() {
+    if (zoomMode === "loupe") {
+      setZoomMode("normal");
+      setScale(baseScaleRef.current);
+    } else {
+      setZoomMode("loupe");
+      setScale(baseScaleRef.current * 2.2);
+    }
+  }
+
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const isSwiping = useRef(false);
 
+  function getTouchDist(e: React.TouchEvent) {
+    const t = e.touches;
+    const dx = t[1].clientX - t[0].clientX;
+    const dy = t[1].clientY - t[0].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
   function handleTouchStart(e: React.TouchEvent) {
+    if (e.touches.length === 2) {
+      isPinching.current = true;
+      pinchStartDist.current = getTouchDist(e);
+      pinchStartScale.current = scale;
+      return;
+    }
+    isPinching.current = false;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isSwiping.current = false;
   }
 
   function handleTouchMove(e: React.TouchEvent) {
-    if (isSwiping.current) return;
+    if (e.touches.length === 2 && isPinching.current) {
+      const dist = getTouchDist(e);
+      const ratio = dist / pinchStartDist.current;
+      const newScale = Math.min(4, Math.max(0.5, pinchStartScale.current * ratio));
+      setScale(+newScale.toFixed(2));
+      setZoomMode(newScale > baseScaleRef.current * 1.1 ? "loupe" : "normal");
+      e.preventDefault();
+      return;
+    }
+    if (isSwiping.current || isPinching.current) return;
     const deltaX = Math.abs(e.touches[0].clientX - touchStartX.current);
     const deltaY = Math.abs(e.touches[0].clientY - touchStartY.current);
-    if (deltaX > 20 && deltaX > deltaY) {
+    if (deltaX > 20 && deltaX > deltaY && scale <= baseScaleRef.current * 1.1) {
       isSwiping.current = true;
       e.preventDefault();
     }
   }
 
   function handleTouchEnd(e: React.TouchEvent) {
+    if (isPinching.current) {
+      isPinching.current = false;
+      return;
+    }
     if (!isSwiping.current) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     if (Math.abs(deltaX) < 50) return;
@@ -115,13 +158,12 @@ export default function PdfViewer({ pdfUrl }: Props) {
     <div
       className="flex flex-col bg-gray-900"
       style={{ minHeight: "calc(100vh - 56px)" }}
-      // Désactive le clic droit sur tout le composant
       onContextMenu={(e) => e.preventDefault()}
     >
       {/* Barre de contrôles */}
       {status === "ready" && (
         <div
-          className="flex items-center justify-center gap-3 bg-gray-800 border-b border-gray-700 px-4 py-2 flex-wrap select-none"
+          className="flex items-center justify-center gap-2 sm:gap-3 bg-gray-800 border-b border-gray-700 px-3 sm:px-4 py-2 flex-wrap select-none"
           onContextMenu={(e) => e.preventDefault()}
         >
           <button
@@ -153,7 +195,7 @@ export default function PdfViewer({ pdfUrl }: Props) {
           <div className="w-px h-5 bg-gray-600" />
 
           <button
-            onClick={() => setScale((s) => Math.max(0.5, +(s - 0.2).toFixed(1)))}
+            onClick={() => setScale((s) => { const n = Math.max(0.5, +(s - 0.2).toFixed(1)); setZoomMode(n > baseScaleRef.current * 1.1 ? "loupe" : "normal"); return n; })}
             className="p-1.5 rounded hover:bg-gray-700 text-white transition"
             title="Zoom arrière"
           >
@@ -165,7 +207,7 @@ export default function PdfViewer({ pdfUrl }: Props) {
           <span className="text-gray-400 text-xs w-10 text-center tabular-nums">{Math.round(scale * 100)}%</span>
 
           <button
-            onClick={() => setScale((s) => Math.min(3, +(s + 0.2).toFixed(1)))}
+            onClick={() => setScale((s) => { const n = Math.min(4, +(s + 0.2).toFixed(1)); setZoomMode(n > baseScaleRef.current * 1.1 ? "loupe" : "normal"); return n; })}
             className="p-1.5 rounded hover:bg-gray-700 text-white transition"
             title="Zoom avant"
           >
@@ -173,14 +215,31 @@ export default function PdfViewer({ pdfUrl }: Props) {
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
             </svg>
           </button>
+
+          <div className="w-px h-5 bg-gray-600" />
+
+          {/* Bouton Loupe */}
+          <button
+            onClick={toggleLoupe}
+            className={`p-1.5 rounded transition flex items-center gap-1 ${
+              zoomMode === "loupe" ? "bg-red-600 text-white" : "hover:bg-gray-700 text-white"
+            }`}
+            title={zoomMode === "loupe" ? "Désactiver la loupe" : "Activer la loupe (x2.2)"}
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+            <span className="text-xs hidden sm:inline">Loupe</span>
+          </button>
         </div>
       )}
 
       {/* Zone d'affichage */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-auto md:overflow-auto overflow-x-hidden flex items-start justify-center py-6 px-4"
-        style={{ userSelect: "none", WebkitUserSelect: "none", touchAction: "pan-y" }}
+        className="flex-1 overflow-auto flex items-start justify-center py-6 px-4"
+        style={{ userSelect: "none", WebkitUserSelect: "none", touchAction: "pan-x pan-y pinch-zoom" }}
         onContextMenu={(e) => e.preventDefault()}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -229,7 +288,7 @@ export default function PdfViewer({ pdfUrl }: Props) {
           <canvas
             ref={canvasRef}
             className="shadow-2xl rounded"
-            style={{ maxWidth: "100%", display: "block", pointerEvents: "none" }}
+            style={{ maxWidth: zoomMode === "loupe" ? "none" : "100%", display: "block", pointerEvents: "none" }}
             onContextMenu={(e) => e.preventDefault()}
           />
         )}
