@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { JournalWP, MagazineWP } from "@/lib/types";
@@ -225,37 +226,7 @@ export default function MonCompteClient({ user, journaux, magazines, achats }: P
                 </Link>
               </div>
             ) : (
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                {journaux.length === 0 ? (
-                  <div className="p-6 text-center text-sm text-gray-500">
-                    Aucun journal disponible pour le moment.
-                  </div>
-                ) : journaux.map((j, i) => (
-                  <div key={j.id} className={`flex items-center justify-between px-5 py-4 gap-4 ${i !== 0 ? "border-t border-gray-50" : ""} hover:bg-gray-50 transition`}>
-                    <div className="flex items-center gap-4">
-                      <div className="bg-red-50 rounded-lg p-2.5">
-                        <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
-                          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-red-600">{j.numero}</span>
-                        <p className="text-sm font-medium text-gray-900 leading-snug">{j.title}</p>
-                        <p className="text-xs text-gray-400">{j.datePublication}</p>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/lecture/${j.databaseId}`}
-                      className="shrink-0 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition"
-                    >
-                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                      </svg>
-                      Lire
-                    </Link>
-                  </div>
-                ))}
-              </div>
+              <MonthGroupedList items={journaux} type="journal" />
             )}
           </section>
 
@@ -279,37 +250,7 @@ export default function MonCompteClient({ user, journaux, magazines, achats }: P
                 </Link>
               </div>
             ) : (
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                {magazines.length === 0 ? (
-                  <div className="p-6 text-center text-sm text-gray-500">
-                    Aucun magazine disponible pour le moment.
-                  </div>
-                ) : magazines.map((m, i) => (
-                  <div key={m.id} className={`flex items-center justify-between px-5 py-4 gap-4 ${i !== 0 ? "border-t border-gray-50" : ""} hover:bg-gray-50 transition`}>
-                    <div className="flex items-center gap-4">
-                      <div className="bg-red-50 rounded-lg p-2.5">
-                        <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
-                          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-red-600">{m.numero}</span>
-                        <p className="text-sm font-medium text-gray-900 leading-snug">{m.title}</p>
-                        <p className="text-xs text-gray-400">{m.datePublication}</p>
-                      </div>
-                    </div>
-                    <Link
-                      href={`/lecture/${m.databaseId}`}
-                      className="shrink-0 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition"
-                    >
-                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                      </svg>
-                      Lire
-                    </Link>
-                  </div>
-                ))}
-              </div>
+              <MonthGroupedList items={magazines} type="magazine" />
             )}
           </section>
 
@@ -447,6 +388,125 @@ export default function MonCompteClient({ user, journaux, magazines, achats }: P
 
         </main>
       </div>
+    </div>
+  );
+}
+
+// Sous-composant : journaux/magazines regroupés par mois
+const MOIS_FR = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
+
+function getMonthKey(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+  const yearMatch = dateStr.match(/(\d{4})/);
+  return yearMatch ? `${yearMatch[1]}-00` : "0000-00";
+}
+
+function getMonthLabel(key: string): string {
+  const [year, month] = key.split("-");
+  const m = parseInt(month, 10);
+  if (isNaN(m) || m < 0 || m > 11) return year;
+  return `${MOIS_FR[m]} ${year}`;
+}
+
+function MonthGroupedList({ items, type }: { items: (JournalWP | MagazineWP)[]; type: "journal" | "magazine" }) {
+  const [openMonth, setOpenMonth] = useState<string | null>(null);
+
+  if (items.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center text-sm text-gray-500">
+        Aucun {type} disponible pour le moment.
+      </div>
+    );
+  }
+
+  const grouped = new Map<string, typeof items>();
+  items.forEach((item) => {
+    const key = getMonthKey(item.datePublication || "");
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(item);
+  });
+  const sortedKeys = [...grouped.keys()].sort((a, b) => b.localeCompare(a));
+
+  return (
+    <div className="space-y-3">
+      {/* Dossiers par mois */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {sortedKeys.map((key) => {
+          const monthItems = grouped.get(key)!;
+          const isOpen = openMonth === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setOpenMonth(isOpen ? null : key)}
+              className={`bg-white rounded-xl border shadow-sm p-4 hover:shadow-md transition text-center ${
+                isOpen ? "border-red-300 ring-2 ring-red-100" : "border-gray-100"
+              }`}
+            >
+              <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                </svg>
+              </div>
+              <p className="text-sm font-bold text-gray-800">{getMonthLabel(key)}</p>
+              <p className="text-xs text-gray-400">{monthItems.length} {type}{monthItems.length > 1 ? "s" : ""}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Contenu du mois ouvert */}
+      {openMonth && grouped.has(openMonth) && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
+            <span className="text-sm font-bold text-gray-700 flex items-center gap-2">
+              <svg width="16" height="16" fill="none" stroke="#dc2626" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+              </svg>
+              {getMonthLabel(openMonth)}
+            </span>
+            <button onClick={() => setOpenMonth(null)} className="text-gray-400 hover:text-red-600 transition">
+              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          {grouped.get(openMonth)!.map((item, i) => (
+            <div key={item.id} className={`flex items-center justify-between px-5 py-4 gap-4 ${i !== 0 ? "border-t border-gray-50" : ""} hover:bg-gray-50 transition`}>
+              <div className="flex items-center gap-4">
+                <div className="bg-red-50 rounded-lg p-2.5">
+                  {type === "journal" ? (
+                    <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-red-600">{(item as JournalWP).numero || ""}</span>
+                  <p className="text-sm font-medium text-gray-900 leading-snug">{item.title}</p>
+                  <p className="text-xs text-gray-400">{item.datePublication}</p>
+                </div>
+              </div>
+              <Link
+                href={`/lecture/${item.databaseId}`}
+                className="shrink-0 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition"
+              >
+                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                Lire
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

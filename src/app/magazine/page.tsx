@@ -3,6 +3,7 @@ import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_JOURNAUX, GET_MAGAZINES } from "@/graphql/queries";
 import type { JournalWP, MagazineWP } from "@/lib/types";
 import MagazineTabs from "@/components/magazine/MagazineTabs";
+import { readAbonnes } from "@/lib/abonnes";
 
 export const metadata = {
   title: "Journal & Magazine",
@@ -22,6 +23,19 @@ export default async function MagazinePage() {
       isConnected = true;
       userEmail = data.user?.email || "";
     } catch { /* cookie invalide */ }
+  }
+
+  // Vérifier abonnement actif et achats
+  let hasSubscription = false;
+  let purchasedIds: string[] = [];
+
+  if (userEmail) {
+    const abonnes = await readAbonnes();
+    const user = abonnes.find((a) => a.email === userEmail);
+    if (user) {
+      hasSubscription = user.plan !== "gratuit" && user.expiresAt > Date.now();
+      purchasedIds = (user.achats || []).map((a) => String(a.id));
+    }
   }
 
   // Récupère journaux et magazines depuis WordPress
@@ -75,6 +89,8 @@ export default async function MagazinePage() {
         magazines={magazinesList}
         isConnected={isConnected}
         userEmail={userEmail}
+        hasSubscription={hasSubscription}
+        purchasedIds={purchasedIds}
       />
     </div>
   );

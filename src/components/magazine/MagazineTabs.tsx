@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import PaymentMethodSelector, { MOBILE_MONEY_COUNTRIES, type PaymentMethod, type CountryOption } from "@/components/payment/PaymentMethodSelector";
+import ArchivesSection from "@/components/magazine/ArchivesSection";
 
 interface Quotidien {
   id: string;
@@ -34,6 +35,8 @@ interface Props {
   magazines: Magazine[];
   isConnected: boolean;
   userEmail: string;
+  hasSubscription?: boolean;
+  purchasedIds?: string[];
 }
 
 function formatDate(d: string) {
@@ -174,7 +177,7 @@ function getYears(items: { date: string; num: string }[]): string[] {
   return Array.from(years).sort((a, b) => Number(b) - Number(a));
 }
 
-export default function MagazineTabs({ quotidiens, magazines, isConnected }: Props) {
+export default function MagazineTabs({ quotidiens, magazines, isConnected, hasSubscription = false, purchasedIds = [] }: Props) {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "magazines" ? "magazine" : "quotidien";
   const [tab, setTab] = useState<"quotidien" | "magazine">(initialTab);
@@ -410,6 +413,16 @@ export default function MagazineTabs({ quotidiens, magazines, isConnected }: Pro
               )}
             </>
           )}
+
+          {/* Archives Quotidiens */}
+          <ArchivesSection
+            items={archives.map((q) => ({ id: q.id, num: q.num, date: q.date, titre: q.titre, cover: q.cover, prix: q.prix }))}
+            type="journal"
+            isConnected={isConnected}
+            hasAccess={hasSubscription}
+            purchasedIds={purchasedIds}
+            onBuy={(item) => setAchatJournal(archives.find((q) => q.id === item.id) || null)}
+          />
         </div>
       )}
 
@@ -575,6 +588,16 @@ export default function MagazineTabs({ quotidiens, magazines, isConnected }: Pro
               )}
             </>
           )}
+
+          {/* Archives Magazines */}
+          <ArchivesSection
+            items={archivesMag.map((m) => ({ id: m.id, num: m.num, date: m.date, titre: m.titre, cover: m.cover, prix: m.prix }))}
+            type="magazine"
+            isConnected={isConnected}
+            hasAccess={hasSubscription}
+            purchasedIds={purchasedIds}
+            onBuy={(item) => setAchatMag(archivesMag.find((m) => m.id === item.id) || null)}
+          />
         </div>
       )}
 
