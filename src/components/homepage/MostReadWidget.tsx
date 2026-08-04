@@ -2,7 +2,7 @@ import Link from "next/link";
 import fs from "fs";
 import path from "path";
 import { graphqlFetch } from "@/lib/graphql-fetch";
-import { GET_MOST_READ_POSTS, GET_POSTS_BY_SLUGS } from "@/graphql/queries";
+import { GET_POSTS_BY_SLUGS } from "@/graphql/queries";
 
 interface Post {
   title: string;
@@ -11,10 +11,10 @@ interface Post {
 
 function getTopSlugs(n: number): string[] {
   try {
-    const views = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), "data", "article-views.json"), "utf-8")
-    ) as Record<string, number>;
+    const filePath = path.join(process.cwd(), "data", "article-views.json");
+    const views = JSON.parse(fs.readFileSync(filePath, "utf-8")) as Record<string, number>;
     return Object.entries(views)
+      .filter(([, count]) => count >= 2)
       .sort((a, b) => b[1] - a[1])
       .slice(0, n)
       .map(([slug]) => slug);
@@ -28,31 +28,20 @@ export default async function MostReadWidget() {
 
   const topSlugs = getTopSlugs(5);
 
-  if (topSlugs.length >= 3) {
-    // On a assez de données réelles — on récupère les titres via GraphQL
+  if (topSlugs.length > 0) {
     try {
       const data = await graphqlFetch<{ posts: { nodes: Post[] } }>(
         GET_POSTS_BY_SLUGS,
         { slugs: topSlugs }
       );
-      // Ré-ordonner selon le classement des vues
       const bySlug = Object.fromEntries(data.posts.nodes.map(p => [p.slug, p]));
       posts = topSlugs.map(s => bySlug[s]).filter(Boolean);
     } catch (err) {
-      console.error("MostReadWidget (top slugs) fetch error:", err);
+      console.error("MostReadWidget fetch error:", err);
     }
   }
 
-  // Fallback : articles les plus récents
-  if (posts.length < 3) {
-    try {
-      const data = await graphqlFetch<{ posts: { nodes: Post[] } }>(GET_MOST_READ_POSTS);
-      posts = data.posts.nodes;
-    } catch (err) {
-      console.error("MostReadWidget fallback fetch error:", err);
-      return null;
-    }
-  }
+  if (posts.length === 0) return null;
 
   return (
     <div className="bg-white h-full">
