@@ -9,7 +9,7 @@ interface Post {
   slug: string;
 }
 
-function getTopSlugs(n: number): string[] {
+function getTopSlugs(n: number): { slug: string; views: number }[] {
   try {
     const filePath = path.join(process.cwd(), "data", "article-views.json");
     const views = JSON.parse(fs.readFileSync(filePath, "utf-8")) as Record<string, number>;
@@ -17,16 +17,24 @@ function getTopSlugs(n: number): string[] {
       .filter(([, count]) => count >= 2)
       .sort((a, b) => b[1] - a[1])
       .slice(0, n)
-      .map(([slug]) => slug);
+      .map(([slug, views]) => ({ slug, views }));
   } catch {
     return [];
   }
 }
 
+function slugToTitle(slug: string): string {
+  return slug
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .slice(0, 80);
+}
+
 export default async function MostReadWidget() {
   let posts: Post[] = [];
 
-  const topSlugs = getTopSlugs(5);
+  const topEntries = getTopSlugs(5);
+  const topSlugs = topEntries.map((e) => e.slug);
 
   if (topSlugs.length > 0) {
     try {
@@ -36,8 +44,13 @@ export default async function MostReadWidget() {
       );
       const bySlug = Object.fromEntries(data.posts.nodes.map(p => [p.slug, p]));
       posts = topSlugs.map(s => bySlug[s]).filter(Boolean);
-    } catch (err) {
-      console.error("MostReadWidget fetch error:", err);
+    } catch {
+      // GraphQL indisponible — on utilise les slugs comme titres de secours
+    }
+
+    // Fallback : si GraphQL n'a pas répondu, on affiche quand même avec les slugs formatés
+    if (posts.length === 0) {
+      posts = topSlugs.map((slug) => ({ title: slugToTitle(slug), slug }));
     }
   }
 
