@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveSubscriber, sendWelcomeEmailAsync } from "@/lib/abonnes";
-import { buildAccessCookie, type Plan } from "@/lib/subscription";
+import { buildAccessCookie, PLAN_DURATION_DAYS, type Plan } from "@/lib/subscription";
+import { sendInvoiceEmail } from "@/lib/invoice-email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,6 +20,17 @@ export async function POST(req: NextRequest) {
         email, name: name || email.split("@")[0],
         plan, ref, expiresAt: result.expiresAt, createdAt: Date.now(),
       });
+
+      const amount = plan === "annuel" ? 50000 : 5000;
+      Promise.resolve().then(() => sendInvoiceEmail({
+        type: "abonnement",
+        email,
+        name: name || email.split("@")[0],
+        plan,
+        amount,
+        reference: ref,
+        expiresAt: result.expiresAt,
+      }));
     }
 
     const days = plan === "annuel" ? 365 : 31;

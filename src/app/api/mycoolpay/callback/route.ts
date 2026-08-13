@@ -6,6 +6,8 @@ import crypto from "crypto";
 import { readAbonnes, writeAbonnes, saveSubscriber } from "@/lib/abonnes";
 import { readSubscribers, writeSubscribers, generateToken } from "@/lib/newsletter";
 import type { Plan } from "@/lib/subscription";
+import { PLAN_DURATION_DAYS } from "@/lib/subscription";
+import { sendInvoiceEmail } from "@/lib/invoice-email";
 
 type PendingAchat = { email: string; name: string; type: "journal" | "magazine"; id: number; titre: string };
 type PendingAbonnement = { email: string; name: string; type: "abonnement"; plan: Plan };
@@ -194,9 +196,23 @@ export async function POST(req: NextRequest) {
     // ── Abonnement mensuel / annuel ──────────────────────────────────────────
     if (pending.type === "abonnement") {
       const plan = pending.plan as Plan;
-      savePaiement({ email, reference, plan, type: "abonnement", amount: body.transaction_amount });
+      const amount = Number(body.transaction_amount) || 0;
+      savePaiement({ email, reference, plan, type: "abonnement", amount });
       await saveSubscriber(email, name || email.split("@")[0], plan, reference);
       await deletePending(reference);
+
+      const days = PLAN_DURATION_DAYS[plan] || 31;
+      const expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
+      Promise.resolve().then(() => sendInvoiceEmail({
+        type: "abonnement",
+        email,
+        name: name || email.split("@")[0],
+        plan,
+        amount,
+        reference,
+        expiresAt,
+      }));
+
       console.log(`MyCoolPay webhook: abonnement ${plan} confirmé pour ${email}`);
       return NextResponse.json({ received: true });
     }
@@ -236,7 +252,17 @@ export async function POST(req: NextRequest) {
     await deletePending(reference);
 
     const displayName = name || email.split("@")[0];
+    const achatAmount = Number(body.transaction_amount) || 0;
     Promise.resolve().then(() => sendAchatEmail(email, displayName, titre, id));
+    Promise.resolve().then(() => sendInvoiceEmail({
+      type: "achat",
+      email,
+      name: displayName,
+      itemType: type,
+      titre,
+      amount: achatAmount,
+      reference,
+    }));
 
     // Pour les achats de journal : inscription newsletter + email de création de compte
     if (type === "journal") {
@@ -282,6 +308,19 @@ export async function GET(req: NextRequest) {
         savePaiement({ email, reference, plan, type: "abonnement" });
         await saveSubscriber(email, name || email.split("@")[0], plan, reference);
         await deletePending(reference);
+
+        const days = PLAN_DURATION_DAYS[plan] || 31;
+        const expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
+        Promise.resolve().then(() => sendInvoiceEmail({
+          type: "abonnement",
+          email,
+          name: name || email.split("@")[0],
+          plan,
+          amount: plan === "annuel" ? 50000 : 5000,
+          reference,
+          expiresAt,
+        }));
+
         return NextResponse.redirect(new URL(`/paiement-succes?ref=${reference}&email=${encodeURIComponent(email)}&plan=${plan}`, req.url));
       }
 
@@ -318,6 +357,15 @@ export async function GET(req: NextRequest) {
       await deletePending(reference);
       const displayName = name || email.split("@")[0];
       Promise.resolve().then(() => sendAchatEmail(email, displayName, titre, id));
+      Promise.resolve().then(() => sendInvoiceEmail({
+        type: "achat",
+        email,
+        name: displayName,
+        itemType: type,
+        titre,
+        amount: type === "magazine" ? 1000 : 200,
+        reference,
+      }));
 
       if (type === "journal") {
         Promise.resolve().then(() => subscribeToNewsletter(email));
