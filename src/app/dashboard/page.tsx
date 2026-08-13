@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, startTransition } from "react";
 
 interface Achat { id: number; type: string; titre: string; ref: string; acheteLe: number; email?: string; name?: string; }
 interface Abonne { email?: string; name?: string; plan?: string; createdAt?: number; expiresAt?: number; achats?: Achat[]; }
@@ -90,11 +90,12 @@ function BannersManager({ token }: { token: string }) {
   const fetchBanners = useCallback(async () => {
     const res = await fetch("/api/banners", { headers: { "x-dashboard-token": token } });
     const data = await res.json();
-    setBanners(data);
-    setLoading(false);
+    startTransition(() => { setBanners(data); setLoading(false); });
   }, [token]);
 
-  useEffect(() => { fetchBanners(); }, [fetchBanners]);
+  useEffect(() => {
+    void fetchBanners();
+  }, [fetchBanners]);
 
   async function saveBanner(banner: BannerItem) {
     await fetch("/api/banners", {
@@ -175,6 +176,7 @@ function BannersManager({ token }: { token: string }) {
               </div>
               {form.imageUrl && (
                 <div className="border border-gray-700 rounded-lg overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={form.imageUrl} alt="Aperçu" className="w-full h-auto max-h-24 object-contain bg-white" />
                 </div>
               )}
@@ -206,6 +208,7 @@ function BannersManager({ token }: { token: string }) {
               </div>
               {b.imageUrl && (
                 <div className="border border-gray-700 rounded-lg overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={b.imageUrl} alt={b.alt} className="w-full h-auto max-h-20 object-contain bg-white" />
                 </div>
               )}
@@ -246,6 +249,7 @@ function BannersManager({ token }: { token: string }) {
           </div>
           {form.imageUrl && (
             <div className="border border-gray-700 rounded-lg overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={form.imageUrl} alt="Aperçu" className="w-full h-auto max-h-24 object-contain bg-white" />
             </div>
           )}
@@ -305,7 +309,9 @@ export default function DashboardPage() {
   useEffect(() => {
     uidRef.current = Math.random().toString(36).slice(2);
     const saved = sessionStorage.getItem("dashboard_token");
-    if (saved) { setToken(saved); fetchStats(saved); }
+    if (saved) {
+      Promise.resolve().then(() => { setToken(saved); fetchStats(saved); });
+    }
   }, [fetchStats]);
 
   // Heartbeat visiteur + refresh online toutes les 15s
