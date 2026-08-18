@@ -11,50 +11,44 @@ export async function GET() {
       paiements = JSON.parse(fs.readFileSync(PAIEMENTS_FILE, "utf-8"));
     } catch {}
 
-    const toAdd = [
-      {
-        email: "hkemayou2504.hk@gmail.com",
-        name: "Henri KEMAYOU",
-        reference: "backfill-annuel-henri",
-        plan: "annuel",
-        type: "abonnement",
-        amount: 50000,
-        paymentMethod: "mobile",
-        date: "2026-08-16T00:00:00.000Z",
-      },
-      {
-        email: "biloaaristide10@gmail.com",
-        name: "JEAN ESSIMI",
-        reference: "backfill-mensuel-jean",
-        plan: "mensuel",
-        type: "abonnement",
-        amount: 5000,
-        paymentMethod: "mobile",
-        date: "2026-07-29T00:00:00.000Z",
-      },
+    const fixes = [
+      { email: "hkemayou2504.hk@gmail.com", plan: "annuel", amount: 50000, paymentMethod: "mobile" },
+      { email: "biloaaristide10@gmail.com", plan: "mensuel", amount: 5000, paymentMethod: "mobile" },
     ];
 
-    let added = 0;
-    for (const entry of toAdd) {
-      const exists = paiements.some(
-        (p) => p.email === entry.email && p.type === "abonnement" && p.plan === entry.plan
+    let updated = 0;
+    for (const fix of fixes) {
+      const idx = paiements.findIndex(
+        (p) => p.email === fix.email && p.type === "abonnement" && p.plan === fix.plan
       );
-      if (!exists) {
-        paiements.push(entry);
-        added++;
+      if (idx >= 0 && !paiements[idx].amount) {
+        paiements[idx].amount = fix.amount;
+        paiements[idx].paymentMethod = fix.paymentMethod;
+        updated++;
+      } else if (idx < 0) {
+        paiements.push({
+          email: fix.email,
+          plan: fix.plan,
+          type: "abonnement",
+          amount: fix.amount,
+          paymentMethod: fix.paymentMethod,
+          date: fix.plan === "annuel" ? "2026-08-16T00:00:00.000Z" : "2026-07-29T00:00:00.000Z",
+        });
+        updated++;
       }
     }
 
-    if (added > 0) {
+    if (updated > 0) {
       fs.writeFileSync(PAIEMENTS_FILE, JSON.stringify(paiements, null, 2));
     }
 
     return NextResponse.json({
       success: true,
-      added,
-      message: added > 0
-        ? `${added} paiement(s) ajouté(s) avec succès`
-        : "Les paiements existent déjà, rien à ajouter",
+      updated,
+      totalPaiements: paiements.length,
+      message: updated > 0
+        ? `${updated} paiement(s) mis à jour avec montant`
+        : "Tous les paiements ont déjà un montant",
     });
   } catch (err) {
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
