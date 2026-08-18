@@ -135,10 +135,15 @@ export async function sendInvoiceEmail(data: InvoiceData) {
             </tr>
           </table>
 
-          <!-- Bouton -->
+          <!-- Boutons -->
           <div style="text-align:center;margin:24px 0;">
+            <a href="${siteUrl}/facture/${data.reference}"
+               style="background:#dc2626;color:white;padding:14px 32px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:14px;display:inline-block;margin-bottom:12px;">
+              Imprimer ma facture
+            </a>
+            <br/>
             <a href="${siteUrl}/mon-compte"
-               style="background:#dc2626;color:white;padding:14px 32px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:14px;">
+               style="color:#dc2626;font-size:13px;text-decoration:underline;">
               Accéder à mon espace
             </a>
           </div>
