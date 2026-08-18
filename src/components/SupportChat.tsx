@@ -8,7 +8,7 @@ interface Message {
   options?: string[];
 }
 
-const WHATSAPP_NUMBER = "237696537690";
+const WHATSAPP_NUMBER = "237693537690";
 
 const INITIAL_MESSAGE: Message = {
   from: "bot",
