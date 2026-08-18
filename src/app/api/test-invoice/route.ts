@@ -10,12 +10,12 @@ export async function GET() {
     const reference = "leco-test-facture-001";
 
     // Sauvegarder le paiement test dans paiements.json
-    let paiements: object[] = [];
+    let paiements: Record<string, unknown>[] = [];
     try {
       paiements = JSON.parse(fs.readFileSync(PAIEMENTS_FILE, "utf-8"));
     } catch { /* fichier absent */ }
 
-    const exists = paiements.some((p: Record<string, unknown>) => p.reference === reference);
+    const exists = paiements.some((p) => p.reference === reference);
     if (!exists) {
       paiements.push({
         email: "josephelvisbengonozang@gmail.com",

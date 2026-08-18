@@ -192,12 +192,13 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, name } = pending;
+    const paymentMethod = body.payment_method || body.operator || (body.channel === "card" ? "card" : "mobile");
 
     // ── Abonnement mensuel / annuel ──────────────────────────────────────────
     if (pending.type === "abonnement") {
       const plan = pending.plan as Plan;
       const amount = Number(body.transaction_amount) || 0;
-      savePaiement({ email, reference, plan, type: "abonnement", amount });
+      savePaiement({ email, reference, plan, type: "abonnement", amount, paymentMethod });
       await saveSubscriber(email, name || email.split("@")[0], plan, reference);
       await deletePending(reference);
 
@@ -220,7 +221,7 @@ export async function POST(req: NextRequest) {
     // ── Achat unitaire journal / magazine ────────────────────────────────────
     const { id, type, titre } = pending as PendingAchat;
 
-    savePaiement({ email, reference, titre, id, type, amount: body.transaction_amount });
+    savePaiement({ email, reference, titre, id, type, amount: body.transaction_amount, paymentMethod });
 
     const abonnes = await readAbonnes();
     const idx = abonnes.findIndex((a) => a.email === email);

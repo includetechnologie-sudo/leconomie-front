@@ -45,8 +45,24 @@ export async function GET(req: NextRequest) {
     articles.total = data?.data?.posts?.pageInfo?.total || 0;
   } catch {}
 
-  // Revenus
-  const revenus = paiements.reduce((sum, p) => sum + (p.amount || 0), 0);
+  // Revenus nets (après commission MyCoolPay : 2% Mobile Money, 4% Carte)
+  const revenus = paiements.reduce((sum, p) => {
+    const brut = p.amount || 0;
+    if (brut === 0) return sum;
+    // Si le mode de paiement est stocké, on l'utilise directement
+    const pm = (p as Record<string, unknown>).paymentMethod as string | undefined;
+    let commission: number;
+    if (pm === "card") {
+      commission = 0.04;
+    } else if (pm === "mobile") {
+      commission = 0.02;
+    } else {
+      // Heuristique pour les anciens paiements sans paymentMethod
+      // Abonnements = généralement carte (4%), achats unitaires = mobile (2%)
+      commission = (p.type === "abonnement" || p.plan === "mensuel" || p.plan === "annuel") ? 0.04 : 0.02;
+    }
+    return sum + Math.round(brut * (1 - commission));
+  }, 0);
   // Abonnés depuis abonnes.json
   const mensuel = abonnes.filter(a => a.plan === "mensuel").length;
   const annuel = abonnes.filter(a => a.plan === "annuel").length;
