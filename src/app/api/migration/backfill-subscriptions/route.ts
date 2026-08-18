@@ -19,13 +19,13 @@ export async function GET() {
     let updated = 0;
     for (const fix of fixes) {
       const idx = paiements.findIndex(
-        (p) => p.email === fix.email && p.type === "abonnement" && p.plan === fix.plan
+        (p) => p.email === fix.email && p.plan === fix.plan
       );
-      if (idx >= 0 && !paiements[idx].amount) {
+      if (idx >= 0) {
         paiements[idx].amount = fix.amount;
         paiements[idx].paymentMethod = fix.paymentMethod;
         updated++;
-      } else if (idx < 0) {
+      } else {
         paiements.push({
           email: fix.email,
           plan: fix.plan,
