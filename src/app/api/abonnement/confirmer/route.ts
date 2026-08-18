@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 import { saveSubscriber, sendWelcomeEmailAsync } from "@/lib/abonnes";
-import { buildAccessCookie, PLAN_DURATION_DAYS, type Plan } from "@/lib/subscription";
+import { buildAccessCookie, type Plan } from "@/lib/subscription";
 import { sendInvoiceEmail } from "@/lib/invoice-email";
+
+const PAIEMENTS_FILE = path.join(process.cwd(), "data", "paiements.json");
+
+function savePaiement(data: object) {
+  try {
+    let existing: object[] = [];
+    try { existing = JSON.parse(fs.readFileSync(PAIEMENTS_FILE, "utf-8")); } catch {}
+    existing.push({ ...data, date: new Date().toISOString() });
+    fs.writeFileSync(PAIEMENTS_FILE, JSON.stringify(existing, null, 2));
+  } catch {}
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,12 +29,14 @@ export async function POST(req: NextRequest) {
     const result = await saveSubscriber(email, name, plan, ref);
 
     if (result.success) {
+      const amount = plan === "annuel" ? 50000 : 5000;
+
+      savePaiement({ email, reference: ref, plan, type: "abonnement", amount });
+
       sendWelcomeEmailAsync({
         email, name: name || email.split("@")[0],
         plan, ref, expiresAt: result.expiresAt, createdAt: Date.now(),
       });
-
-      const amount = plan === "annuel" ? 50000 : 5000;
       Promise.resolve().then(() => sendInvoiceEmail({
         type: "abonnement",
         email,
