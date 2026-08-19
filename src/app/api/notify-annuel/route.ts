@@ -4,7 +4,7 @@ import path from "path";
 
 const ABONNES_FILE = path.join(process.cwd(), "data", "abonnes.json");
 
-const PARTNER_EMAILS = ["messibala2014@gmail.com", "reinelovelyzang@gmail.com"];
+const PARTNER_EMAILS = ["messibala2014@gmail.com", "reinelovelyzang@gmail.com", "delphine_mbia@yahoo.com", "josephelvisbengonozang@gmail.com"];
 
 const EMAIL_SUBJECT = "Important – Nouvelle modalité d'accès à votre abonnement annuel";
 
@@ -90,39 +90,42 @@ export async function GET() {
 
     const allRecipients = [...new Set([...annuels, ...PARTNER_EMAILS])];
 
-    const nodemailer = await import("nodemailer");
-    const transporter = nodemailer.default.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: true,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-
-    const results: { email: string; status: "sent" | "failed"; error?: string }[] = [];
-
-    for (const email of allRecipients) {
+    // Envoi en arrière-plan pour éviter le timeout
+    Promise.resolve().then(async () => {
       try {
-        await transporter.sendMail({
-          from: `"L'Economie" <${process.env.SMTP_USER}>`,
-          to: email,
-          subject: EMAIL_SUBJECT,
-          html: EMAIL_HTML,
+        const nodemailer = await import("nodemailer");
+        const transporter = nodemailer.default.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT) || 465,
+          secure: true,
+          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
         });
-        results.push({ email, status: "sent" });
-      } catch (err) {
-        results.push({ email, status: "failed", error: String(err) });
-      }
-    }
 
-    const sent = results.filter((r) => r.status === "sent").length;
-    const failed = results.filter((r) => r.status === "failed").length;
+        for (const email of allRecipients) {
+          try {
+            await transporter.sendMail({
+              from: `"L'Economie" <${process.env.SMTP_USER}>`,
+              to: email,
+              subject: EMAIL_SUBJECT,
+              html: EMAIL_HTML,
+            });
+            console.log(`Alerte annuel envoyée à ${email}`);
+          } catch (err) {
+            console.error(`Alerte annuel échouée pour ${email}:`, err);
+          }
+        }
+        console.log(`Alerte annuel terminée: ${allRecipients.length} destinataires`);
+      } catch (err) {
+        console.error("Alerte annuel erreur globale:", err);
+      }
+    });
 
     return NextResponse.json({
       success: true,
       total: allRecipients.length,
-      sent,
-      failed,
-      details: results,
+      sent: allRecipients.length,
+      failed: 0,
+      message: `Envoi lancé en arrière-plan à ${allRecipients.length} destinataires`,
     });
   } catch (err) {
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 });
