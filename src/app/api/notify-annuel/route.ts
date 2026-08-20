@@ -113,6 +113,8 @@ export async function GET() {
           } catch (err) {
             console.error(`Alerte annuel échouée pour ${email}:`, err);
           }
+          // Pause 2 secondes entre chaque email pour ne pas surcharger le serveur
+          await new Promise((r) => setTimeout(r, 2000));
         }
         console.log(`Alerte annuel terminée: ${allRecipients.length} destinataires`);
       } catch (err) {
