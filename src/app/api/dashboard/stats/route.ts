@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       listeAchatsJournal: achatsJournal.slice(-20).reverse(),
       listeAchatsMagazine: achatsMagazine.slice(-20).reverse(),
     },
-    abonnes: { total: abonnes.length, list: abonnes.slice(-20).reverse() },
+    abonnes: { total: abonnes.length, list: abonnes.reverse() },
     devis: { total: devis.length, recent: (devis as object[]).slice(-10).reverse() },
     articles,
     visits: { total: totalVisits, today: todayVisits, last7, online },
