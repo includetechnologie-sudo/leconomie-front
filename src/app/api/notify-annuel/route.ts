@@ -90,7 +90,7 @@ export async function GET() {
 
     const allRecipients = [...new Set([...annuels, ...PARTNER_EMAILS])];
 
-    // Envoi en arrière-plan pour éviter le timeout
+    // Envoi par lots de 5 avec pause de 10s entre chaque lot
     Promise.resolve().then(async () => {
       try {
         const nodemailer = await import("nodemailer");
@@ -101,20 +101,26 @@ export async function GET() {
           auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
         });
 
-        for (const email of allRecipients) {
-          try {
-            await transporter.sendMail({
-              from: `"L'Economie" <${process.env.SMTP_USER}>`,
-              to: email,
-              subject: EMAIL_SUBJECT,
-              html: EMAIL_HTML,
-            });
-            console.log(`Alerte annuel envoyée à ${email}`);
-          } catch (err) {
-            console.error(`Alerte annuel échouée pour ${email}:`, err);
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < allRecipients.length; i += BATCH_SIZE) {
+          const batch = allRecipients.slice(i, i + BATCH_SIZE);
+          for (const email of batch) {
+            try {
+              await transporter.sendMail({
+                from: `"L'Economie" <${process.env.SMTP_USER}>`,
+                to: email,
+                subject: EMAIL_SUBJECT,
+                html: EMAIL_HTML,
+              });
+              console.log(`Alerte annuel envoyée à ${email}`);
+            } catch (err) {
+              console.error(`Alerte annuel échouée pour ${email}:`, err);
+            }
           }
-          // Pause 2 secondes entre chaque email pour ne pas surcharger le serveur
-          await new Promise((r) => setTimeout(r, 2000));
+          // Pause 10 secondes entre chaque lot de 5
+          if (i + BATCH_SIZE < allRecipients.length) {
+            await new Promise((r) => setTimeout(r, 10000));
+          }
         }
         console.log(`Alerte annuel terminée: ${allRecipients.length} destinataires`);
       } catch (err) {
