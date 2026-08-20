@@ -286,7 +286,6 @@ export default function DashboardPage() {
   const [pwLoading, setPwLoading] = useState(false);
 
   const [recapStatus, setRecapStatus] = useState<string>("");
-  const [alertAnnuelStatus, setAlertAnnuelStatus] = useState<string>("");
 
   // Gérer abonnés
   const [gAbEmail, setGAbEmail] = useState("");
@@ -523,36 +522,6 @@ export default function DashboardPage() {
               </p>
             )}
 
-            {/* Bouton alerte abonnés annuels */}
-            <div className="bg-gray-900 border border-orange-800/50 rounded-xl p-5 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-orange-300">🔔 Alerte abonnés annuels</h3>
-                <p className="text-gray-500 text-xs mt-1">Notifier le passage PDF → lecture en ligne (abonnés annuels + partenaires)</p>
-              </div>
-              <button
-                onClick={async () => {
-                  if (!confirm("Envoyer l'alerte de transition PDF → en ligne à TOUS les abonnés annuels ?")) return;
-                  setAlertAnnuelStatus("loading");
-                  try {
-                    const res = await fetch("/api/notify-annuel");
-                    const data = await res.json();
-                    if (res.ok) setAlertAnnuelStatus(`ok:${data.sent}:${data.failed}`);
-                    else setAlertAnnuelStatus(`err:${data.error}`);
-                  } catch { setAlertAnnuelStatus("err:Erreur réseau"); }
-                }}
-                disabled={alertAnnuelStatus === "loading"}
-                className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-bold px-5 py-2.5 rounded-lg text-sm transition whitespace-nowrap"
-              >
-                {alertAnnuelStatus === "loading" ? "Envoi en cours..." : "Envoyer l'alerte"}
-              </button>
-            </div>
-            {alertAnnuelStatus && alertAnnuelStatus !== "loading" && (
-              <p className={`text-sm ${alertAnnuelStatus.startsWith("ok") ? "text-green-400" : "text-red-400"}`}>
-                {alertAnnuelStatus.startsWith("ok")
-                  ? `✓ ${alertAnnuelStatus.split(":")[1]} envoyé(s)${Number(alertAnnuelStatus.split(":")[2]) > 0 ? `, ${alertAnnuelStatus.split(":")[2]} échoué(s)` : ""}`
-                  : alertAnnuelStatus.split(":")[1]}
-              </p>
-            )}
 
             {/* Graphique visiteurs */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
