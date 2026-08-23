@@ -523,6 +523,61 @@ export default function DashboardPage() {
             )}
 
 
+            {/* Section Solde & Retraits */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-gray-300">💰 Solde & Retraits</h3>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Solde disponible MyCoolPay</p>
+                  <p className="text-xl font-bold text-green-400">{new Intl.NumberFormat("fr-FR").format((stats as Record<string, unknown>).retraits ? ((stats as Record<string, unknown>).retraits as {soldeDisponible: number}).soldeDisponible : 0)} FCFA</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="bg-gray-800 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500">Revenus nets</p>
+                  <p className="text-sm font-bold text-white">{new Intl.NumberFormat("fr-FR").format(stats.paiements.revenus)} FCFA</p>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500">Total retiré</p>
+                  <p className="text-sm font-bold text-orange-400">{new Intl.NumberFormat("fr-FR").format((stats as Record<string, unknown>).retraits ? ((stats as Record<string, unknown>).retraits as {totalRetire: number}).totalRetire : 0)} FCFA</p>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-500">Nb retraits</p>
+                  <p className="text-sm font-bold text-white">{(stats as Record<string, unknown>).retraits ? ((stats as Record<string, unknown>).retraits as {total: number}).total : 0}</p>
+                </div>
+              </div>
+              {((stats as Record<string, unknown>).retraits as {list: {montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string}[]} | undefined)?.list?.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-gray-500 border-b border-gray-800">
+                        <th className="text-left py-2 px-2">Date</th>
+                        <th className="text-left py-2 px-2">Bénéficiaire</th>
+                        <th className="text-right py-2 px-2">Montant</th>
+                        <th className="text-right py-2 px-2">Frais</th>
+                        <th className="text-right py-2 px-2">Net</th>
+                        <th className="text-left py-2 px-2">Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {((stats as Record<string, unknown>).retraits as {list: {montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string}[]}).list.map((r, i) => (
+                        <tr key={i} className="border-b border-gray-800/50">
+                          <td className="py-2 px-2 text-gray-400">{new Date(r.date).toLocaleDateString("fr-FR")}</td>
+                          <td className="py-2 px-2 text-gray-300">{r.beneficiaire}{r.banque ? ` (${r.banque})` : ""}</td>
+                          <td className="py-2 px-2 text-right text-white">{new Intl.NumberFormat("fr-FR").format(r.montant)}</td>
+                          <td className="py-2 px-2 text-right text-red-400">{new Intl.NumberFormat("fr-FR").format(r.frais)}</td>
+                          <td className="py-2 px-2 text-right font-bold text-orange-400">{new Intl.NumberFormat("fr-FR").format(r.net)}</td>
+                          <td className="py-2 px-2"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.statut === "effectué" ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-300"}`}>{r.statut}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-xs text-center py-2">Aucun retrait enregistré</p>
+              )}
+            </div>
+
             {/* Graphique visiteurs */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
               <div className="flex items-center justify-between mb-5">

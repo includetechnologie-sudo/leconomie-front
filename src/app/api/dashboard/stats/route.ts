@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
+  const retraits: { montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] = readJSON("retraits.json");
   const subscribers: string[] = readJSON("newsletter-subscribers.json");
   const paiements: { email?: string; plan?: string; amount?: number; date?: string; type?: string; titre?: string; reference?: string; note?: string }[] = readJSON("paiements.json");
   const abonnes: { email?: string; name?: string; plan?: string; createdAt?: number; expiresAt?: number; achats?: { id: number; type: string; titre: string; ref: string; acheteLe: number }[] }[] = readJSON("abonnes.json");
@@ -117,5 +118,11 @@ export async function GET(req: NextRequest) {
     articles,
     visits: { total: totalVisits, today: todayVisits, last7, online },
     topArticles,
+    retraits: {
+      total: retraits.length,
+      totalRetire: retraits.reduce((s, r) => s + (r.net || 0), 0),
+      soldeDisponible: revenus - retraits.reduce((s, r) => s + (r.net || 0), 0),
+      list: retraits.reverse(),
+    },
   });
 }
