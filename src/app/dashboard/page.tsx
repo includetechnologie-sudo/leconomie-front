@@ -21,6 +21,7 @@ interface Stats {
   articles: { total: number; recent: { title: string; date: string; slug: string }[] };
   visits: { total: number; today: number; last7: { date: string; count: number }[]; online: number };
   topArticles: { slug: string; views: number }[];
+  retraits?: { total: number; totalRetire: number; soldeDisponible: number; list: { montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] };
 }
 
 type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "banners" | "settings";
@@ -529,7 +530,7 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-bold text-gray-300">💰 Solde & Retraits</h3>
                 <div className="text-right">
                   <p className="text-xs text-gray-500">Solde disponible MyCoolPay</p>
-                  <p className="text-xl font-bold text-green-400">{new Intl.NumberFormat("fr-FR").format((stats as Record<string, unknown>).retraits ? ((stats as Record<string, unknown>).retraits as {soldeDisponible: number}).soldeDisponible : 0)} FCFA</p>
+                  <p className="text-xl font-bold text-green-400">{new Intl.NumberFormat("fr-FR").format(stats.retraits?.soldeDisponible || 0)} FCFA</p>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3 mb-4">
@@ -539,14 +540,14 @@ export default function DashboardPage() {
                 </div>
                 <div className="bg-gray-800 rounded-lg p-3 text-center">
                   <p className="text-xs text-gray-500">Total retiré</p>
-                  <p className="text-sm font-bold text-orange-400">{new Intl.NumberFormat("fr-FR").format((stats as Record<string, unknown>).retraits ? ((stats as Record<string, unknown>).retraits as {totalRetire: number}).totalRetire : 0)} FCFA</p>
+                  <p className="text-sm font-bold text-orange-400">{new Intl.NumberFormat("fr-FR").format(stats.retraits?.totalRetire || 0)} FCFA</p>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-3 text-center">
                   <p className="text-xs text-gray-500">Nb retraits</p>
-                  <p className="text-sm font-bold text-white">{(stats as Record<string, unknown>).retraits ? ((stats as Record<string, unknown>).retraits as {total: number}).total : 0}</p>
+                  <p className="text-sm font-bold text-white">{stats.retraits?.total || 0}</p>
                 </div>
               </div>
-              {((stats as Record<string, unknown>).retraits as {list: {montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string}[]} | undefined)?.list?.length ? (
+              {stats.retraits?.list?.length ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
@@ -560,7 +561,7 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {((stats as Record<string, unknown>).retraits as {list: {montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string}[]}).list.map((r, i) => (
+                      {stats.retraits.list.map((r, i) => (
                         <tr key={i} className="border-b border-gray-800/50">
                           <td className="py-2 px-2 text-gray-400">{new Date(r.date).toLocaleDateString("fr-FR")}</td>
                           <td className="py-2 px-2 text-gray-300">{r.beneficiaire}{r.banque ? ` (${r.banque})` : ""}</td>
