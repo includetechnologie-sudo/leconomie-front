@@ -91,3 +91,111 @@ h1, h2, h3, h4, h5, h6 {
 .prose img { border-radius: 8px; margin: 1.5rem auto; }
 .prose ul li::marker { color: #dc2626; }
 .prose ol li::marker { color: #dc2626; font-weight: 700; }
+
+/* ═══════ DARK MODE GLOBAL ═══════ */
+.dark {
+  color-scheme: dark;
+}
+
+/* Fond blanc → slate-900 */
+.dark .bg-white,
+.dark [class*="bg-white"] {
+  background-color: #0f172a !important;
+}
+
+/* Fonds gris clair → slate-800 */
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-neutral-50,
+.dark [class*="bg-gray-50"],
+.dark [class*="bg-gray-100"] {
+  background-color: #1e293b !important;
+}
+
+/* Textes sombres → clairs */
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-neutral-900,
+.dark .text-neutral-800,
+.dark [class*="text-gray-900"],
+.dark [class*="text-gray-800"],
+.dark [class*="text-gray-700"] {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark [class*="text-gray-600"],
+.dark [class*="text-gray-500"] {
+  color: #94a3b8 !important;
+}
+
+.dark .text-gray-400,
+.dark [class*="text-gray-400"] {
+  color: #64748b !important;
+}
+
+/* Borders */
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark [class*="border-gray-100"],
+.dark [class*="border-gray-200"],
+.dark [class*="border-gray-300"] {
+  border-color: #334155 !important;
+}
+
+.dark .border-b,
+.dark .border-t {
+  border-color: #334155;
+}
+
+/* Ombres */
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-sm {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Inputs */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #475569 !important;
+}
+
+/* Cartes et surfaces élevées */
+.dark .rounded-xl,
+.dark .rounded-lg,
+.dark .rounded-2xl {
+  border-color: #334155;
+}
+
+/* Hover states */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover {
+  background-color: #334155 !important;
+}
+
+/* Titres noirs → blancs */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #f1f5f9;
+}
+
+/* Breadcrumb et texte noir */
+.dark .text-black,
+.dark [class*="text-black"] {
+  color: #f1f5f9 !important;
+}
+
+/* Ne pas affecter le footer (déjà noir) ni la TopBar (déjà sombre) */
+.dark footer,
+.dark footer * {
+  background-color: unset !important;
+  color: unset !important;
+  border-color: unset !important;
+}
+footer { color-scheme: light dark; }
