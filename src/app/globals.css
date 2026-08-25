@@ -6,6 +6,19 @@
   --foreground: #171717;
   --font-inter: "Inter", sans-serif;
   --font-serif: "Source Serif 4", Georgia, serif;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --muted: #6b7280;
+  --surface: #f9fafb;
+}
+
+.dark {
+  --background: #0f172a;
+  --foreground: #e2e8f0;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --muted: #94a3b8;
+  --surface: #1e293b;
 }
 
 @theme inline {
@@ -41,6 +54,19 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 1.05rem;
   line-height: 1.8;
   color: #1f2937;
+}
+.dark .prose {
+  color: #cbd5e1;
+}
+.dark .prose h2, .dark .prose h3, .dark .prose h4 {
+  color: #f1f5f9;
+}
+.dark .prose strong {
+  color: #f1f5f9;
+}
+.dark .prose blockquote {
+  background: #1e293b;
+  color: #94a3b8;
 }
 .prose h2, .prose h3, .prose h4 {
   font-family: var(--font-serif);

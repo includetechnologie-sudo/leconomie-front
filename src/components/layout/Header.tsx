@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import HeaderUserMenu from "./HeaderUserMenu";
 import HeaderSearch from "./HeaderSearch";
+import ThemeToggle from "@/components/ThemeToggle";
 import { parseAccessCookie } from "@/lib/parse-access";
 
 export default async function Header() {
@@ -12,7 +13,7 @@ export default async function Header() {
   const user = access ? parseAccessCookie(access.value) : null;
 
   return (
-    <header className="hidden lg:block bg-white border-b">
+    <header className="hidden lg:block bg-white dark:bg-slate-900 border-b dark:border-slate-700">
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
 
         {/* Logo */}
@@ -56,8 +57,11 @@ export default async function Header() {
           </a>
         </div>
 
-        {/* Barre de recherche */}
-        <HeaderSearch />
+        {/* Barre de recherche + Theme toggle */}
+        <div className="flex items-center gap-2">
+          <HeaderSearch />
+          <ThemeToggle />
+        </div>
 
         {/* Boutons action */}
         <div className="hidden lg:flex items-center gap-3">

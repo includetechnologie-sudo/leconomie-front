@@ -101,8 +101,9 @@ export function generateViewport() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${inter.variable} ${sourceSerif.variable}`}>
-      <body className="font-sans antialiased">
+    <html lang="fr" className={`${inter.variable} ${sourceSerif.variable}`} suppressHydrationWarning>
+      <body className="font-sans antialiased bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-200 transition-colors duration-300">
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||(t==null&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()` }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
         {/* Google Reader Revenue Manager */}
         <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js" />

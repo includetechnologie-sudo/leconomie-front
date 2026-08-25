@@ -62,7 +62,7 @@ export default function MainMenu() {
   return (
     <>
       {/* ── Barre desktop ── */}
-      <nav className="border-b bg-white sticky top-0 z-[100] shadow-md">
+      <nav className="border-b bg-white dark:bg-slate-900 dark:border-slate-700 sticky top-0 z-[100] shadow-md dark:shadow-slate-900/50">
         <div className="max-w-7xl mx-auto px-0">
           <div className="hidden lg:flex items-center">
 
