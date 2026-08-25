@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import BoursePanel from "@/components/bourse/BoursePanel";
+import ThemeToggle from "@/components/ThemeToggle";
 
 type MenuItem = {
   label: string;
@@ -175,7 +176,8 @@ export default function MainMenu() {
             <Link href="/" className="absolute left-1/2 -translate-x-1/2">
               <Image src="/images/logo.png" alt="L'Economie" width={130} height={34} priority />
             </Link>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
               <Link href="/connexion" className="text-gray-700 hover:text-red-600 transition" aria-label="Mon compte">
                 <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
