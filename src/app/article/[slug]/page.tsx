@@ -7,6 +7,7 @@ import path from "path";
 import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_POST_BY_SLUG, GET_RELATED_POSTS, GET_JOURNAUX } from "@/graphql/queries";
 import PremiumWall from "@/components/article/PremiumWall";
+import ReadingProgressBar from "@/components/article/ReadingProgressBar";
 import NewsletterForm from "@/components/newsletter/NewsletterForm";
 import TrackPageView from "@/components/TrackPageView";
 import ViewCount from "@/components/article/ViewCount";
@@ -196,6 +197,7 @@ export default async function ArticlePage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
+      <ReadingProgressBar />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <TrackPageView slug={post.slug} />
       <div className="grid lg:grid-cols-[1fr_300px] gap-10">
