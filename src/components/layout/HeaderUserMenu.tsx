@@ -96,6 +96,16 @@ export default function HeaderUserMenu({ name, email }: Props) {
               </svg>
               Magazine
             </Link>
+            <Link
+              href="/mes-favoris"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-red-600 transition"
+            >
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+              </svg>
+              Mes favoris
+            </Link>
           </div>
 
           {/* Déconnexion */}

@@ -8,6 +8,7 @@ import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_POST_BY_SLUG, GET_RELATED_POSTS, GET_JOURNAUX } from "@/graphql/queries";
 import PremiumWall from "@/components/article/PremiumWall";
 import ReadingProgressBar from "@/components/article/ReadingProgressBar";
+import BookmarkButton from "@/components/article/BookmarkButton";
 import NewsletterForm from "@/components/newsletter/NewsletterForm";
 import TrackPageView from "@/components/TrackPageView";
 import ViewCount from "@/components/article/ViewCount";
@@ -308,6 +309,13 @@ export default async function ArticlePage({
 
           {/* Partage social */}
           <div className="mt-6 pt-6 border-t flex items-center gap-3 flex-wrap">
+            <BookmarkButton
+              slug={post.slug}
+              title={post.title}
+              image={coverImage}
+              category={category?.name || ""}
+              date={post.date}
+            />
             <span className="text-sm font-semibold text-gray-600">Partager :</span>
             <a
               href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`https://leconomie.info/article/${slug}`)}`}
