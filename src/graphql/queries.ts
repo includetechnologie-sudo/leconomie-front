@@ -220,6 +220,25 @@ export const SEARCH_POSTS = `
   }
 `;
 
+export const GET_PREMIUM_POSTS = `
+  query GetPremiumPosts {
+    posts(first: 20, where: { tag: "premium", orderby: { field: DATE, order: DESC } }) {
+      nodes {
+        title
+        slug
+        date
+        excerpt
+        featuredImage {
+          node { sourceUrl }
+        }
+        categories {
+          nodes { name slug }
+        }
+      }
+    }
+  }
+`;
+
 export const GET_RELATED_POSTS = `
   query GetRelatedPosts($category: String!) {
     posts(first: 4, where: { categoryName: $category }) {

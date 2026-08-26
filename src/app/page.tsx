@@ -2,6 +2,7 @@ import HeroSlider from "@/components/homepage/HeroSlider";
 import NewsTickerBar from "@/components/homepage/NewsTickerBar";
 import CategoryGrid from "@/components/homepage/CategoryGrid";
 import JournalDuJour from "@/components/homepage/JournalDuJour";
+import EspaceVipWidget from "@/components/homepage/EspaceVipWidget";
 import AdvertisementSection from "@/components/homepage/AdvertisementSection";
 import LeconomieTV from "@/components/homepage/LeconomieTV";
 import RegionalMapsSection from "@/components/homepage/RegionalMapsSection";
@@ -24,6 +25,13 @@ export default function HomePage() {
 
       {/* Journal du Jour */}
       <JournalDuJour />
+
+      {/* Espace VIP Widget */}
+      <section className="max-w-7xl mx-auto px-4 mt-8">
+        <div className="max-w-xs mx-auto lg:mx-0 lg:ml-auto">
+          <EspaceVipWidget />
+        </div>
+      </section>
 
       {/* Publicité leaderboard */}
       <AdvertisementSection />
