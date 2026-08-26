@@ -198,7 +198,7 @@ export default async function ArticlePage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <ReadingProgressBar />
+      <ReadingProgressBar color={isPremium ? "#c9a84c" : undefined} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <TrackPageView slug={post.slug} />
       <div className="grid lg:grid-cols-[1fr_300px] gap-10">
@@ -207,11 +207,11 @@ export default async function ArticlePage({
         <article>
           {/* Breadcrumb */}
           <nav className="text-sm text-gray-500 mb-4 flex items-center gap-2 flex-wrap">
-            <Link href="/" className="hover:text-red-600 transition">Accueil</Link>
+            <Link href="/" className={`transition ${isPremium ? "hover:text-[#c9a84c]" : "hover:text-red-600"}`}>Accueil</Link>
             <span>›</span>
             {category && (
               <>
-                <Link href={`/${category.slug}`} className="hover:text-red-600 transition capitalize">
+                <Link href={`/${category.slug}`} className={`transition capitalize ${isPremium ? "hover:text-[#c9a84c]" : "hover:text-red-600"}`}>
                   {category.name}
                 </Link>
                 <span>›</span>
@@ -220,19 +220,33 @@ export default async function ArticlePage({
             <span className="text-gray-400 truncate max-w-[300px]">{post.title}</span>
           </nav>
 
-          {/* Badge catégorie */}
-          {category && (
-            <Link href={`/${category.slug}`}
-              className="inline-block bg-red-600 text-white text-xs font-bold px-3 py-1 mb-4 uppercase tracking-wide hover:bg-red-700 transition">
-              {category.name}
-            </Link>
-          )}
+          {/* Badges catégorie + premium */}
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
+            {category && (
+              <Link href={`/${category.slug}`}
+                className={`inline-block text-xs font-bold px-3 py-1 uppercase tracking-wide transition ${
+                  isPremium
+                    ? "bg-[#c9a84c] text-black hover:bg-[#b8943f]"
+                    : "bg-red-600 text-white hover:bg-red-700"
+                }`}>
+                {category.name}
+              </Link>
+            )}
+            {isPremium && (
+              <span className="inline-flex items-center gap-1 bg-[#c9a84c] text-black text-xs font-bold px-3 py-1 uppercase tracking-wide rounded-sm">
+                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Premium
+              </span>
+            )}
+          </div>
 
           {/* Titre */}
           <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-4">{post.title}</h1>
 
           {/* Meta */}
-          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-6 border-b pb-4">
+          <div className={`flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-6 border-b pb-4 ${isPremium ? "border-[#c9a84c]/40" : ""}`}>
             {post.author?.node?.name && (
               <span className="font-medium text-gray-700 flex items-center gap-1">
                 <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -269,6 +283,14 @@ export default async function ArticlePage({
               className="object-cover"
               priority
             />
+            {isPremium && (
+              <span className="absolute top-3 right-3 bg-[#c9a84c] text-black text-[11px] font-bold px-3 py-1 rounded-sm uppercase tracking-wide flex items-center gap-1 shadow-md">
+                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Premium
+              </span>
+            )}
             {/* Filigrane */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" style={{ opacity: 0.10 }}>
               <span className="text-white font-serif font-bold tracking-widest rotate-[-30deg]" style={{ fontSize: "clamp(24px, 4vw, 48px)", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
@@ -282,7 +304,9 @@ export default async function ArticlePage({
             <PremiumWall content={post.content} />
           ) : (
             <div
-              className="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-red-600 prose-img:rounded-lg"
+              className={`prose prose-lg max-w-none prose-headings:font-bold prose-img:rounded-lg ${
+                isPremium ? "prose-a:text-[#c9a84c]" : "prose-a:text-red-600"
+              }`}
               dangerouslySetInnerHTML={{ __html: post.content }}
             />
           )}
@@ -299,7 +323,11 @@ export default async function ArticlePage({
                 .map(tag => (
                   <span
                     key={tag.name}
-                    className="text-xs bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 px-3 py-1 rounded-full border border-gray-200 transition cursor-default"
+                    className={`text-xs px-3 py-1 rounded-full border transition cursor-default ${
+                      isPremium
+                        ? "bg-[#c9a84c]/10 hover:bg-[#c9a84c]/20 hover:text-[#c9a84c] text-gray-600 border-[#c9a84c]/30"
+                        : "bg-gray-100 hover:bg-red-50 hover:text-red-600 text-gray-600 border-gray-200"
+                    }`}
                   >
                     {tag.name}
                   </span>
@@ -355,7 +383,7 @@ export default async function ArticlePage({
 
           {/* ZONE 1 — Actuellement en kiosque */}
           <div className="border border-gray-200 rounded-xl overflow-hidden">
-            <div className="bg-red-600 text-white text-center py-2.5 px-4">
+            <div className={`text-center py-2.5 px-4 ${isPremium ? "bg-[#c9a84c] text-black" : "bg-red-600 text-white"}`}>
               <p className="text-xs font-bold uppercase tracking-widest">Actuellement en kiosque</p>
             </div>
             <div className="p-4 bg-white">
@@ -370,7 +398,7 @@ export default async function ArticlePage({
               {latestJournal && (
                 <div className="mb-2 text-center">
                   {latestJournal.numero && (
-                    <p className="text-xs font-bold text-red-600">N° {latestJournal.numero}</p>
+                    <p className={`text-xs font-bold ${isPremium ? "text-[#c9a84c]" : "text-red-600"}`}>N° {latestJournal.numero}</p>
                   )}
                   {latestJournal.datePublication && (
                     <p className="text-[10px] text-gray-400">{latestJournal.datePublication}</p>
@@ -379,7 +407,9 @@ export default async function ArticlePage({
               )}
               <Link
                 href={`/magazine?achat=${latestJournal?.databaseId ?? ""}`}
-                className="block w-full bg-red-600 text-white text-center py-2 rounded-lg font-bold text-xs hover:bg-red-700 transition"
+                className={`block w-full text-center py-2 rounded-lg font-bold text-xs transition ${
+                  isPremium ? "bg-[#c9a84c] text-black hover:bg-[#b8943f]" : "bg-red-600 text-white hover:bg-red-700"
+                }`}
               >
                 Achetez votre journal — 200 FCFA
               </Link>
@@ -408,18 +438,18 @@ export default async function ArticlePage({
           {related.length > 0 && (
             <div>
               <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-                <span className="w-1 h-5 bg-red-600 inline-block rounded" />
+                <span className={`w-1 h-5 inline-block rounded ${isPremium ? "bg-[#c9a84c]" : "bg-red-600"}`} />
                 Les plus lus
               </h3>
               <div className="space-y-4">
                 {related.map((r, i) => (
                   <Link key={r.slug} href={`/article/${r.slug}`} className="flex gap-3 group">
-                    <span className="text-red-600 font-bold text-lg w-5 shrink-0">{i + 1}</span>
+                    <span className={`font-bold text-lg w-5 shrink-0 ${isPremium ? "text-[#c9a84c]" : "text-red-600"}`}>{i + 1}</span>
                     <div className="flex-1">
-                      <p className="text-xs text-red-600 font-semibold mb-0.5">
+                      <p className={`text-xs font-semibold mb-0.5 ${isPremium ? "text-[#c9a84c]" : "text-red-600"}`}>
                         {r.categories?.nodes[0]?.name}
                       </p>
-                      <h4 className="text-sm font-medium leading-snug group-hover:text-red-600 transition line-clamp-2">
+                      <h4 className={`text-sm font-medium leading-snug transition line-clamp-2 ${isPremium ? "group-hover:text-[#c9a84c]" : "group-hover:text-red-600"}`}>
                         {r.title}
                       </h4>
                     </div>
@@ -430,14 +460,18 @@ export default async function ArticlePage({
           )}
 
           {/* Accès Premium */}
-          <div className="border-2 border-red-600 rounded-xl p-5">
+          <div className={`border-2 rounded-xl p-5 ${isPremium ? "border-[#c9a84c]" : "border-red-600"}`}>
             <h3 className="font-bold text-base mb-1">Accès Premium</h3>
             <p className="text-xs text-gray-600 mb-3">
               Accédez à l&apos;intégralité des articles, archives et magazine.
             </p>
-            <Link href="/abonnement"
-              className="block w-full bg-red-600 text-white text-center py-2 rounded-lg font-bold text-sm hover:bg-red-700 transition">
-              S&apos;abonner dès 5 000 FCFA/mois
+            <Link href={isPremium ? "/espace-vip" : "/abonnement"}
+              className={`block w-full text-center py-2 rounded-lg font-bold text-sm transition ${
+                isPremium
+                  ? "bg-[#c9a84c] text-black hover:bg-[#b8943f]"
+                  : "bg-red-600 text-white hover:bg-red-700"
+              }`}>
+              {isPremium ? "Accéder à l'espace VIP" : "S'abonner dès 5 000 FCFA/mois"}
             </Link>
           </div>
 
@@ -448,10 +482,10 @@ export default async function ArticlePage({
       {related.length > 0 && (
         <div className="mt-14">
           <div className="flex items-center gap-3 mb-6">
-            <span className="w-1 h-7 bg-red-600 rounded inline-block" />
+            <span className={`w-1 h-7 rounded inline-block ${isPremium ? "bg-[#c9a84c]" : "bg-red-600"}`} />
             <h2 className="text-xl font-bold uppercase tracking-wide">Dans la même catégorie</h2>
             {category && (
-              <Link href={`/${category.slug}`} className="ml-auto text-sm text-red-600 font-semibold hover:underline whitespace-nowrap">
+              <Link href={`/${category.slug}`} className={`ml-auto text-sm font-semibold hover:underline whitespace-nowrap ${isPremium ? "text-[#c9a84c]" : "text-red-600"}`}>
                 Voir plus →
               </Link>
             )}
@@ -467,12 +501,12 @@ export default async function ArticlePage({
                     className="object-cover group-hover:scale-105 transition duration-300"
                   />
                   {r.categories?.nodes[0] && (
-                    <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide">
+                    <span className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide ${isPremium ? "bg-[#c9a84c] text-black" : "bg-red-600 text-white"}`}>
                       {r.categories.nodes[0].name}
                     </span>
                   )}
                 </div>
-                <h3 className="font-bold text-sm leading-snug group-hover:text-red-600 transition line-clamp-2 flex-1">
+                <h3 className={`font-bold text-sm leading-snug transition line-clamp-2 flex-1 ${isPremium ? "group-hover:text-[#c9a84c]" : "group-hover:text-red-600"}`}>
                   {r.title}
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">{formatDate(r.date)}</p>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-export default function ReadingProgressBar() {
+export default function ReadingProgressBar({ color }: { color?: string }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -21,8 +21,8 @@ export default function ReadingProgressBar() {
   return (
     <div className="fixed top-0 left-0 w-full h-[3px] z-[9999] bg-transparent pointer-events-none">
       <div
-        className="h-full bg-red-600 transition-[width] duration-150 ease-out"
-        style={{ width: `${progress}%` }}
+        className={`h-full transition-[width] duration-150 ease-out ${color ? "" : "bg-red-600"}`}
+        style={{ width: `${progress}%`, ...(color ? { backgroundColor: color } : {}) }}
       />
     </div>
   );
