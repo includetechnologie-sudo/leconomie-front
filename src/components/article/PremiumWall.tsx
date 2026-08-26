@@ -1,7 +1,9 @@
 import Link from "next/link";
+import BuyArticleButton from "./BuyArticleButton";
 
 interface Props {
   content: string;
+  slug: string;
 }
 
 function getPreview(html: string): string {
@@ -16,7 +18,7 @@ function getPreview(html: string): string {
   return [chapo, truncated].filter(Boolean).join("\n");
 }
 
-export default function PremiumWall({ content }: Props) {
+export default function PremiumWall({ content, slug }: Props) {
   const preview = getPreview(content);
 
   return (
@@ -72,21 +74,24 @@ export default function PremiumWall({ content }: Props) {
           </div>
 
           {/* Offres */}
-          <div className="grid sm:grid-cols-2 gap-3 max-w-sm mx-auto mb-6">
+          <div className="grid sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-6">
+            <BuyArticleButton slug={slug} />
             <Link
               href="/abonnement?offre=mensuel"
-              className="border-2 border-red-600 rounded-xl px-4 py-3 hover:bg-red-50 transition"
+              className="border-2 border-red-600 rounded-xl px-4 py-3 hover:bg-red-50 transition text-center"
             >
               <p className="text-xs text-gray-500 mb-0.5">Mensuel</p>
               <p className="text-lg font-bold text-red-600">5 000 FCFA<span className="text-xs font-normal text-gray-400">/mois</span></p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Accès illimité</p>
             </Link>
             <Link
               href="/abonnement?offre=annuel"
-              className="bg-red-600 text-white rounded-xl px-4 py-3 hover:bg-red-700 transition relative overflow-hidden"
+              className="bg-red-600 text-white rounded-xl px-4 py-3 hover:bg-red-700 transition relative overflow-hidden text-center"
             >
               <span className="absolute top-1.5 right-2 text-[10px] bg-yellow-400 text-black font-bold px-1.5 py-0.5 rounded">-30%</span>
               <p className="text-xs text-red-200 mb-0.5">Annuel</p>
               <p className="text-lg font-bold">50 000 FCFA<span className="text-xs font-normal text-red-200">/an</span></p>
+              <p className="text-[10px] text-red-200 mt-0.5">Accès illimité</p>
             </Link>
           </div>
 

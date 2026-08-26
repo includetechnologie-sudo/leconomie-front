@@ -121,11 +121,28 @@ export default async function ArticlePage({
   const cookieStore = await cookies();
   const access = cookieStore.get("abonne_access");
   let hasPremiumAccess = false;
+  let userEmail = "";
   if (access) {
     try {
       const user = parseAccessCookie(access.value);
-      hasPremiumAccess = user !== null && canAccess(user.plan, "premium") && !user.isExpired;
+      if (user) {
+        userEmail = user.email;
+        hasPremiumAccess = canAccess(user.plan, "premium") && !user.isExpired;
+      }
     } catch { /* cookie invalide */ }
+  }
+
+  // Vérifie aussi l'achat unitaire (48h)
+  if (!hasPremiumAccess && userEmail) {
+    try {
+      const achatsFile = path.join(process.cwd(), "data", "achats-articles.json");
+      const achats = JSON.parse(fs.readFileSync(achatsFile, "utf-8")) as { email: string; slug: string; expiresAt: string }[];
+      const now = new Date();
+      const validPurchase = achats.find(
+        (a) => a.email === userEmail && a.slug === slug && new Date(a.expiresAt) > now
+      );
+      if (validPurchase) hasPremiumAccess = true;
+    } catch {}
   }
 
   let post: Post | null = null;
@@ -301,7 +318,7 @@ export default async function ArticlePage({
 
           {/* Contenu article — mur premium si non connecté */}
           {showWall ? (
-            <PremiumWall content={post.content} />
+            <PremiumWall content={post.content} slug={post.slug} />
           ) : (
             <div
               className={`prose prose-lg max-w-none prose-headings:font-bold prose-img:rounded-lg ${

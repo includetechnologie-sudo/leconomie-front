@@ -11,7 +11,8 @@ import { sendInvoiceEmail } from "@/lib/invoice-email";
 
 type PendingAchat = { email: string; name: string; type: "journal" | "magazine"; id: number; titre: string };
 type PendingAbonnement = { email: string; name: string; type: "abonnement"; plan: Plan };
-type PendingEntry = PendingAchat | PendingAbonnement;
+type PendingArticle = { email: string; slug: string; type: "article" };
+type PendingEntry = PendingAchat | PendingAbonnement | PendingArticle;
 
 const PENDING_FILE = path.join(process.cwd(), "data", "achats-pending.json");
 const PAIEMENTS_FILE = path.join(process.cwd(), "data", "paiements.json");
@@ -191,7 +192,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const { email, name } = pending;
+    const email = pending.email;
+    const name = "name" in pending ? pending.name : email.split("@")[0];
     const paymentMethod = body.payment_method || body.operator || (body.channel === "card" ? "card" : "mobile");
 
     // ── Abonnement mensuel / annuel ──────────────────────────────────────────
@@ -215,6 +217,25 @@ export async function POST(req: NextRequest) {
       }));
 
       console.log(`MyCoolPay webhook: abonnement ${plan} confirmé pour ${email}`);
+      return NextResponse.json({ received: true });
+    }
+
+    // ── Achat unitaire article (48h) ────────────────────────────────────────
+    if (pending.type === "article") {
+      const { slug } = pending as PendingArticle;
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+      const achatsFile = path.join(process.cwd(), "data", "achats-articles.json");
+      let achats: object[] = [];
+      try { achats = JSON.parse(fs.readFileSync(achatsFile, "utf-8")); } catch {}
+      achats.push({ email, slug, purchasedAt: now.toISOString(), reference, expiresAt: expiresAt.toISOString() });
+      fs.writeFileSync(achatsFile, JSON.stringify(achats, null, 2));
+
+      savePaiement({ email, reference, type: "achat-article", slug, amount: 200, paymentMethod });
+      await deletePending(reference);
+
+      console.log(`MyCoolPay webhook: achat article confirmé pour ${email} — ${slug} (expire ${expiresAt.toISOString()})`);
       return NextResponse.json({ received: true });
     }
 
@@ -301,7 +322,25 @@ export async function GET(req: NextRequest) {
     const email = pending?.email || req.nextUrl.searchParams.get("email") || "";
 
     if (pending) {
-      const { name } = pending;
+      const name = "name" in pending ? pending.name : email.split("@")[0];
+
+      // Achat article (48h) — redirection après paiement
+      if (pending.type === "article") {
+        const { slug } = pending as PendingArticle;
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+        const achatsFile = path.join(process.cwd(), "data", "achats-articles.json");
+        let achats: object[] = [];
+        try { achats = JSON.parse(fs.readFileSync(achatsFile, "utf-8")); } catch {}
+        achats.push({ email, slug, purchasedAt: now.toISOString(), reference, expiresAt: expiresAt.toISOString() });
+        fs.writeFileSync(achatsFile, JSON.stringify(achats, null, 2));
+
+        savePaiement({ email, reference, type: "achat-article", slug, amount: 200 });
+        await deletePending(reference);
+
+        return NextResponse.redirect(new URL(`/article/${slug}?achat=ok`, req.url));
+      }
 
       // Abonnement mensuel / annuel
       if (pending.type === "abonnement") {
