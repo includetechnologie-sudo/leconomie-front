@@ -47,7 +47,7 @@ const COUNTRIES: Record<string, CountryInfo> = {
     color: "#b91c1c",
   },
   cotedivoire: {
-    id: "cotedivoire", name: "Côte d'Ivoire", slug: "/uemoa/cote-d-ivoire",
+    id: "cotedivoire", name: "Côte d’Ivoire", slug: "/uemoa/cote-d-ivoire",
     articles: 87, capital: "Abidjan", capitalCoords: [-4.008, 5.354],
     pib: "70 Mds $", flag: "🇨🇮",
     description: "Première économie de l'UEMOA, leader du cacao et hub financier régional.",
