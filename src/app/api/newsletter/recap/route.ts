@@ -13,6 +13,14 @@ interface Article {
   categories: { nodes: { name: string }[] };
 }
 
+interface JournalDuJour {
+  databaseId: number;
+  title: string;
+  numero: string;
+  datePublication: string;
+  featuredImage: { node: { sourceUrl: string } } | null;
+}
+
 const GRAPHQL_URL = "https://teal-horse-411567.hostingersite.com/graphql";
 
 function stripHtml(html: string): string {
@@ -26,7 +34,41 @@ function stripHtml(html: string): string {
     .slice(0, 180);
 }
 
-function buildRecapEmail(articles: Article[], dateStr: string): string {
+function buildJournalSection(journal: JournalDuJour, isActiveSubscriber: boolean): string {
+  const cover = journal.featuredImage?.node?.sourceUrl || "";
+  const numero = journal.numero ? `N° ${journal.numero}` : "";
+  const readUrl = `https://leconomie.info/lecture/${journal.databaseId}`;
+  const buyUrl = `https://leconomie.info/magazine`;
+
+  return `
+    <tr><td style="padding:0 0 24px;">
+      <div style="background:#fffbeb;border:2px solid #c9a84c;border-radius:12px;padding:20px;">
+        <p style="color:#c9a84c;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 12px;text-align:center;">
+          📰 Journal du Jour
+        </p>
+        ${cover ? `
+        <div style="text-align:center;margin-bottom:14px;">
+          <img src="${cover}" alt="${journal.title}" style="max-width:200px;width:100%;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
+        </div>` : ""}
+        <h3 style="color:#111;font-size:16px;font-weight:bold;text-align:center;margin:0 0 4px;">${journal.title}</h3>
+        ${numero ? `<p style="color:#666;font-size:12px;text-align:center;margin:0 0 16px;">${numero}</p>` : ""}
+        <div style="text-align:center;">
+          ${isActiveSubscriber
+            ? `<a href="${readUrl}" style="background:#c9a84c;color:#fff;padding:12px 28px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:13px;display:inline-block;">
+                Lire l'intégralité →
+              </a>`
+            : `<a href="${buyUrl}" style="background:#c9a84c;color:#fff;padding:12px 28px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:13px;display:inline-block;">
+                Acheter — 200 FCFA
+              </a>`
+          }
+        </div>
+      </div>
+    </td></tr>
+    <tr><td><hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 20px;" /></td></tr>
+  `;
+}
+
+function buildRecapEmail(articles: Article[], dateStr: string, journalHtml: string): string {
   const articleBlocks = articles.map((a, i) => {
     const cat = a.categories?.nodes?.[0]?.name || "Actualité";
     const excerpt = stripHtml(a.excerpt);
@@ -58,6 +100,7 @@ function buildRecapEmail(articles: Article[], dateStr: string): string {
       </div>
       <div style="padding:24px;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          ${journalHtml}
           ${articleBlocks}
         </table>
       </div>
@@ -77,7 +120,31 @@ function buildRecapEmail(articles: Article[], dateStr: string): string {
   `;
 }
 
-async function sendBroadcast(recipients: string[], subject: string, html: string) {
+async function fetchLatestJournal(): Promise<JournalDuJour | null> {
+  try {
+    const res = await fetch(GRAPHQL_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `{ journaux(first: 1, where: { orderby: { field: DATE, order: DESC } }) { nodes { databaseId title numero datePublication featuredImage { node { sourceUrl } } } } }`,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const nodes = data?.data?.journaux?.nodes;
+    return nodes?.[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+async function sendBroadcast(
+  recipients: { email: string; isActive: boolean }[],
+  subject: string,
+  articles: Article[],
+  dateStr: string,
+  journal: JournalDuJour | null
+) {
   const BATCH_SIZE = 10;
   const DELAY_BETWEEN_EMAILS = 3000;
   const DELAY_BETWEEN_BATCHES = 30000;
@@ -93,19 +160,21 @@ async function sendBroadcast(recipients: string[], subject: string, html: string
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
 
-    for (const email of batch) {
+    for (const recipient of batch) {
       try {
+        const journalHtml = journal ? buildJournalSection(journal, recipient.isActive) : "";
+        const html = buildRecapEmail(articles, dateStr, journalHtml);
         await transporter.sendMail({
           from: `"L'Economie" <${process.env.SMTP_USER}>`,
-          to: email,
+          to: recipient.email,
           subject,
           html,
         });
         sent++;
       } catch (err) {
-        console.error("Recap email error for", email, err);
+        console.error("Recap email error for", recipient.email, err);
       }
-      if (batch.indexOf(email) < batch.length - 1) {
+      if (batch.indexOf(recipient) < batch.length - 1) {
         await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
       }
     }
@@ -133,14 +202,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Paramètre 'to' ou 'broadcast: true' requis" }, { status: 400 });
   }
 
-  // Récupérer les 5 derniers articles via GraphQL
-  const gqlRes = await fetch(GRAPHQL_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query: `{ posts(first: 5, where: { status: PUBLISH }) { nodes { title slug excerpt date featuredImage { node { sourceUrl } } categories { nodes { name } } } } }`,
+  // Récupérer les 5 derniers articles + le dernier journal
+  const [gqlRes, journal] = await Promise.all([
+    fetch(GRAPHQL_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `{ posts(first: 5, where: { status: PUBLISH }) { nodes { title slug excerpt date featuredImage { node { sourceUrl } } categories { nodes { name } } } } }`,
+      }),
     }),
-  });
+    fetchLatestJournal(),
+  ]);
 
   if (!gqlRes.ok) return NextResponse.json({ error: "Erreur GraphQL" }, { status: 500 });
   const gqlData = await gqlRes.json();
@@ -149,14 +221,21 @@ export async function POST(req: NextRequest) {
   if (articles.length === 0) return NextResponse.json({ error: "Aucun article trouvé" }, { status: 404 });
 
   const today = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }).toUpperCase();
-  const html = buildRecapEmail(articles, today);
   const subject = `L'Economie — Newsletter du ${today}`;
 
-  // Collecter les destinataires
-  let recipients: string[] = [];
+  // Charger les abonnés actifs pour la logique du bouton journal
+  const abonnes = await readAbonnes();
+  const now = Date.now();
+  const activeEmails = new Set(
+    abonnes
+      .filter(a => (a.plan === "mensuel" || a.plan === "annuel") && a.expiresAt > now)
+      .map(a => a.email.toLowerCase())
+  );
+
+  // Collecter les destinataires avec leur statut d'abonnement
+  let recipients: { email: string; isActive: boolean }[] = [];
 
   if (broadcast) {
-    const abonnes = await readAbonnes();
     const newsletterSubs = await readSubscribers();
 
     const abonnesEmails = abonnes
@@ -166,9 +245,12 @@ export async function POST(req: NextRequest) {
     const newsletterEmails = newsletterSubs.map(s => s.email.toLowerCase());
 
     const allEmails = new Set([...abonnesEmails, ...newsletterEmails]);
-    recipients = Array.from(allEmails);
+    recipients = Array.from(allEmails).map(email => ({
+      email,
+      isActive: activeEmails.has(email),
+    }));
   } else {
-    recipients = [to];
+    recipients = [{ email: to, isActive: activeEmails.has(to.toLowerCase()) }];
   }
 
   if (recipients.length === 0) {
@@ -184,9 +266,12 @@ export async function POST(req: NextRequest) {
       auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     });
 
+    const journalHtml = journal ? buildJournalSection(journal, recipients[0].isActive) : "";
+    const html = buildRecapEmail(articles, today, journalHtml);
+
     await transporter.sendMail({
       from: `"L'Economie" <${process.env.SMTP_USER}>`,
-      to: recipients[0],
+      to: recipients[0].email,
       subject,
       html,
     });
@@ -195,7 +280,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Mode broadcast : répondre immédiatement, envoyer en arrière-plan
-  sendBroadcast(recipients, subject, html).catch(err => {
+  sendBroadcast(recipients, subject, articles, today, journal).catch(err => {
     console.error("[Recap] Broadcast error:", err);
   });
 

@@ -3,9 +3,19 @@ import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 import { readSubscribers, buildUnsubscribeUrl } from "@/lib/newsletter";
+import { readAbonnes } from "@/lib/abonnes";
 
 const WEBHOOK_SECRET = process.env.NEWSLETTER_WEBHOOK_SECRET || "";
 const NOTIFIED_PATH = path.join(process.cwd(), "data", "newsletter-notified.json");
+const GRAPHQL_URL = "https://teal-horse-411567.hostingersite.com/graphql";
+
+interface JournalDuJour {
+  databaseId: number;
+  title: string;
+  numero: string;
+  datePublication: string;
+  featuredImage: { node: { sourceUrl: string } } | null;
+}
 
 function hasBeenNotified(slug: string): boolean {
   try {
@@ -27,13 +37,63 @@ function markNotified(slug: string) {
   }
 }
 
+async function fetchLatestJournal(): Promise<JournalDuJour | null> {
+  try {
+    const res = await fetch(GRAPHQL_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: `{ journaux(first: 1, where: { orderby: { field: DATE, order: DESC } }) { nodes { databaseId title numero datePublication featuredImage { node { sourceUrl } } } } }`,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const nodes = data?.data?.journaux?.nodes;
+    return nodes?.[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildJournalSection(journal: JournalDuJour, isActiveSubscriber: boolean): string {
+  const cover = journal.featuredImage?.node?.sourceUrl || "";
+  const numero = journal.numero ? `N° ${journal.numero}` : "";
+  const readUrl = `https://leconomie.info/lecture/${journal.databaseId}`;
+  const buyUrl = `https://leconomie.info/magazine`;
+
+  return `
+    <!-- Journal du Jour -->
+    <div style="background:#fffbeb;border:2px solid #c9a84c;border-radius:12px;padding:20px;margin-bottom:24px;">
+      <p style="color:#c9a84c;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 12px;text-align:center;">
+        📰 Journal du Jour
+      </p>
+      ${cover ? `
+      <div style="text-align:center;margin-bottom:14px;">
+        <img src="${cover}" alt="${journal.title}" style="max-width:200px;width:100%;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);" />
+      </div>` : ""}
+      <h3 style="color:#111;font-size:16px;font-weight:bold;text-align:center;margin:0 0 4px;">${journal.title}</h3>
+      ${numero ? `<p style="color:#666;font-size:12px;text-align:center;margin:0 0 16px;">${numero}</p>` : ""}
+      <div style="text-align:center;">
+        ${isActiveSubscriber
+          ? `<a href="${readUrl}" style="background:#c9a84c;color:#fff;padding:12px 28px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:13px;display:inline-block;">
+              Lire l'intégralité →
+            </a>`
+          : `<a href="${buyUrl}" style="background:#c9a84c;color:#fff;padding:12px 28px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:13px;display:inline-block;">
+              Acheter — 200 FCFA
+            </a>`
+        }
+      </div>
+    </div>
+  `;
+}
+
 function buildEmail(article: {
   title: string;
   excerpt: string;
   slug: string;
   category: string;
   imageUrl?: string;
-}, unsubscribeUrl: string): string {
+}, unsubscribeUrl: string, journalHtml: string): string {
   const articleUrl = `https://leconomie.info/article/${article.slug}`;
   const category = article.category?.toUpperCase() || "ACTUALITE";
   const excerpt = article.excerpt?.replace(/<[^>]+>/g, "").slice(0, 200) || "";
@@ -49,8 +109,10 @@ function buildEmail(article: {
         <span style="background:#fff;color:#dc2626;font-size:10px;font-weight:bold;padding:4px 10px;border-radius:20px;text-transform:uppercase;">${category}</span>
       </div>
 
-      <!-- Article -->
+      <!-- Content -->
       <div style="padding:32px 24px;">
+        ${journalHtml}
+
         ${article.imageUrl ? `
         <div style="margin-bottom:20px;border-radius:8px;overflow:hidden;">
           <img src="${article.imageUrl}" alt="${article.title}" style="width:100%;max-height:300px;object-fit:cover;display:block;" />
@@ -80,7 +142,6 @@ function buildEmail(article: {
 
 export async function POST(req: NextRequest) {
   try {
-    // Vérification du secret
     const secret = req.headers.get("x-webhook-secret") || req.nextUrl.searchParams.get("secret") || "";
     if (WEBHOOK_SECRET && secret !== WEBHOOK_SECRET) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -88,19 +149,15 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
-    // Ignorer les brouillons/révisions — on ne notifie que les articles publiés
     const postStatus = body.post_status || body.status || "publish";
     if (postStatus !== "publish") {
       return NextResponse.json({ success: true, skipped: true, reason: "non publié" });
     }
 
-    // WP Webhooks envoie les données de l'article publié
     const title    = body.post_title || body.title || "";
     const excerpt  = body.post_excerpt || body.excerpt || body.post_content || "";
     const slug     = body.post_name || body.slug || "";
-    // WP Webhooks : post_thumbnail = URL directe de l'image mise en avant
     const imageUrl = body.post_thumbnail || body.featured_image_url || body.thumbnail || "";
-    // WP Webhooks : taxonomies est un objet { category: { slug: { name, ... } } }
     let category = body.category || "";
     if (!category && body.taxonomies) {
       const cats = body.taxonomies.category || body.taxonomies;
@@ -114,7 +171,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Données article manquantes" }, { status: 400 });
     }
 
-    // Anti-doublon : si cet article a déjà été notifié, on ignore
     if (hasBeenNotified(slug)) {
       return NextResponse.json({ success: true, skipped: true, reason: "déjà notifié" });
     }
@@ -123,6 +179,19 @@ export async function POST(req: NextRequest) {
     if (subscribers.length === 0) {
       return NextResponse.json({ success: true, sent: 0 });
     }
+
+    // Récupérer le dernier journal + la liste des abonnés actifs
+    const [journal, abonnes] = await Promise.all([
+      fetchLatestJournal(),
+      readAbonnes(),
+    ]);
+
+    const now = Date.now();
+    const activeEmails = new Set(
+      abonnes
+        .filter(a => (a.plan === "mensuel" || a.plan === "annuel") && a.expiresAt > now)
+        .map(a => a.email.toLowerCase())
+    );
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -134,7 +203,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Envoi en parallèle par batch de 10
     let sent = 0;
     const BATCH = 10;
     for (let i = 0; i < subscribers.length; i += BATCH) {
@@ -142,11 +210,13 @@ export async function POST(req: NextRequest) {
       await Promise.allSettled(
         batch.map((sub) => {
           const unsubUrl = buildUnsubscribeUrl(sub.email, sub.token);
+          const isActive = activeEmails.has(sub.email.toLowerCase());
+          const journalHtml = journal ? buildJournalSection(journal, isActive) : "";
           return transporter.sendMail({
             from: `"L'Economie" <${process.env.SMTP_USER}>`,
             to: sub.email,
             subject: `[L'Economie] ${title}`,
-            html: buildEmail({ title, excerpt, slug, category, imageUrl }, unsubUrl),
+            html: buildEmail({ title, excerpt, slug, category, imageUrl }, unsubUrl, journalHtml),
           }).then(() => { sent++; });
         })
       );
