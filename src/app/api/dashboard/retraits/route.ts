@@ -70,3 +70,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  const auth = req.headers.get("x-dashboard-token");
+  if (!checkDashboardAuth(auth)) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  try {
+    const { id, statut } = await req.json();
+    if (typeof id !== "number" || !statut) {
+      return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
+    }
+
+    const retraits = readRetraits();
+    if (!retraits[id]) {
+      return NextResponse.json({ error: "Retrait introuvable" }, { status: 404 });
+    }
+
+    retraits[id].statut = statut;
+    writeRetraits(retraits);
+
+    return NextResponse.json({ success: true, retrait: retraits[id] });
+  } catch {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

@@ -21,10 +21,11 @@ interface Stats {
   articles: { total: number; recent: { title: string; date: string; slug: string }[] };
   visits: { total: number; today: number; last7: { date: string; count: number }[]; online: number };
   topArticles: { slug: string; views: number }[];
-  retraits?: { total: number; totalRetire: number; soldeDisponible: number; list: { montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] };
+  articlesPayants?: { totalVentes: number; totalRevenus: number; list: { slug: string; ventes: number; revenus: number; dernierAchat: string }[] };
+  retraits?: { total: number; totalRetire: number; soldeDisponible: number; list: { id: number; montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] };
 }
 
-type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "banners" | "settings";
+type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "articles-payants" | "banners" | "settings";
 
 function fmt(n: number) { return n.toLocaleString("fr-FR") + " FCFA"; }
 function fmtDate(iso?: string | number) {
@@ -288,6 +289,12 @@ export default function DashboardPage() {
 
   const [recapStatus, setRecapStatus] = useState<string>("");
 
+  // Édition du solde disponible
+  const [editingSolde, setEditingSolde] = useState(false);
+  const [soldeInput, setSoldeInput] = useState("");
+  const [soldeLoading, setSoldeLoading] = useState(false);
+  const [retraitLoadingId, setRetraitLoadingId] = useState<number | null>(null);
+
   // Gérer abonnés
   const [gAbEmail, setGAbEmail] = useState("");
   const [gAbName, setGAbName] = useState("");
@@ -359,6 +366,37 @@ export default function DashboardPage() {
     await fetchStats(password);
   }
 
+  async function handleSaveSolde() {
+    const soldeReel = Number(soldeInput.replace(/[^\d.-]/g, ""));
+    if (Number.isNaN(soldeReel)) return;
+    setSoldeLoading(true);
+    try {
+      const res = await fetch("/api/dashboard/solde", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-dashboard-token": token },
+        body: JSON.stringify({ soldeReel }),
+      });
+      if (res.ok) {
+        setEditingSolde(false);
+        await fetchStats(token);
+      }
+    } catch {}
+    finally { setSoldeLoading(false); }
+  }
+
+  async function handleMarquerRetraitComplete(id: number) {
+    setRetraitLoadingId(id);
+    try {
+      const res = await fetch("/api/dashboard/retraits", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "x-dashboard-token": token },
+        body: JSON.stringify({ id, statut: "effectué" }),
+      });
+      if (res.ok) await fetchStats(token);
+    } catch {}
+    finally { setRetraitLoadingId(null); }
+  }
+
   function handleLogout() {
     sessionStorage.removeItem("dashboard_token");
     setToken(""); setStats(null); setPassword("");
@@ -414,6 +452,7 @@ export default function DashboardPage() {
     { id: "newsletter", label: "Newsletter", count: stats.newsletter.total },
     { id: "visiteurs", label: "Visiteurs", count: stats.visits.today },
     { id: "top-articles", label: "Top Articles" },
+    { id: "articles-payants", label: "Articles Payants", count: stats.articlesPayants?.totalVentes },
     { id: "articles", label: "Articles", count: stats.articles.total },
     { id: "devis", label: "Devis", count: stats.devis.total },
     { id: "gerer-abonnes", label: "Gérer Abonnés" },
@@ -530,7 +569,32 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-bold text-gray-300">💰 Solde & Retraits</h3>
                 <div className="text-right">
                   <p className="text-xs text-gray-500">Solde disponible MyCoolPay</p>
-                  <p className="text-xl font-bold text-green-400">{new Intl.NumberFormat("fr-FR").format(stats.retraits?.soldeDisponible || 0)} FCFA</p>
+                  {editingSolde ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="text"
+                        autoFocus
+                        value={soldeInput}
+                        onChange={e => setSoldeInput(e.target.value)}
+                        placeholder="Solde réel en FCFA"
+                        className="w-36 bg-gray-800 border border-gray-700 text-white rounded-lg px-2 py-1 text-sm text-right focus:outline-none focus:border-green-500"
+                      />
+                      <button onClick={handleSaveSolde} disabled={soldeLoading}
+                        className="text-green-400 hover:text-green-300 text-xs font-bold disabled:opacity-50">
+                        {soldeLoading ? "…" : "✓"}
+                      </button>
+                      <button onClick={() => setEditingSolde(false)} className="text-gray-500 hover:text-white text-xs font-bold">✕</button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <p className="text-xl font-bold text-green-400">{new Intl.NumberFormat("fr-FR").format(stats.retraits?.soldeDisponible || 0)} FCFA</p>
+                      <button
+                        onClick={() => { setSoldeInput(String(stats.retraits?.soldeDisponible || 0)); setEditingSolde(true); }}
+                        className="text-gray-500 hover:text-white text-xs transition"
+                        title="Corriger le solde réel"
+                      >✎</button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3 mb-4">
@@ -558,17 +622,29 @@ export default function DashboardPage() {
                         <th className="text-right py-2 px-2">Frais</th>
                         <th className="text-right py-2 px-2">Net</th>
                         <th className="text-left py-2 px-2">Statut</th>
+                        <th className="text-right py-2 px-2">Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {stats.retraits.list.map((r, i) => (
-                        <tr key={i} className="border-b border-gray-800/50">
+                      {stats.retraits.list.map((r) => (
+                        <tr key={r.id} className="border-b border-gray-800/50">
                           <td className="py-2 px-2 text-gray-400">{new Date(r.date).toLocaleDateString("fr-FR")}</td>
                           <td className="py-2 px-2 text-gray-300">{r.beneficiaire}{r.banque ? ` (${r.banque})` : ""}</td>
                           <td className="py-2 px-2 text-right text-white">{new Intl.NumberFormat("fr-FR").format(r.montant)}</td>
                           <td className="py-2 px-2 text-right text-red-400">{new Intl.NumberFormat("fr-FR").format(r.frais)}</td>
                           <td className="py-2 px-2 text-right font-bold text-orange-400">{new Intl.NumberFormat("fr-FR").format(r.net)}</td>
                           <td className="py-2 px-2"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${r.statut === "effectué" ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-300"}`}>{r.statut}</span></td>
+                          <td className="py-2 px-2 text-right">
+                            {r.statut !== "effectué" && (
+                              <button
+                                onClick={() => handleMarquerRetraitComplete(r.id)}
+                                disabled={retraitLoadingId === r.id}
+                                className="text-green-400 hover:text-green-300 text-[10px] font-bold disabled:opacity-50"
+                              >
+                                {retraitLoadingId === r.id ? "…" : "Marquer complété"}
+                              </button>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -661,9 +737,9 @@ export default function DashboardPage() {
             {/* Top articles mini */}
             {stats.topArticles.length > 0 && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Top 5 articles les plus lus</h3>
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Top 20 articles les plus lus</h3>
                 <div className="space-y-3">
-                  {stats.topArticles.slice(0, 5).map((a, i) => {
+                  {stats.topArticles.slice(0, 20).map((a, i) => {
                     const maxViews = stats.topArticles[0].views;
                     return (
                       <div key={a.slug} className="flex items-center gap-3">
@@ -895,6 +971,49 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* ── ARTICLES PAYANTS ── */}
+        {activeTab === "articles-payants" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Ventes d&apos;articles payants</h2>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <StatCard icon="🛍️" label="Ventes totales" value={stats.articlesPayants?.totalVentes || 0} color="red" />
+              <StatCard icon="💰" label="Revenus articles payants" value={fmt(stats.articlesPayants?.totalRevenus || 0)} color="green" />
+              <StatCard icon="📰" label="Articles vendus différents" value={stats.articlesPayants?.list?.length || 0} color="blue" />
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {!stats.articlesPayants?.list?.length ? (
+                <p className="text-gray-500 text-sm p-6">Aucune vente d&apos;article payant pour le moment</p>
+              ) : (
+                <table className="w-full">
+                  <thead><tr className="border-b border-gray-800">
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Article</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Ventes</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Revenus</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Dernière vente</th>
+                  </tr></thead>
+                  <tbody>
+                    {stats.articlesPayants.list.map((a) => (
+                      <tr key={a.slug} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="px-5 py-3">
+                          <a href={`https://leconomie.info/article/${a.slug}`} target="_blank" rel="noreferrer"
+                            className="text-sm text-white hover:text-red-400 transition line-clamp-1">
+                            {a.slug.replace(/-/g, " ")}
+                          </a>
+                        </td>
+                        <td className="px-5 py-3"><Badge color="blue">{a.ventes}</Badge></td>
+                        <td className="px-5 py-3 text-sm text-green-400 font-bold">{fmt(a.revenus)}</td>
+                        <td className="px-5 py-3 text-sm text-gray-400">{a.dernierAchat ? fmtDate(a.dernierAchat) : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── ARTICLES ── */}
         {activeTab === "articles" && (
           <div className="space-y-4">
@@ -904,19 +1023,33 @@ export default function DashboardPage() {
                 <table className="w-full">
                   <thead><tr className="border-b border-gray-800">
                     <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Titre</th>
+                    <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Type</th>
                     <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Date</th>
                     <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Lien</th>
                   </tr></thead>
                   <tbody>
-                    {stats.articles.recent.map((a, i) => (
-                      <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
-                        <td className="px-5 py-3 text-sm text-white">{a.title}</td>
-                        <td className="px-5 py-3 text-sm text-gray-500">{fmtDate(a.date)}</td>
-                        <td className="px-5 py-3">
-                          <a href={`https://leconomie.info/article/${a.slug}`} target="_blank" rel="noreferrer" className="text-red-400 hover:underline text-xs">Voir →</a>
-                        </td>
-                      </tr>
-                    ))}
+                    {stats.articles.recent.map((a, i) => {
+                      const vente = stats.articlesPayants?.list?.find(v => v.slug === a.slug);
+                      return (
+                        <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
+                          <td className="px-5 py-3 text-sm text-white">{a.title}</td>
+                          <td className="px-5 py-3">
+                            {vente ? (
+                              <span className="flex items-center gap-1.5">
+                                <Badge color="yellow">Article payant</Badge>
+                                <span className="text-[10px] text-gray-500">{vente.ventes} vendu{vente.ventes > 1 ? "s" : ""}</span>
+                              </span>
+                            ) : (
+                              <Badge color="gray">Gratuit</Badge>
+                            )}
+                          </td>
+                          <td className="px-5 py-3 text-sm text-gray-500">{fmtDate(a.date)}</td>
+                          <td className="px-5 py-3">
+                            <a href={`https://leconomie.info/article/${a.slug}`} target="_blank" rel="noreferrer" className="text-red-400 hover:underline text-xs">Voir →</a>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}

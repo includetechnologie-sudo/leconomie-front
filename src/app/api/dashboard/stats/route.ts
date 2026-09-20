@@ -20,12 +20,14 @@ export async function GET(req: NextRequest) {
 
   const retraits: { montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] = readJSON("retraits.json");
   const subscribers: string[] = readJSON("newsletter-subscribers.json");
-  const paiements: { email?: string; plan?: string; amount?: number; date?: string; type?: string; titre?: string; reference?: string; note?: string }[] = readJSON("paiements.json");
+  const paiements: { email?: string; plan?: string; amount?: number; date?: string; type?: string; titre?: string; reference?: string; note?: string; slug?: string }[] = readJSON("paiements.json");
   const abonnes: { email?: string; name?: string; plan?: string; createdAt?: number; expiresAt?: number; achats?: { id: number; type: string; titre: string; ref: string; acheteLe: number }[] }[] = readJSON("abonnes.json");
   const devis: object[] = readJSON("devis.json");
   const visitsRaw: Record<string, number> = readJSON("visits.json", {});
   const articleViewsRaw: Record<string, number> = readJSON("article-views.json", {});
   const onlineRaw: Record<string, number> = readJSON("online.json", {});
+  const achatsArticles: { email: string; slug: string; purchasedAt: string; reference: string; expiresAt: string }[] = readJSON("achats-articles.json");
+  const soldeCorrectif: { valeur?: number } = readJSON("solde-correctif.json", {});
 
   // Articles WordPress via GraphQL
   let articles = { total: 0, recent: [] as { title: string; date: string; slug: string }[] };
@@ -91,11 +93,35 @@ export async function GET(req: NextRequest) {
   const todayKey = new Date().toISOString().split("T")[0];
   const todayVisits = visitsRaw[todayKey] || 0;
 
-  // Top 10 articles les plus lus
+  // Top 20 articles les plus lus
   const topArticles = Object.entries(articleViewsRaw)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 10)
+    .slice(0, 20)
     .map(([slug, views]) => ({ slug, views }));
+
+  // Ventes d'articles payants (achat à l'unité d'un article) groupées par article
+  const paiementsArticles = paiements.filter(p => p.type === "achat-article");
+  const ventesParSlug = new Map<string, { ventes: number; revenus: number; dernierAchat: string }>();
+  for (const p of paiementsArticles) {
+    if (!p.slug) continue;
+    const entry = ventesParSlug.get(p.slug) || { ventes: 0, revenus: 0, dernierAchat: "" };
+    entry.ventes += 1;
+    entry.revenus += p.amount || 0;
+    if (p.date && p.date > entry.dernierAchat) entry.dernierAchat = p.date;
+    ventesParSlug.set(p.slug, entry);
+  }
+  // Complète la date du dernier achat via achats-articles.json si absente des paiements
+  for (const a of achatsArticles) {
+    const entry = ventesParSlug.get(a.slug);
+    if (entry && !entry.dernierAchat) entry.dernierAchat = a.purchasedAt;
+  }
+  const articlesPayants = {
+    totalVentes: paiementsArticles.length,
+    totalRevenus: paiementsArticles.reduce((s, p) => s + (p.amount || 0), 0),
+    list: Array.from(ventesParSlug.entries())
+      .map(([slug, v]) => ({ slug, ...v }))
+      .sort((a, b) => b.ventes - a.ventes),
+  };
 
   return NextResponse.json({
     newsletter: { total: subscribers.length, list: subscribers },
@@ -118,11 +144,12 @@ export async function GET(req: NextRequest) {
     articles,
     visits: { total: totalVisits, today: todayVisits, last7, online },
     topArticles,
+    articlesPayants,
     retraits: {
       total: retraits.length,
       totalRetire: retraits.reduce((s, r) => s + (r.net || 0), 0),
-      soldeDisponible: revenus - retraits.reduce((s, r) => s + (r.net || 0), 0),
-      list: retraits.reverse(),
+      soldeDisponible: revenus - retraits.reduce((s, r) => s + (r.net || 0), 0) + (soldeCorrectif.valeur || 0),
+      list: retraits.map((r, id) => ({ ...r, id })).reverse(),
     },
   });
 }
