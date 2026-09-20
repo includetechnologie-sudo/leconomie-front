@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { checkDashboardAuth } from "@/lib/dashboard-auth";
+import { fetchMyCoolPayBalance } from "@/lib/mycoolpay";
 
 function readJSON(file: string, fallback: unknown = []) {
   try {
@@ -29,10 +30,10 @@ export async function GET(req: NextRequest) {
   const achatsArticles: { email: string; slug: string; purchasedAt: string; reference: string; expiresAt: string }[] = readJSON("achats-articles.json");
   const soldeCorrectif: { valeur?: number } = readJSON("solde-correctif.json", {});
 
-  // Articles WordPress via GraphQL
+  // Articles WordPress via GraphQL + solde marchand en temps réel via MyCoolPay (en parallèle)
   let articles = { total: 0, recent: [] as { title: string; date: string; slug: string }[] };
-  try {
-    const gql = await fetch(
+  const [gqlResult, soldeLive] = await Promise.all([
+    fetch(
       `${process.env.NEXT_PUBLIC_WORDPRESS_API_URL || "https://teal-horse-411567.hostingersite.com/graphql"}`,
       {
         method: "POST",
@@ -42,11 +43,13 @@ export async function GET(req: NextRequest) {
         }),
         next: { revalidate: 300 },
       }
-    );
-    const data = await gql.json();
-    articles.recent = data?.data?.posts?.nodes || [];
-    articles.total = data?.data?.posts?.pageInfo?.total || 0;
-  } catch {}
+    ).then(r => r.json()).catch(() => null),
+    fetchMyCoolPayBalance(),
+  ]);
+  if (gqlResult) {
+    articles.recent = gqlResult?.data?.posts?.nodes || [];
+    articles.total = gqlResult?.data?.posts?.pageInfo?.total || 0;
+  }
 
   // Revenus nets (après commission MyCoolPay : 2% Mobile Money, 4% Carte)
   const revenus = paiements.reduce((sum, p) => {
@@ -148,7 +151,8 @@ export async function GET(req: NextRequest) {
     retraits: {
       total: retraits.length,
       totalRetire: retraits.reduce((s, r) => s + (r.net || 0), 0),
-      soldeDisponible: revenus - retraits.reduce((s, r) => s + (r.net || 0), 0) + (soldeCorrectif.valeur || 0),
+      soldeDisponible: soldeLive ?? (revenus - retraits.reduce((s, r) => s + (r.net || 0), 0) + (soldeCorrectif.valeur || 0)),
+      soldeSource: soldeLive !== null ? "live" : "estime",
       list: retraits.map((r, id) => ({ ...r, id })).reverse(),
     },
   });

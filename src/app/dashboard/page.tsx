@@ -28,7 +28,7 @@ interface Stats {
   visits: { total: number; today: number; last7: { date: string; count: number }[]; online: number };
   topArticles: { slug: string; views: number }[];
   articlesPayants?: { totalVentes: number; totalRevenus: number; list: { slug: string; ventes: number; revenus: number; dernierAchat: string }[] };
-  retraits?: { total: number; totalRetire: number; soldeDisponible: number; list: { id: number; montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] };
+  retraits?: { total: number; totalRetire: number; soldeDisponible: number; soldeSource?: "live" | "estime"; list: { id: number; montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] };
 }
 
 type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "articles-payants" | "banners" | "settings";
@@ -614,11 +614,22 @@ export default function DashboardPage() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <p className="text-xl font-bold text-green-400">{new Intl.NumberFormat("fr-FR").format(stats.retraits?.soldeDisponible || 0)} FCFA</p>
-                      <button
-                        onClick={() => { setSoldeInput(String(stats.retraits?.soldeDisponible || 0)); setEditingSolde(true); }}
-                        className="text-gray-500 hover:text-white text-xs transition"
-                        title="Corriger le solde réel"
-                      >✎</button>
+                      {stats.retraits?.soldeSource === "live" ? (
+                        <span className="flex items-center gap-1 bg-green-600/20 text-green-400 text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-green-600/30" title="Récupéré en direct depuis l'API MyCoolPay">
+                          <span className="w-1 h-1 bg-green-400 rounded-full animate-pulse" />EN DIRECT
+                        </span>
+                      ) : (
+                        <>
+                          <span className="bg-yellow-600/20 text-yellow-400 text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-yellow-600/30" title="API MyCoolPay injoignable — valeur estimée">
+                            ESTIMÉ
+                          </span>
+                          <button
+                            onClick={() => { setSoldeInput(String(stats.retraits?.soldeDisponible || 0)); setEditingSolde(true); }}
+                            className="text-gray-500 hover:text-white text-xs transition"
+                            title="Corriger le solde réel"
+                          >✎</button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
