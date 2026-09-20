@@ -551,7 +551,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard icon="📧" label="Abonnés newsletter" value={stats.newsletter.total} color="purple" />
               <StatCard icon="👁️" label="Visiteurs aujourd'hui" value={stats.visits.today} sub={`${stats.visits.total} au total`} color="blue" />
-              <StatCard icon="📰" label="Articles publiés" value={stats.articles.total} color="yellow" />
+              <StatCard icon="📰" label="Articles vendus" value={stats.articlesPayants?.totalVentes || 0} sub={`${stats.articlesPayants?.list?.length || 0} article(s) différent(s)`} color="yellow" />
               <StatCard icon="🏢" label="Demandes de devis" value={stats.devis.total} color="purple" />
             </div>
 
