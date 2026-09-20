@@ -6,6 +6,12 @@ interface Achat { id: number; type: string; titre: string; ref: string; acheteLe
 interface Abonne { email?: string; name?: string; plan?: string; createdAt?: number; expiresAt?: number; achats?: Achat[]; }
 interface Paiement { email?: string; plan?: string; amount?: number; date?: string; type?: string; titre?: string; reference?: string; note?: string; }
 interface Subscriber { email?: string; token?: string; createdAt?: number; }
+interface Campaign {
+  id: string; subject: string; date: string; status: string;
+  total: number; sent: number; failedCount: number;
+  failedEmails: { email: string; error: string }[];
+  opens: number; clicks: number; openRate: number;
+}
 
 interface Stats {
   newsletter: { total: number; list: (string | Subscriber)[] };
@@ -295,6 +301,11 @@ export default function DashboardPage() {
   const [soldeLoading, setSoldeLoading] = useState(false);
   const [retraitLoadingId, setRetraitLoadingId] = useState<number | null>(null);
 
+  // Historique des campagnes newsletter
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignsLoaded, setCampaignsLoaded] = useState(false);
+  const [expandedFailed, setExpandedFailed] = useState<string | null>(null);
+
   // Gérer abonnés
   const [gAbEmail, setGAbEmail] = useState("");
   const [gAbName, setGAbName] = useState("");
@@ -322,6 +333,21 @@ export default function DashboardPage() {
       Promise.resolve().then(() => { setToken(saved); fetchStats(saved); });
     }
   }, [fetchStats]);
+
+  const fetchCampaigns = useCallback(async () => {
+    try {
+      const res = await fetch("/api/newsletter/stats", { headers: { "x-dashboard-token": token } });
+      if (!res.ok) return;
+      const data = await res.json();
+      startTransition(() => { setCampaigns(data.campaigns || []); setCampaignsLoaded(true); });
+    } catch { startTransition(() => setCampaignsLoaded(true)); }
+  }, [token]);
+
+  useEffect(() => {
+    if (activeTab === "newsletter" && token && !campaignsLoaded) {
+      void fetchCampaigns();
+    }
+  }, [activeTab, token, campaignsLoaded, fetchCampaigns]);
 
   // Heartbeat visiteur + refresh online toutes les 15s
   useEffect(() => {
@@ -878,7 +904,78 @@ export default function DashboardPage() {
 
         {/* ── NEWSLETTER ── */}
         {activeTab === "newsletter" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-300">Historique des envois</h3>
+              <button onClick={() => fetchCampaigns()} className="text-gray-400 hover:text-white text-xs transition flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                Actualiser
+              </button>
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {!campaignsLoaded ? (
+                <p className="text-gray-500 text-sm p-6">Chargement…</p>
+              ) : campaigns.length === 0 ? (
+                <p className="text-gray-500 text-sm p-6">Aucun envoi enregistré pour le moment</p>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead><tr className="border-b border-gray-800 text-gray-500">
+                    <th className="text-left px-5 py-3 uppercase">Sujet</th>
+                    <th className="text-left px-5 py-3 uppercase">Date</th>
+                    <th className="text-left px-5 py-3 uppercase">Statut</th>
+                    <th className="text-right px-5 py-3 uppercase">Reçu</th>
+                    <th className="text-right px-5 py-3 uppercase">Échecs</th>
+                    <th className="text-right px-5 py-3 uppercase">Ouvertures</th>
+                    <th className="text-right px-5 py-3 uppercase">Clics</th>
+                  </tr></thead>
+                  <tbody>
+                    {campaigns.map((c) => (
+                      <>
+                        <tr key={c.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                          <td className="px-5 py-3 text-white line-clamp-1">{c.subject}</td>
+                          <td className="px-5 py-3 text-gray-400">{fmtDate(c.date)}</td>
+                          <td className="px-5 py-3">
+                            <Badge color={c.status === "terminé" ? "green" : "yellow"}>{c.status}</Badge>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <span className="text-green-400 font-bold">{c.sent}</span>
+                            <span className="text-gray-600">/{c.total}</span>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            {c.failedCount > 0 ? (
+                              <button onClick={() => setExpandedFailed(expandedFailed === c.id ? null : c.id)}
+                                className="text-red-400 font-bold hover:underline">
+                                {c.failedCount}
+                              </button>
+                            ) : (
+                              <span className="text-gray-600">0</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-3 text-right text-blue-400">{c.opens} <span className="text-gray-600">({c.openRate}%)</span></td>
+                          <td className="px-5 py-3 text-right text-purple-400">{c.clicks}</td>
+                        </tr>
+                        {expandedFailed === c.id && c.failedEmails.length > 0 && (
+                          <tr className="border-b border-gray-800/50 bg-gray-950/50">
+                            <td colSpan={7} className="px-5 py-3">
+                              <p className="text-gray-500 mb-2">Adresses n&apos;ayant pas reçu cet envoi :</p>
+                              <div className="space-y-1 max-h-40 overflow-y-auto">
+                                {c.failedEmails.map((f, i) => (
+                                  <div key={i} className="flex items-center justify-between gap-3 text-[11px]">
+                                    <span className="text-gray-300">{f.email}</span>
+                                    <span className="text-red-400/70 truncate max-w-[280px]">{f.error}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
             <h2 className="text-lg font-bold">Newsletter — {stats.newsletter.total} inscrits</h2>
             <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
               {stats.newsletter.list.length === 0 ? (

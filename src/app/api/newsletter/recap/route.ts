@@ -68,22 +68,31 @@ function buildJournalSection(journal: JournalDuJour, isActiveSubscriber: boolean
   `;
 }
 
-function buildRecapEmail(articles: Article[], dateStr: string, journalHtml: string): string {
+function trackUrl(targetUrl: string, cid: string, email: string): string {
+  return `https://leconomie.info/api/newsletter/track?type=click&cid=${encodeURIComponent(cid)}&email=${encodeURIComponent(email)}&url=${encodeURIComponent(targetUrl)}`;
+}
+
+function openPixel(cid: string, email: string): string {
+  return `<img src="https://leconomie.info/api/newsletter/track?type=open&cid=${encodeURIComponent(cid)}&email=${encodeURIComponent(email)}" width="1" height="1" style="display:none;" alt="" />`;
+}
+
+function buildRecapEmail(articles: Article[], dateStr: string, journalHtml: string, cid: string, subscriberEmail: string): string {
   const articleBlocks = articles.map((a, i) => {
     const cat = a.categories?.nodes?.[0]?.name || "Actualité";
     const excerpt = stripHtml(a.excerpt);
     const url = `https://leconomie.info/article/${a.slug}`;
+    const trackedUrl = trackUrl(url, cid, subscriberEmail);
     const img = a.featuredImage?.node?.sourceUrl || "";
 
     return `
       <tr><td style="padding:${i === 0 ? "0" : "24px"} 0 0;">
-        ${img ? `<a href="${url}" style="display:block;margin-bottom:12px;"><img src="${img}" alt="${a.title}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;display:block;" /></a>` : ""}
+        ${img ? `<a href="${trackedUrl}" style="display:block;margin-bottom:12px;"><img src="${img}" alt="${a.title}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;display:block;" /></a>` : ""}
         <span style="background:#dc2626;color:#fff;font-size:10px;font-weight:bold;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;">${cat}</span>
         <h3 style="color:#111;font-size:17px;font-weight:bold;line-height:1.4;margin:8px 0 6px;">
-          <a href="${url}" style="color:#111;text-decoration:none;">${a.title}</a>
+          <a href="${trackedUrl}" style="color:#111;text-decoration:none;">${a.title}</a>
         </h3>
         <p style="color:#555;font-size:13px;line-height:1.6;margin:0;">${excerpt}...</p>
-        <a href="${url}" style="color:#dc2626;font-size:12px;font-weight:bold;text-decoration:none;display:inline-block;margin-top:8px;">Lire la suite &rarr;</a>
+        <a href="${trackedUrl}" style="color:#dc2626;font-size:12px;font-weight:bold;text-decoration:none;display:inline-block;margin-top:8px;">Lire la suite &rarr;</a>
       </td></tr>
       ${i < articles.length - 1 ? '<tr><td><hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0 0;" /></td></tr>' : ""}
     `;
@@ -116,6 +125,7 @@ function buildRecapEmail(articles: Article[], dateStr: string, journalHtml: stri
           <a href="https://leconomie.info" style="color:#dc2626;text-decoration:none;">leconomie.info</a>
         </p>
       </div>
+      ${openPixel(cid, subscriberEmail)}
     </div>
   `;
 }
@@ -143,12 +153,14 @@ async function sendBroadcast(
   subject: string,
   articles: Article[],
   dateStr: string,
-  journal: JournalDuJour | null
+  journal: JournalDuJour | null,
+  campaignId: string
 ) {
   const BATCH_SIZE = 10;
   const DELAY_BETWEEN_EMAILS = 3000;
   const DELAY_BETWEEN_BATCHES = 30000;
   let sent = 0;
+  const failed: { email: string; error: string }[] = [];
 
   for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
     const batch = recipients.slice(i, i + BATCH_SIZE);
@@ -163,7 +175,7 @@ async function sendBroadcast(
     for (const recipient of batch) {
       try {
         const journalHtml = journal ? buildJournalSection(journal, recipient.isActive) : "";
-        const html = buildRecapEmail(articles, dateStr, journalHtml);
+        const html = buildRecapEmail(articles, dateStr, journalHtml, campaignId, recipient.email);
         await transporter.sendMail({
           from: `"L'Economie" <${process.env.SMTP_USER}>`,
           to: recipient.email,
@@ -173,6 +185,7 @@ async function sendBroadcast(
         sent++;
       } catch (err) {
         console.error("Recap email error for", recipient.email, err);
+        failed.push({ email: recipient.email, error: err instanceof Error ? err.message : String(err) });
       }
       if (batch.indexOf(recipient) < batch.length - 1) {
         await new Promise(r => setTimeout(r, DELAY_BETWEEN_EMAILS));
@@ -186,7 +199,17 @@ async function sendBroadcast(
     }
   }
 
-  console.log(`[Recap] Broadcast terminé : ${sent}/${recipients.length} emails envoyés`);
+  // Met à jour le résultat final de la campagne (le décompte initial n'est qu'une estimation)
+  try {
+    const { promises: fsStats } = await import("fs");
+    const statsPath = (await import("path")).default.join(process.cwd(), "data", "newsletter-stats.json");
+    let stats: Record<string, Record<string, unknown>> = {};
+    try { stats = JSON.parse(await fsStats.readFile(statsPath, "utf-8")); } catch {}
+    stats[campaignId] = { ...stats[campaignId], sent, failed, status: "terminé" };
+    await fsStats.writeFile(statsPath, JSON.stringify(stats, null, 2));
+  } catch {}
+
+  console.log(`[Recap] Broadcast terminé : ${sent}/${recipients.length} emails envoyés (${failed.length} échecs)`);
 }
 
 export async function POST(req: NextRequest) {
@@ -257,6 +280,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Aucun destinataire" }, { status: 400 });
   }
 
+  const campaignId = `recap-${Date.now()}`;
+
   // Mode single : envoi direct et attente
   if (!broadcast) {
     const transporter = nodemailer.createTransport({
@@ -267,7 +292,7 @@ export async function POST(req: NextRequest) {
     });
 
     const journalHtml = journal ? buildJournalSection(journal, recipients[0].isActive) : "";
-    const html = buildRecapEmail(articles, today, journalHtml);
+    const html = buildRecapEmail(articles, today, journalHtml, campaignId, recipients[0].email);
 
     await transporter.sendMail({
       from: `"L'Economie" <${process.env.SMTP_USER}>`,
@@ -279,8 +304,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, sent: 1, total: 1, articlesCount: articles.length });
   }
 
+  // Enregistrer les stats d'envoi
+  try {
+    const { promises: fsStats } = await import("fs");
+    const statsPath = (await import("path")).default.join(process.cwd(), "data", "newsletter-stats.json");
+    let stats: Record<string, object> = {};
+    try { stats = JSON.parse(await fsStats.readFile(statsPath, "utf-8")); } catch {}
+    stats[campaignId] = { sent: 0, total: recipients.length, failed: [], opens: [], clicks: [], subject, date: new Date().toISOString(), status: "en cours" };
+    await fsStats.writeFile(statsPath, JSON.stringify(stats, null, 2));
+  } catch {}
+
   // Mode broadcast : répondre immédiatement, envoyer en arrière-plan
-  sendBroadcast(recipients, subject, articles, today, journal).catch(err => {
+  sendBroadcast(recipients, subject, articles, today, journal, campaignId).catch(err => {
     console.error("[Recap] Broadcast error:", err);
   });
 

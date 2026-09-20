@@ -87,14 +87,23 @@ function buildJournalSection(journal: JournalDuJour, isActiveSubscriber: boolean
   `;
 }
 
+function trackUrl(targetUrl: string, cid: string, email: string): string {
+  return `https://leconomie.info/api/newsletter/track?type=click&cid=${encodeURIComponent(cid)}&email=${encodeURIComponent(email)}&url=${encodeURIComponent(targetUrl)}`;
+}
+
+function openPixel(cid: string, email: string): string {
+  return `<img src="https://leconomie.info/api/newsletter/track?type=open&cid=${encodeURIComponent(cid)}&email=${encodeURIComponent(email)}" width="1" height="1" style="display:none;" alt="" />`;
+}
+
 function buildEmail(article: {
   title: string;
   excerpt: string;
   slug: string;
   category: string;
   imageUrl?: string;
-}, unsubscribeUrl: string, journalHtml: string): string {
+}, unsubscribeUrl: string, journalHtml: string, cid: string, subscriberEmail: string): string {
   const articleUrl = `https://leconomie.info/article/${article.slug}`;
+  const trackedArticleUrl = trackUrl(articleUrl, cid, subscriberEmail);
   const category = article.category?.toUpperCase() || "ACTUALITE";
   const excerpt = article.excerpt?.replace(/<[^>]+>/g, "").slice(0, 200) || "";
 
@@ -124,7 +133,7 @@ function buildEmail(article: {
         ${excerpt ? `<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 24px;">${excerpt}…</p>` : ""}
 
         <div style="text-align:center;margin:24px 0;">
-          <a href="${articleUrl}" style="background:#dc2626;color:#fff;padding:14px 36px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:14px;display:inline-block;">
+          <a href="${trackedArticleUrl}" style="background:#dc2626;color:#fff;padding:14px 36px;border-radius:8px;font-weight:bold;text-decoration:none;font-size:14px;display:inline-block;">
             Lire l'article complet →
           </a>
         </div>
@@ -136,6 +145,7 @@ function buildEmail(article: {
         <p style="color:#9ca3af;font-size:11px;margin:8px 0 4px;">© 2026 L'Economie — Tous droits réservés</p>
         <a href="${unsubscribeUrl}" style="color:#9ca3af;font-size:11px;text-decoration:underline;">Se désabonner de la newsletter</a>
       </div>
+      ${openPixel(cid, subscriberEmail)}
     </div>
   `;
 }
@@ -203,7 +213,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const campaignId = `notify-${slug}-${Date.now()}`;
     let sent = 0;
+    const failed: { email: string; error: string }[] = [];
     const BATCH = 10;
     for (let i = 0; i < subscribers.length; i += BATCH) {
       const batch = subscribers.slice(i, i + BATCH);
@@ -216,15 +228,35 @@ export async function POST(req: NextRequest) {
             from: `"L'Economie" <${process.env.SMTP_USER}>`,
             to: sub.email,
             subject: `[L'Economie] ${title}`,
-            html: buildEmail({ title, excerpt, slug, category, imageUrl }, unsubUrl, journalHtml),
-          }).then(() => { sent++; });
+            html: buildEmail({ title, excerpt, slug, category, imageUrl }, unsubUrl, journalHtml, campaignId, sub.email),
+          }).then(() => { sent++; }).catch((err) => {
+            failed.push({ email: sub.email, error: err instanceof Error ? err.message : String(err) });
+          });
         })
       );
     }
 
+    // Enregistrer le résultat détaillé de l'envoi
+    try {
+      const statsFile = path.join(process.cwd(), "data", "newsletter-stats.json");
+      let stats: Record<string, object> = {};
+      try { stats = JSON.parse(fs.readFileSync(statsFile, "utf-8")); } catch {}
+      stats[campaignId] = {
+        sent,
+        total: subscribers.length,
+        failed,
+        opens: [],
+        clicks: [],
+        subject: `[L'Economie] ${title}`,
+        date: new Date().toISOString(),
+        status: "terminé",
+      };
+      fs.writeFileSync(statsFile, JSON.stringify(stats, null, 2));
+    } catch {}
+
     markNotified(slug);
-    console.log(`Newsletter notify: ${sent}/${subscribers.length} emails envoyés pour "${title}"`);
-    return NextResponse.json({ success: true, sent, total: subscribers.length });
+    console.log(`Newsletter notify: ${sent}/${subscribers.length} emails envoyés pour "${title}" (${failed.length} échecs)`);
+    return NextResponse.json({ success: true, sent, failed: failed.length, total: subscribers.length });
   } catch (err) {
     console.error("Newsletter notify error:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
