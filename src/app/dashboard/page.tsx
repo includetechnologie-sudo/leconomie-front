@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, startTransition } from "react";
+import { useState, useEffect, useCallback, useRef, startTransition, Fragment } from "react";
 
 interface Achat { id: number; type: string; titre: string; ref: string; acheteLe: number; email?: string; name?: string; }
 interface Abonne { email?: string; name?: string; plan?: string; createdAt?: number; expiresAt?: number; achats?: Achat[]; }
@@ -941,8 +941,8 @@ export default function DashboardPage() {
                   </tr></thead>
                   <tbody>
                     {campaigns.map((c) => (
-                      <>
-                        <tr key={c.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                      <Fragment key={c.id}>
+                        <tr className="border-b border-gray-800/50 hover:bg-gray-800/30">
                           <td className="px-5 py-3 text-white line-clamp-1">{c.subject}</td>
                           <td className="px-5 py-3 text-gray-400">{fmtDate(c.date)}</td>
                           <td className="px-5 py-3">
@@ -980,7 +980,7 @@ export default function DashboardPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

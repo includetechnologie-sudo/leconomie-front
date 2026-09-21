@@ -1,18 +1,10 @@
 import "./globals.css";
 import { Inter, Source_Serif_4 } from "next/font/google";
 
-import TopBar from "@/components/navigation/TopBar";
-import BreakingNews from "@/components/layout/BreakingNews";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import MainMenu from "@/components/navigation/MainMenu";
-import RightClickProtection from "@/components/RightClickProtection";
-import SupportChat from "@/components/SupportChat";
-import CookieBanner from "@/components/CookieBanner";
+import SiteChrome from "@/components/layout/SiteChrome";
 import PageLoader from "@/components/layout/PageLoader";
 import OnlineHeartbeat from "@/components/layout/OnlineHeartbeat";
 import OneSignalInit from "@/components/layout/OneSignalInit";
-import HeaderBanner from "@/components/layout/HeaderBanner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -111,19 +103,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PageLoader />
         <OnlineHeartbeat />
         <OneSignalInit />
-        <RightClickProtection />
-        <TopBar />
-        <BreakingNews />
-        <Header />
-
-        {/* Bandeau publicitaire entre logo et navigation */}
-        <HeaderBanner />
-
-        <MainMenu />
-        <main>{children}</main>
-        <Footer />
-        <SupportChat />
-        <CookieBanner />
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );
