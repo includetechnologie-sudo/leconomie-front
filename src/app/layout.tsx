@@ -5,6 +5,15 @@ import SiteChrome from "@/components/layout/SiteChrome";
 import PageLoader from "@/components/layout/PageLoader";
 import OnlineHeartbeat from "@/components/layout/OnlineHeartbeat";
 import OneSignalInit from "@/components/layout/OneSignalInit";
+import TopBar from "@/components/navigation/TopBar";
+import MainMenu from "@/components/navigation/MainMenu";
+import BreakingNews from "@/components/layout/BreakingNews";
+import Header from "@/components/layout/Header";
+import HeaderBanner from "@/components/layout/HeaderBanner";
+import Footer from "@/components/layout/Footer";
+import RightClickProtection from "@/components/RightClickProtection";
+import SupportChat from "@/components/SupportChat";
+import CookieBanner from "@/components/CookieBanner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -103,7 +112,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PageLoader />
         <OnlineHeartbeat />
         <OneSignalInit />
-        <SiteChrome>{children}</SiteChrome>
+        <SiteChrome
+          rightClickProtection={<RightClickProtection />}
+          topBar={<TopBar />}
+          breakingNews={<BreakingNews />}
+          header={<Header />}
+          headerBanner={<HeaderBanner />}
+          mainMenu={<MainMenu />}
+          footer={<Footer />}
+          supportChat={<SupportChat />}
+          cookieBanner={<CookieBanner />}
+        >
+          {children}
+        </SiteChrome>
       </body>
     </html>
   );

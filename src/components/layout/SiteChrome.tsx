@@ -2,17 +2,29 @@
 
 import { usePathname } from "next/navigation";
 
-import TopBar from "@/components/navigation/TopBar";
-import MainMenu from "@/components/navigation/MainMenu";
-import BreakingNews from "@/components/layout/BreakingNews";
-import Header from "@/components/layout/Header";
-import HeaderBanner from "@/components/layout/HeaderBanner";
-import Footer from "@/components/layout/Footer";
-import RightClickProtection from "@/components/RightClickProtection";
-import SupportChat from "@/components/SupportChat";
-import CookieBanner from "@/components/CookieBanner";
-
-export default function SiteChrome({ children }: { children: React.ReactNode }) {
+export default function SiteChrome({
+  rightClickProtection,
+  topBar,
+  breakingNews,
+  header,
+  headerBanner,
+  mainMenu,
+  footer,
+  supportChat,
+  cookieBanner,
+  children,
+}: {
+  rightClickProtection: React.ReactNode;
+  topBar: React.ReactNode;
+  breakingNews: React.ReactNode;
+  header: React.ReactNode;
+  headerBanner: React.ReactNode;
+  mainMenu: React.ReactNode;
+  footer: React.ReactNode;
+  supportChat: React.ReactNode;
+  cookieBanner: React.ReactNode;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith("/dashboard");
 
@@ -22,19 +34,19 @@ export default function SiteChrome({ children }: { children: React.ReactNode }) 
 
   return (
     <>
-      <RightClickProtection />
-      <TopBar />
-      <BreakingNews />
-      <Header />
+      {rightClickProtection}
+      {topBar}
+      {breakingNews}
+      {header}
 
       {/* Bandeau publicitaire entre logo et navigation */}
-      <HeaderBanner />
+      {headerBanner}
 
-      <MainMenu />
+      {mainMenu}
       <main>{children}</main>
-      <Footer />
-      <SupportChat />
-      <CookieBanner />
+      {footer}
+      {supportChat}
+      {cookieBanner}
     </>
   );
 }
