@@ -9,13 +9,9 @@ interface Props {
 function getPreview(html: string): string {
   const paragraphs = html.match(/<p[^>]*>[\s\S]*?<\/p>/gi) || [];
   const nonEmpty = paragraphs.filter((p) => p.replace(/<[^>]+>/g, "").trim().length > 0);
-  // 1er paragraphe = chapô, puis on tronque le 2e à ~6 lignes (~400 caractères)
-  const chapo = nonEmpty[0] || "";
-  const second = nonEmpty[1] || "";
-  const truncated = second.length > 400
-    ? second.replace(/<\/p>$/, "").slice(0, 400).trimEnd() + "…</p>"
-    : second;
-  return [chapo, truncated].filter(Boolean).join("\n");
+  // Seul le chapô (1er paragraphe) est affiché : le reste du texte peut contenir
+  // l'information à forte valeur, on ne veut pas la laisser lisible avant le mur premium.
+  return nonEmpty[0] || "";
 }
 
 export default function PremiumWall({ content, slug }: Props) {
@@ -24,7 +20,7 @@ export default function PremiumWall({ content, slug }: Props) {
   return (
     <div className="relative">
 
-      {/* Aperçu — 3 premiers paragraphes */}
+      {/* Aperçu — chapô uniquement */}
       <div
         className="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-red-600 prose-img:rounded-lg"
         dangerouslySetInnerHTML={{ __html: preview }}
