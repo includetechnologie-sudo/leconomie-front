@@ -44,8 +44,8 @@ export default async function LectureViewerPage({
   let hasUnitAccess = false;
   if (!hasSubscription && email) {
     const abonnes = await readAbonnes();
-    const abonne = abonnes.find((a) => a.email === email);
-    hasUnitAccess = abonne?.achats?.some((a) => a.id === Number(id)) ?? false;
+    const abonne = abonnes.find((a) => a.email.toLowerCase() === email.toLowerCase());
+    hasUnitAccess = abonne?.achats?.some((a) => a.type !== "article" && a.id === Number(id)) ?? false;
   }
 
   if (!hasSubscription && !hasUnitAccess) {

@@ -31,7 +31,7 @@ export default async function MonComptePage() {
 
   // Récupère les achats unitaires de l'utilisateur
   const abonnes = await readAbonnes();
-  const abonne = abonnes.find((a) => a.email === user!.email);
+  const abonne = abonnes.find((a) => a.email.toLowerCase() === user!.email.toLowerCase());
   const achats = abonne?.achats || [];
 
   return <MonCompteClient user={user!} journaux={journaux} magazines={magazines} achats={achats} />;

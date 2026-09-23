@@ -3,15 +3,15 @@ import fs from "fs";
 import { promises as fsPromises } from "fs";
 import path from "path";
 import crypto from "crypto";
-import { readAbonnes, writeAbonnes, saveSubscriber } from "@/lib/abonnes";
+import { readAbonnes, writeAbonnes, saveSubscriber, type Subscriber } from "@/lib/abonnes";
 import { readSubscribers, writeSubscribers, generateToken } from "@/lib/newsletter";
 import type { Plan } from "@/lib/subscription";
-import { PLAN_DURATION_DAYS } from "@/lib/subscription";
+import { PLAN_DURATION_DAYS, buildAccessCookie } from "@/lib/subscription";
 import { sendInvoiceEmail } from "@/lib/invoice-email";
 
 type PendingAchat = { email: string; name: string; type: "journal" | "magazine"; id: number; titre: string };
 type PendingAbonnement = { email: string; name: string; type: "abonnement"; plan: Plan };
-type PendingArticle = { email: string; slug: string; type: "article" };
+type PendingArticle = { email: string; slug: string; titre?: string; type: "article" };
 type PendingEntry = PendingAchat | PendingAbonnement | PendingArticle;
 
 const PENDING_FILE = path.join(process.cwd(), "data", "achats-pending.json");
@@ -222,9 +222,10 @@ export async function POST(req: NextRequest) {
 
     // ── Achat unitaire article (48h) ────────────────────────────────────────
     if (pending.type === "article") {
-      const { slug } = pending as PendingArticle;
+      const { slug, titre } = pending as PendingArticle;
       const now = new Date();
       const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+      const displayTitre = titre || slug;
 
       const achatsFile = path.join(process.cwd(), "data", "achats-articles.json");
       let achats: object[] = [];
@@ -233,7 +234,33 @@ export async function POST(req: NextRequest) {
       fs.writeFileSync(achatsFile, JSON.stringify(achats, null, 2));
 
       savePaiement({ email, reference, type: "achat-article", slug, amount: 200, paymentMethod });
+
+      // Rattache l'achat au compte de l'utilisateur pour qu'il apparaisse dans "Mes achats"
+      const abonnesForArticle = await readAbonnes();
+      const idx = abonnesForArticle.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
+      const achatEntry = { type: "article" as const, slug, titre: displayTitre, ref: reference, acheteLe: Date.now(), expiresAt: expiresAt.getTime() };
+      const isNewUser = idx < 0;
+
+      if (idx >= 0) {
+        abonnesForArticle[idx].achats = [...(abonnesForArticle[idx].achats || []), achatEntry];
+      } else {
+        abonnesForArticle.push({
+          email,
+          name: name || email.split("@")[0],
+          plan: "gratuit",
+          ref: reference,
+          expiresAt: 0,
+          createdAt: Date.now(),
+          achats: [achatEntry],
+        });
+      }
+      await writeAbonnes(abonnesForArticle);
       await deletePending(reference);
+
+      const displayName = name || email.split("@")[0];
+      if (isNewUser) {
+        Promise.resolve().then(() => sendAccountCreationEmail(email, displayName));
+      }
 
       console.log(`MyCoolPay webhook: achat article confirmé pour ${email} — ${slug} (expire ${expiresAt.toISOString()})`);
       return NextResponse.json({ received: true });
@@ -245,14 +272,14 @@ export async function POST(req: NextRequest) {
     savePaiement({ email, reference, titre, id, type, amount: body.transaction_amount, paymentMethod });
 
     const abonnes = await readAbonnes();
-    const idx = abonnes.findIndex((a) => a.email === email);
+    const idx = abonnes.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
     const achat = { id, type, titre, ref: reference, acheteLe: Date.now() };
 
     const isNewUser = idx < 0;
 
     if (idx >= 0) {
       const existing = abonnes[idx];
-      const dejaAchete = existing.achats?.some((a) => a.id === id && a.type === type);
+      const dejaAchete = existing.achats?.some((a) => a.type !== "article" && a.id === id && a.type === type);
       if (!dejaAchete) {
         existing.achats = [...(existing.achats || []), achat];
         abonnes[idx] = existing;
@@ -302,6 +329,18 @@ export async function POST(req: NextRequest) {
   }
 }
 
+function setAutoLogin(response: NextResponse, email: string, plan: Plan, ref: string, name?: string) {
+  const cookieValue = buildAccessCookie(email, plan, ref, name);
+  response.cookies.set("abonne_access", cookieValue, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/",
+  });
+  return response;
+}
+
 // Retour navigateur (GET) après paiement MyCoolPay
 export async function GET(req: NextRequest) {
   const reference =
@@ -326,9 +365,10 @@ export async function GET(req: NextRequest) {
 
       // Achat article (48h) — redirection après paiement
       if (pending.type === "article") {
-        const { slug } = pending as PendingArticle;
+        const { slug, titre } = pending as PendingArticle;
         const now = new Date();
         const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+        const displayTitre = titre || slug;
 
         const achatsFile = path.join(process.cwd(), "data", "achats-articles.json");
         let achats: object[] = [];
@@ -337,9 +377,31 @@ export async function GET(req: NextRequest) {
         fs.writeFileSync(achatsFile, JSON.stringify(achats, null, 2));
 
         savePaiement({ email, reference, type: "achat-article", slug, amount: 200 });
+
+        // Rattache l'achat au compte + auto-login après achat article
+        const abonnesForArticle = await readAbonnes();
+        const idx = abonnesForArticle.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
+        const achatEntry = { type: "article" as const, slug, titre: displayTitre, ref: reference, acheteLe: Date.now(), expiresAt: expiresAt.getTime() };
+        const isNewUser = idx < 0;
+
+        let articleUser: Subscriber;
+        if (idx >= 0) {
+          abonnesForArticle[idx].achats = [...(abonnesForArticle[idx].achats || []), achatEntry];
+          articleUser = abonnesForArticle[idx];
+        } else {
+          articleUser = { email, name: name || email.split("@")[0], plan: "gratuit" as Plan, ref: reference, expiresAt: 0, createdAt: Date.now(), achats: [achatEntry] };
+          abonnesForArticle.push(articleUser);
+        }
+        await writeAbonnes(abonnesForArticle);
         await deletePending(reference);
 
-        return NextResponse.redirect(new URL(`/article/${slug}?achat=ok`, req.url));
+        const displayName = name || email.split("@")[0];
+        if (isNewUser) {
+          Promise.resolve().then(() => sendAccountCreationEmail(email, displayName));
+        }
+
+        const articleResponse = NextResponse.redirect(new URL(`/article/${slug}?achat=ok`, req.url));
+        return setAutoLogin(articleResponse, email, articleUser.plan, articleUser.ref, name);
       }
 
       // Abonnement mensuel / annuel
@@ -361,7 +423,9 @@ export async function GET(req: NextRequest) {
           expiresAt,
         }));
 
-        return NextResponse.redirect(new URL(`/paiement-succes?ref=${reference}&email=${encodeURIComponent(email)}&plan=${plan}`, req.url));
+        // Auto-login après abonnement
+        const aboResponse = NextResponse.redirect(new URL(`/paiement-succes?ref=${reference}&email=${encodeURIComponent(email)}&plan=${plan}`, req.url));
+        return setAutoLogin(aboResponse, email, plan, reference, name);
       }
 
       // Achat unitaire
@@ -369,13 +433,13 @@ export async function GET(req: NextRequest) {
       savePaiement({ email, reference, titre, id, type });
 
       const abonnes = await readAbonnes();
-      const idx = abonnes.findIndex((a) => a.email === email);
+      const idx = abonnes.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
       const achat = { id, type, titre, ref: reference, acheteLe: Date.now() };
       const isNewUser = idx < 0;
 
       if (idx >= 0) {
         const existing = abonnes[idx];
-        const dejaAchete = existing.achats?.some((a) => a.id === id && a.type === type);
+        const dejaAchete = existing.achats?.some((a) => a.type !== "article" && a.id === id && a.type === type);
         if (!dejaAchete) {
           existing.achats = [...(existing.achats || []), achat];
           abonnes[idx] = existing;
@@ -415,7 +479,14 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.redirect(new URL(`/paiement-succes?ref=${reference}&email=${encodeURIComponent(email)}`, req.url));
+    // Auto-login après achat journal/magazine
+    const finalAbonnes = await readAbonnes();
+    const finalUser = finalAbonnes.find(a => a.email.toLowerCase() === email.toLowerCase());
+    const successResponse = NextResponse.redirect(new URL(`/paiement-succes?ref=${reference}&email=${encodeURIComponent(email)}`, req.url));
+    if (finalUser) {
+      return setAutoLogin(successResponse, email, finalUser.plan, finalUser.ref, finalUser.name);
+    }
+    return successResponse;
   }
 
   return NextResponse.redirect(

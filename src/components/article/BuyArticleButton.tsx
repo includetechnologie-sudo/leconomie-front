@@ -4,9 +4,10 @@ import { useState } from "react";
 
 interface Props {
   slug: string;
+  title: string;
 }
 
-export default function BuyArticleButton({ slug }: Props) {
+export default function BuyArticleButton({ slug, title }: Props) {
   const [step, setStep] = useState<"idle" | "form" | "loading" | "success" | "error">("idle");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -32,6 +33,7 @@ export default function BuyArticleButton({ slug }: Props) {
         body: JSON.stringify({
           email,
           slug,
+          titre: title,
           phone: paymentMethod === "mobile" ? phone : undefined,
           paymentMethod,
         }),

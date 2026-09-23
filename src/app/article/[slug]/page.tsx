@@ -139,7 +139,7 @@ export default async function ArticlePage({
       const achats = JSON.parse(fs.readFileSync(achatsFile, "utf-8")) as { email: string; slug: string; expiresAt: string }[];
       const now = new Date();
       const validPurchase = achats.find(
-        (a) => a.email === userEmail && a.slug === slug && new Date(a.expiresAt) > now
+        (a) => a.email.toLowerCase() === userEmail.toLowerCase() && a.slug === slug && new Date(a.expiresAt) > now
       );
       if (validPurchase) hasPremiumAccess = true;
     } catch {}
@@ -318,7 +318,7 @@ export default async function ArticlePage({
 
           {/* Contenu article — mur premium si non connecté */}
           {showWall ? (
-            <PremiumWall content={post.content} slug={post.slug} />
+            <PremiumWall content={post.content} slug={post.slug} title={post.title} />
           ) : (
             <div
               className={`prose prose-lg max-w-none prose-headings:font-bold prose-img:rounded-lg ${

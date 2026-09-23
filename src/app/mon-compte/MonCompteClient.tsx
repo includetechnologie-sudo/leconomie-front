@@ -4,16 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { JournalWP, MagazineWP } from "@/lib/types";
-import { PLAN_LABELS, PLAN_RIGHTS, daysUntilExpiry } from "@/lib/subscription";
+import { PLAN_LABELS, PLAN_RIGHTS, daysUntilExpiry, isPast } from "@/lib/subscription";
 import type { Plan } from "@/lib/subscription";
-
-interface Achat {
-  id: number;
-  type: "journal" | "magazine";
-  titre: string;
-  ref: string;
-  acheteLe: number;
-}
+import type { Achat } from "@/lib/abonnes";
 
 interface Props {
   user: { name: string; email: string; roles: string[]; plan?: string; ref?: string; expiresAt?: number };
@@ -169,39 +162,60 @@ export default function MonCompteClient({ user, journaux, magazines, achats }: P
               </div>
             ) : (
               <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                {achats.map((achat, i) => (
-                  <div key={`${achat.type}-${achat.id}`} className={`flex items-center justify-between px-5 py-4 gap-4 ${i !== 0 ? "border-t border-gray-50" : ""} hover:bg-gray-50 transition`}>
-                    <div className="flex items-center gap-4">
-                      <div className="bg-red-50 rounded-lg p-2.5 shrink-0">
-                        {achat.type === "journal" ? (
-                          <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-                          </svg>
-                        ) : (
-                          <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-                          </svg>
-                        )}
+                {achats.map((achat, i) => {
+                  const isArticle = achat.type === "article";
+                  const isExpiredArticle = isArticle && isPast(achat.expiresAt);
+                  const key = isArticle ? `article-${achat.slug}-${achat.ref}` : `${achat.type}-${achat.id}`;
+                  const href = isArticle ? `/article/${achat.slug}` : `/lecture/${achat.id}`;
+                  return (
+                    <div key={key} className={`flex items-center justify-between px-5 py-4 gap-4 ${i !== 0 ? "border-t border-gray-50" : ""} hover:bg-gray-50 transition`}>
+                      <div className="flex items-center gap-4">
+                        <div className="bg-red-50 rounded-lg p-2.5 shrink-0">
+                          {achat.type === "journal" ? (
+                            <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                          ) : achat.type === "magazine" ? (
+                            <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
+                              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+                            </svg>
+                          ) : (
+                            <svg width="20" height="20" fill="none" stroke="#dc2626" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold text-red-600 uppercase">{achat.type}</span>
+                          <p className="text-sm font-medium text-gray-900 leading-snug">{achat.titre}</p>
+                          <p className="text-xs text-gray-400">
+                            Acheté le {new Date(achat.acheteLe).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                          </p>
+                          {isArticle && (
+                            <p className={`text-xs mt-0.5 font-semibold ${isExpiredArticle ? "text-gray-400" : "text-orange-600"}`}>
+                              {isExpiredArticle
+                                ? "Accès expiré"
+                                : `Expire le ${new Date(achat.expiresAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}`}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-xs font-bold text-red-600 uppercase">{achat.type}</span>
-                        <p className="text-sm font-medium text-gray-900 leading-snug">{achat.titre}</p>
-                        <p className="text-xs text-gray-400">
-                          Acheté le {new Date(achat.acheteLe).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
-                        </p>
-                      </div>
+                      {isExpiredArticle ? (
+                        <span className="shrink-0 text-xs font-bold text-gray-400 px-4 py-2">Expiré</span>
+                      ) : (
+                        <Link
+                          href={href}
+                          className="shrink-0 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition"
+                        >
+                          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                          </svg>
+                          Lire
+                        </Link>
+                      )}
                     </div>
-                    <Link
-                      href={`/lecture/${achat.id}`}
-                      className="shrink-0 flex items-center gap-1.5 bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition"
-                    >
-                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                      </svg>
-                      Lire
-                    </Link>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>

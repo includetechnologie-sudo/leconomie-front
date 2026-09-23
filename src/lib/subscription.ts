@@ -46,6 +46,10 @@ export function isSubscriptionExpired(expiresAt?: number): boolean {
   return Date.now() > expiresAt;
 }
 
+export function isPast(timestamp: number): boolean {
+  return Date.now() > timestamp;
+}
+
 export function daysUntilExpiry(expiresAt?: number): number | null {
   if (!expiresAt) return null;
   const ms = expiresAt - Date.now();

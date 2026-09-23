@@ -31,10 +31,10 @@ export default async function MagazinePage() {
 
   if (userEmail) {
     const abonnes = await readAbonnes();
-    const user = abonnes.find((a) => a.email === userEmail);
+    const user = abonnes.find((a) => a.email.toLowerCase() === userEmail.toLowerCase());
     if (user) {
       hasSubscription = user.plan !== "gratuit" && user.expiresAt > Date.now();
-      purchasedIds = (user.achats || []).map((a) => String(a.id));
+      purchasedIds = (user.achats || []).filter((a) => a.type !== "article").map((a) => String(a.id));
     }
   }
 

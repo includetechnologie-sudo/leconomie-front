@@ -4,20 +4,20 @@ import path from "path";
 
 const PENDING_FILE = path.join(process.cwd(), "data", "achats-pending.json");
 
-async function savePending(ref: string, email: string, slug: string) {
+async function savePending(ref: string, email: string, slug: string, titre?: string) {
   let pending: Record<string, unknown> = {};
   try {
     const raw = await fs.readFile(PENDING_FILE, "utf-8");
     pending = JSON.parse(raw);
   } catch {}
-  pending[ref] = { email, slug, type: "article" };
+  pending[ref] = { email, slug, titre, type: "article" };
   await fs.mkdir(path.dirname(PENDING_FILE), { recursive: true });
   await fs.writeFile(PENDING_FILE, JSON.stringify(pending, null, 2));
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, phone, slug, paymentMethod } = await req.json();
+    const { email, name, phone, slug, titre, paymentMethod } = await req.json();
 
     const isCard = paymentMethod === "card";
 
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     const body: Record<string, unknown> = {
       transaction_amount: 200,
       transaction_currency: "XAF",
-      transaction_reason: `Achat article L'Economie (48h)`,
+      transaction_reason: titre ? `Achat article – ${titre}` : `Achat article L'Economie (48h)`,
       app_transaction_ref: reference,
       customer_name: name || email.split("@")[0],
       customer_email: email,
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: errMsg }, { status: 500 });
     }
 
-    await savePending(reference, email, slug);
+    await savePending(reference, email, slug, titre);
 
     return NextResponse.json({ authorization_url: paymentUrl, reference });
   } catch (err) {

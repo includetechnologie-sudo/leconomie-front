@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     if (!email) return NextResponse.json({ achats: [] });
 
     const abonnes = await readAbonnes();
-    const abonne = abonnes.find((a) => a.email === email);
+    const abonne = abonnes.find((a) => a.email.toLowerCase() === email.toLowerCase());
     return NextResponse.json({ achats: abonne?.achats || [] });
   } catch {
     return NextResponse.json({ achats: [] });

@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   const now = new Date();
 
   const valid = achats.find(
-    (a) => a.email === email && a.slug === slug && new Date(a.expiresAt) > now
+    (a) => a.email.toLowerCase() === email.toLowerCase() && a.slug === slug && new Date(a.expiresAt) > now
   );
 
   if (valid) {

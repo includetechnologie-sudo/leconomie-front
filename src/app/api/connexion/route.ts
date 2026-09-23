@@ -19,7 +19,7 @@ async function tryLocalLogin(email: string, password: string): Promise<Response 
   try {
     const raw = await fs.readFile(DATA_FILE, "utf-8");
     const abonnes: LocalSubscriber[] = JSON.parse(raw);
-    const sub = abonnes.find((a) => a.email === email);
+    const sub = abonnes.find((a) => a.email.toLowerCase() === email.toLowerCase());
     if (!sub) return null;
 
     // Compte existant mais sans mot de passe → demander de créer un mot de passe

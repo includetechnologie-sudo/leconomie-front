@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     }
 
     const abonnes = await readAbonnes();
-    const existing = abonnes.find((a) => a.email === email);
+    const existing = abonnes.find((a) => a.email.toLowerCase() === email.toLowerCase());
 
     if (existing) {
       return NextResponse.json({ error: "Un compte existe déjà avec cet email. Connectez-vous." }, { status: 409 });

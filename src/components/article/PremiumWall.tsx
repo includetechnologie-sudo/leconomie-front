@@ -4,6 +4,7 @@ import BuyArticleButton from "./BuyArticleButton";
 interface Props {
   content: string;
   slug: string;
+  title: string;
 }
 
 function getPreview(html: string): string {
@@ -14,7 +15,7 @@ function getPreview(html: string): string {
   return nonEmpty[0] || "";
 }
 
-export default function PremiumWall({ content, slug }: Props) {
+export default function PremiumWall({ content, slug, title }: Props) {
   const preview = getPreview(content);
 
   return (
@@ -71,7 +72,7 @@ export default function PremiumWall({ content, slug }: Props) {
 
           {/* Offres */}
           <div className="grid sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-6">
-            <BuyArticleButton slug={slug} />
+            <BuyArticleButton slug={slug} title={title} />
             <Link
               href="/abonnement?offre=mensuel"
               className="border-2 border-red-600 rounded-xl px-4 py-3 hover:bg-red-50 transition text-center"

@@ -14,8 +14,12 @@ export interface Subscriber {
   passwordHash?: string;
   commentaire?: string;
   autoRenew?: boolean;
-  achats?: { id: number; type: "journal" | "magazine"; titre: string; ref: string; acheteLe: number }[];
+  achats?: Achat[];
 }
+
+export type Achat =
+  | { type: "journal" | "magazine"; id: number; titre: string; ref: string; acheteLe: number }
+  | { type: "article"; slug: string; titre: string; ref: string; acheteLe: number; expiresAt: number };
 
 export async function readAbonnes(): Promise<Subscriber[]> {
   try {
@@ -47,7 +51,7 @@ export async function saveSubscriber(
   ref: string
 ): Promise<SaveResult> {
   const abonnes = await readAbonnes();
-  const existingIndex = abonnes.findIndex((a) => a.email === email);
+  const existingIndex = abonnes.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
   const existing = abonnes[existingIndex];
 
   const days = PLAN_DURATION_DAYS[plan];

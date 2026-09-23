@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   // Vérifie le token (= la référence de paiement stockée en cookie)
   const abonnes = await readAbonnes();
-  const idx = abonnes.findIndex((a) => a.email === email && a.ref === token);
+  const idx = abonnes.findIndex((a) => a.email.toLowerCase() === email.toLowerCase() && a.ref === token);
 
   if (idx < 0) {
     return NextResponse.json({ error: "Lien invalide ou expiré." }, { status: 404 });

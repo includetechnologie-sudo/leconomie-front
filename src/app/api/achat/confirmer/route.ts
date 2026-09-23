@@ -58,13 +58,13 @@ export async function POST(req: NextRequest) {
     }
 
     const abonnes = await readAbonnes();
-    const idx = abonnes.findIndex((a) => a.email === email);
+    const idx = abonnes.findIndex((a) => a.email.toLowerCase() === email.toLowerCase());
 
     const achat = { id, type, titre: titre || `Numéro ${id}`, ref, acheteLe: Date.now() };
 
     if (idx >= 0) {
       const existing = abonnes[idx];
-      const dejaAchete = existing.achats?.some((a) => a.id === id && a.type === type);
+      const dejaAchete = existing.achats?.some((a) => a.type !== "article" && a.id === id && a.type === type);
       if (!dejaAchete) {
         existing.achats = [...(existing.achats || []), achat];
         abonnes[idx] = existing;
