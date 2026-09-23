@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import { promises as fsPromises } from "fs";
 import path from "path";
-import crypto from "crypto";
 import { readAbonnes, writeAbonnes, saveSubscriber, type Subscriber } from "@/lib/abonnes";
 import { readSubscribers, writeSubscribers, generateToken } from "@/lib/newsletter";
 import type { Plan } from "@/lib/subscription";
 import { PLAN_DURATION_DAYS, buildAccessCookie } from "@/lib/subscription";
 import { sendInvoiceEmail } from "@/lib/invoice-email";
+import { createMagicLinkToken, sendMagicLinkEmail } from "@/lib/magic-link";
 
 type PendingAchat = { email: string; name: string; type: "journal" | "magazine"; id: number; titre: string };
 type PendingAbonnement = { email: string; name: string; type: "abonnement"; plan: Plan };
@@ -50,8 +50,6 @@ async function deletePending(ref: string) {
   } catch {}
 }
 
-const TOKENS_FILE = path.join(process.cwd(), "data", "reset-tokens.json");
-
 async function subscribeToNewsletter(email: string) {
   try {
     const subscribers = await readSubscribers();
@@ -64,66 +62,10 @@ async function subscribeToNewsletter(email: string) {
   }
 }
 
-async function sendAccountCreationEmail(email: string, name: string) {
-  try {
-    const token = crypto.randomBytes(32).toString("hex");
-
-    let tokens: Record<string, { email: string; token: string; expiresAt: number }> = {};
-    try {
-      tokens = JSON.parse(await fsPromises.readFile(TOKENS_FILE, "utf-8"));
-    } catch { /* fichier absent */ }
-
-    for (const k in tokens) {
-      if (tokens[k].email.toLowerCase() === email.toLowerCase()) delete tokens[k];
-    }
-    tokens[token] = { email, token, expiresAt: Date.now() + 72 * 3600_000 };
-    await fsPromises.mkdir(path.dirname(TOKENS_FILE), { recursive: true });
-    await fsPromises.writeFile(TOKENS_FILE, JSON.stringify(tokens, null, 2));
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
-    const resetLink = `${siteUrl}/reset-password?token=${token}`;
-
-    const nodemailer = await import("nodemailer");
-    const transporter = nodemailer.default.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: true,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-
-    await transporter.sendMail({
-      from: `"L'Economie" <${process.env.SMTP_USER}>`,
-      to: email,
-      subject: "Créez votre compte L'Economie — Accédez à vos achats",
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
-          <div style="text-align:center;margin-bottom:24px;">
-            <img src="https://leconomie.info/images/favicon.png" alt="L'Economie" style="height:60px;width:auto;" />
-          </div>
-          <h2 style="color:#111;text-align:center;">Bienvenue sur L'Economie !</h2>
-          <p style="color:#555;">Bonjour <strong>${name}</strong>,</p>
-          <p style="color:#555;">Merci pour votre achat ! Un compte gratuit a été créé pour vous. Pour accéder à vos exemplaires et profiter de tous les avantages, créez votre mot de passe :</p>
-          <div style="text-align:center;margin:32px 0;">
-            <a href="${resetLink}" style="background:#dc2626;color:white;font-weight:bold;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:15px;">
-              Créer mon mot de passe
-            </a>
-          </div>
-          <div style="background:#f9fafb;border-radius:8px;padding:16px;margin:24px 0;">
-            <p style="color:#555;font-size:13px;margin:0 0 8px;"><strong>Votre compte vous donne accès à :</strong></p>
-            <ul style="color:#555;font-size:13px;margin:0;padding-left:16px;">
-              <li>Vos journaux achetés en lecture illimitée</li>
-              <li>Les articles gratuits en intégralité</li>
-              <li>La newsletter quotidienne</li>
-            </ul>
-          </div>
-          <p style="color:#888;font-size:12px;">Ce lien est valable <strong>72 heures</strong>.</p>
-          <p style="color:#aaa;font-size:11px;text-align:center;margin-top:32px;">© L'Economie 2026 — leconomie.info</p>
-        </div>
-      `,
-    });
-  } catch (err) {
-    console.error("Account creation email error:", err);
-  }
+// Envoie un lien de connexion magique (sans mot de passe) après création d'un compte
+async function sendAccountCreationEmail(email: string, name: string, titre?: string) {
+  const token = await createMagicLinkToken(email);
+  await sendMagicLinkEmail(email, name, token, { titre });
 }
 
 async function sendAchatEmail(email: string, name: string, titre: string, id: number) {
@@ -259,7 +201,7 @@ export async function POST(req: NextRequest) {
 
       const displayName = name || email.split("@")[0];
       if (isNewUser) {
-        Promise.resolve().then(() => sendAccountCreationEmail(email, displayName));
+        Promise.resolve().then(() => sendAccountCreationEmail(email, displayName, displayTitre));
       }
 
       console.log(`MyCoolPay webhook: achat article confirmé pour ${email} — ${slug} (expire ${expiresAt.toISOString()})`);
@@ -317,7 +259,7 @@ export async function POST(req: NextRequest) {
     if (type === "journal") {
       Promise.resolve().then(() => subscribeToNewsletter(email));
       if (isNewUser) {
-        Promise.resolve().then(() => sendAccountCreationEmail(email, displayName));
+        Promise.resolve().then(() => sendAccountCreationEmail(email, displayName, titre));
       }
     }
 
@@ -397,7 +339,7 @@ export async function GET(req: NextRequest) {
 
         const displayName = name || email.split("@")[0];
         if (isNewUser) {
-          Promise.resolve().then(() => sendAccountCreationEmail(email, displayName));
+          Promise.resolve().then(() => sendAccountCreationEmail(email, displayName, displayTitre));
         }
 
         const articleResponse = NextResponse.redirect(new URL(`/article/${slug}?achat=ok`, req.url));
@@ -474,7 +416,7 @@ export async function GET(req: NextRequest) {
       if (type === "journal") {
         Promise.resolve().then(() => subscribeToNewsletter(email));
         if (isNewUser) {
-          Promise.resolve().then(() => sendAccountCreationEmail(email, displayName));
+          Promise.resolve().then(() => sendAccountCreationEmail(email, displayName, titre));
         }
       }
     }
