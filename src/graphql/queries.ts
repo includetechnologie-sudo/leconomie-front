@@ -222,7 +222,7 @@ export const SEARCH_POSTS = `
 
 export const GET_PREMIUM_POSTS = `
   query GetPremiumPosts {
-    posts(first: 20, where: { tag: "premium", orderby: { field: DATE, order: DESC } }) {
+    posts(first: 60, where: { tag: "premium", orderby: { field: DATE, order: DESC } }) {
       nodes {
         title
         slug

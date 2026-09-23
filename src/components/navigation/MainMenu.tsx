@@ -34,6 +34,7 @@ const menuItems: MenuItem[] = [
   { label: "Banques",           href: "/banques" },
   { label: "Bourse & Marchés",  href: "/bourse-marches" },
   { label: "Infrastructures",   href: "/infrastructure" },
+  { label: "Premium",           href: "/articles-premium",   premium: true },
   { label: "Télécoms",          href: "/telecoms" },
   { label: "Start-ups",         href: "/start-ups" },
   { label: "Mines",             href: "/mines" },

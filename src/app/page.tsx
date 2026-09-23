@@ -3,7 +3,7 @@ import NewsTickerBar from "@/components/homepage/NewsTickerBar";
 import CategoryGrid from "@/components/homepage/CategoryGrid";
 import JournalDuJour from "@/components/homepage/JournalDuJour";
 import EspaceVipWidget from "@/components/homepage/EspaceVipWidget";
-import EspaceVipBanner from "@/components/homepage/EspaceVipBanner";
+import PremiumArticlesCarousel from "@/components/homepage/PremiumArticlesCarousel";
 import AdvertisementSection from "@/components/homepage/AdvertisementSection";
 import LeconomieTV from "@/components/homepage/LeconomieTV";
 import RegionalMapsSection from "@/components/homepage/RegionalMapsSection";
@@ -27,11 +27,11 @@ export default function HomePage() {
       {/* Journal du Jour */}
       <JournalDuJour />
 
-      {/* Espace VIP Widget + pub/auto-promo à gauche */}
+      {/* Espace VIP Widget + carrousel d'articles premium */}
       <section className="max-w-7xl mx-auto px-4 mt-8">
         <div className="flex flex-col lg:flex-row lg:items-stretch gap-4">
           <div className="flex-1 min-w-0">
-            <EspaceVipBanner />
+            <PremiumArticlesCarousel />
           </div>
           <div className="w-full max-w-xs mx-auto lg:mx-0 lg:shrink-0">
             <EspaceVipWidget />
