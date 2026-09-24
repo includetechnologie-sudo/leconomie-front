@@ -1,4 +1,4 @@
-export type Plan = "gratuit" | "mensuel" | "annuel";
+export type Plan = "gratuit" | "mensuel" | "trimestriel" | "semestriel" | "annuel";
 
 export interface Subscription {
   email: string;
@@ -21,24 +21,41 @@ export interface AccessUser {
 export const PLAN_DURATION_DAYS: Record<Plan, number> = {
   gratuit: 0,
   mensuel: 31,
+  trimestriel: 93,
+  semestriel: 186,
   annuel: 365,
+};
+
+export const PLAN_AMOUNTS: Record<Exclude<Plan, "gratuit">, number> = {
+  mensuel: 5000,
+  trimestriel: 13500,
+  semestriel: 25500,
+  annuel: 50000,
 };
 
 export const PLAN_LABELS: Record<Plan, string> = {
   gratuit: "Gratuit",
   mensuel: "Mensuel — 5 000 FCFA/mois",
+  trimestriel: "Trimestriel — 13 500 FCFA/3 mois",
+  semestriel: "Semestriel — 25 500 FCFA/6 mois",
   annuel: "Annuel — 50 000 FCFA/an",
 };
 
 // Droits d'accès par plan
 export const PLAN_RIGHTS: Record<Plan, { journal: boolean; magazine: boolean; premium: boolean }> = {
-  gratuit:  { journal: false, magazine: false, premium: false },
-  mensuel:  { journal: true,  magazine: true,  premium: true  },
-  annuel:   { journal: true,  magazine: true,  premium: true  },
+  gratuit:      { journal: false, magazine: false, premium: false },
+  mensuel:      { journal: true,  magazine: true,  premium: true  },
+  trimestriel:  { journal: true,  magazine: true,  premium: true  },
+  semestriel:   { journal: true,  magazine: true,  premium: true  },
+  annuel:       { journal: true,  magazine: true,  premium: true  },
 };
 
 export function canAccess(plan: Plan, resource: "journal" | "magazine" | "premium"): boolean {
   return PLAN_RIGHTS[plan]?.[resource] ?? false;
+}
+
+export function isPaidPlan(plan: string): plan is Exclude<Plan, "gratuit"> {
+  return plan === "mensuel" || plan === "trimestriel" || plan === "semestriel" || plan === "annuel";
 }
 
 export function isSubscriptionExpired(expiresAt?: number): boolean {

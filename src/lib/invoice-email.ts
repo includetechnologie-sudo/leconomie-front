@@ -57,7 +57,7 @@ export async function sendInvoiceEmail(data: InvoiceData) {
         year: "numeric",
       });
 
-      subject = `Facture — Abonnement ${data.plan === "annuel" ? "Annuel" : "Mensuel"}`;
+      subject = `Facture — Abonnement ${planLabel.split("—")[0].trim()}`;
       detailsHtml = `
         <tr>
           <td style="padding:8px 0;color:#374151;border-bottom:1px solid #f3f4f6;">Désignation</td>

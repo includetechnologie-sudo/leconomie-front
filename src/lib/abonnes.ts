@@ -35,7 +35,7 @@ export async function writeAbonnes(list: Subscriber[]) {
   await fs.writeFile(DATA_FILE, JSON.stringify(list, null, 2));
 }
 
-const PLAN_RANK: Record<Plan, number> = { gratuit: 0, mensuel: 1, annuel: 2 };
+const PLAN_RANK: Record<Plan, number> = { gratuit: 0, mensuel: 1, trimestriel: 2, semestriel: 3, annuel: 4 };
 
 export interface SaveResult {
   success: boolean;

@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { readSubscribers, buildUnsubscribeUrl } from "@/lib/newsletter";
 import { readAbonnes } from "@/lib/abonnes";
+import { isPaidPlan } from "@/lib/subscription";
 
 const WEBHOOK_SECRET = process.env.NEWSLETTER_WEBHOOK_SECRET || "";
 const NOTIFIED_PATH = path.join(process.cwd(), "data", "newsletter-notified.json");
@@ -199,7 +200,7 @@ export async function POST(req: NextRequest) {
     const now = Date.now();
     const activeEmails = new Set(
       abonnes
-        .filter(a => (a.plan === "mensuel" || a.plan === "annuel") && a.expiresAt > now)
+        .filter(a => isPaidPlan(a.plan) && a.expiresAt > now)
         .map(a => a.email.toLowerCase())
     );
 

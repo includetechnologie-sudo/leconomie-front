@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import CreatePasswordForm from "./CreatePasswordForm";
+import { PLAN_LABELS, PLAN_DURATION_DAYS, type Plan } from "@/lib/subscription";
 
 type State = "loading" | "new" | "existing" | "error";
 
@@ -65,8 +66,8 @@ export default function PaiementSuccesClient() {
 
     // Abonnement classique
     const rawPlan = searchParams.get("plan") || ref.split("-")[1] || "mensuel";
-    const plan = ["mensuel", "annuel"].includes(rawPlan) ? rawPlan : "mensuel";
-    const planLabel = plan === "annuel" ? "Annuel — 50 000 FCFA/an" : "Mensuel — 5 000 FCFA/mois";
+    const plan = (["mensuel", "trimestriel", "semestriel", "annuel"].includes(rawPlan) ? rawPlan : "mensuel") as Plan;
+    const planLabel = PLAN_LABELS[plan];
 
     setInfo({ email, plan, ref, planLabel });
 
@@ -146,7 +147,7 @@ export default function PaiementSuccesClient() {
           <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-4">
             <p className="text-sm font-bold text-red-600">{info.planLabel}</p>
             <p className="text-xs text-gray-500 mt-0.5">
-              {info.plan === "achat" ? "Achat à l'unité" : info.plan === "annuel" ? "Accès valable 12 mois" : "Accès valable 1 mois"}
+              {info.plan === "achat" ? "Achat à l'unité" : `Accès valable ${PLAN_DURATION_DAYS[info.plan as Plan] ?? 31} jours`}
             </p>
           </div>
           {info.email && <p className="text-sm text-gray-500 mb-1">Confirmation envoyée à <strong>{info.email}</strong></p>}

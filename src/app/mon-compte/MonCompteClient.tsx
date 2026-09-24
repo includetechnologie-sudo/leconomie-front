@@ -360,9 +360,9 @@ export default function MonCompteClient({ user, journaux, magazines, achats }: P
                     </div>
                   ))}
                 </div>
-                {plan === "mensuel" && (
+                {(plan === "mensuel" || plan === "trimestriel" || plan === "semestriel") && (
                   <p className="text-xs text-gray-400 mt-3 text-center">
-                    Passez à l&apos;annuel pour économiser 30% →{" "}
+                    Passez à l&apos;annuel pour le meilleur tarif →{" "}
                     <Link href="/abonnement" className="text-red-600 font-semibold hover:underline">50 000 FCFA/an</Link>
                   </p>
                 )}

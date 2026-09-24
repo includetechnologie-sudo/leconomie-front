@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { saveSubscriber, sendWelcomeEmailAsync } from "@/lib/abonnes";
-import { buildAccessCookie, type Plan } from "@/lib/subscription";
+import { buildAccessCookie, PLAN_AMOUNTS, PLAN_DURATION_DAYS, type Plan } from "@/lib/subscription";
 import { sendInvoiceEmail } from "@/lib/invoice-email";
 
 const PAIEMENTS_FILE = path.join(process.cwd(), "data", "paiements.json");
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const result = await saveSubscriber(email, name, plan, ref);
 
     if (result.success) {
-      const amount = plan === "annuel" ? 50000 : 5000;
+      const amount = plan === "gratuit" ? 0 : PLAN_AMOUNTS[plan];
 
       savePaiement({ email, reference: ref, plan, type: "abonnement", amount });
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       }));
     }
 
-    const days = plan === "annuel" ? 365 : 31;
+    const days = PLAN_DURATION_DAYS[plan];
     const cookieValue = buildAccessCookie(email, plan, ref, name);
 
     const response = NextResponse.json({

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readAbonnes, writeAbonnes, type Subscriber } from "@/lib/abonnes";
 import { checkDashboardAuth } from "@/lib/dashboard-auth";
+import { PLAN_DURATION_DAYS, PLAN_LABELS, type Plan } from "@/lib/subscription";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import { promises as fs } from "fs";
@@ -34,25 +35,26 @@ export async function POST(req: NextRequest) {
   const abonnes = await readAbonnes();
   const existing = abonnes.find(a => a.email.toLowerCase() === email.toLowerCase());
 
+  const planDays = PLAN_DURATION_DAYS[plan as Plan] ?? 31;
+  const planLabel = (PLAN_LABELS[plan as Plan] || plan).split("—")[0].trim();
+
   if (existing) {
     existing.plan = plan;
     existing.name = name || existing.name;
     if (commentaire) existing.commentaire = commentaire;
-    const days = plan === "annuel" ? 365 : 31;
-    existing.expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
+    existing.expiresAt = Date.now() + planDays * 24 * 60 * 60 * 1000;
     await writeAbonnes(abonnes);
     return NextResponse.json({ success: true, action: "upgraded", email });
   }
 
-  const days = plan === "annuel" ? 365 : 31;
   const newSub: Subscriber = {
     email,
     name: name || email.split("@")[0],
     plan,
     ref: "dashboard-" + Date.now(),
-    expiresAt: Date.now() + days * 24 * 60 * 60 * 1000,
+    expiresAt: Date.now() + planDays * 24 * 60 * 60 * 1000,
     createdAt: Date.now(),
-    commentaire: commentaire || (plan === "annuel" ? "Abonne Annuel" : "Abonne Mensuel"),
+    commentaire: commentaire || `Abonne ${planLabel}`,
   };
 
   abonnes.push(newSub);
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
           </div>
           <div style="background:#fff;border:1px solid #e5e7eb;border-top:none;padding:30px;border-radius:0 0 8px 8px">
             <p>Bonjour <strong>${newSub.name}</strong>,</p>
-            <p>Votre abonnement <strong style="color:#dc2626">${plan === "annuel" ? "Annuel" : "Mensuel"}</strong> est actif sur leconomie.info.</p>
+            <p>Votre abonnement <strong style="color:#dc2626">${planLabel}</strong> est actif sur leconomie.info.</p>
             <p style="color:#6b7280;font-size:14px">Cliquez ci-dessous pour creer votre mot de passe et acceder au journal :</p>
             <div style="text-align:center;margin:30px 0">
               <a href="${resetLink}" style="background:#dc2626;color:white;padding:14px 32px;border-radius:8px;font-weight:bold;text-decoration:none">

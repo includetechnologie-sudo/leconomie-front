@@ -60,6 +60,30 @@ const PLANS: Plan[] = [
     renewable: true,
   },
   {
+    id: "trimestriel",
+    label: "Trimestriel",
+    price: 13500,
+    priceDisplay: "13 500",
+    currency: "FCFA",
+    period: "/ 3 mois",
+    featured: false,
+    cta: "Sélectionner",
+    activeFeatures: FEATURES_BASE.length,
+    renewable: true,
+  },
+  {
+    id: "semestriel",
+    label: "Semestriel",
+    price: 25500,
+    priceDisplay: "25 500",
+    currency: "FCFA",
+    period: "/ 6 mois",
+    featured: false,
+    cta: "Sélectionner",
+    activeFeatures: FEATURES_BASE.length,
+    renewable: true,
+  },
+  {
     id: "annuel",
     label: "Annuel",
     price: 50000,
@@ -67,6 +91,7 @@ const PLANS: Plan[] = [
     currency: "FCFA",
     period: "/ an",
     featured: false,
+    badge: "MEILLEURE OFFRE",
     cta: "Sélectionner",
     activeFeatures: FEATURES_BASE.length,
     renewable: true,
@@ -216,8 +241,8 @@ export default function AbonnementClient() {
       </div>
 
       {/* Grille plans */}
-      <div className="max-w-5xl mx-auto px-4 py-12">
-        <div className="grid md:grid-cols-3 gap-6 items-stretch">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6 items-stretch">
           {PLANS.map((plan) => (
             <div
               key={plan.id}

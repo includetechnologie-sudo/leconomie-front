@@ -16,7 +16,7 @@ interface Campaign {
 interface Stats {
   newsletter: { total: number; list: (string | Subscriber)[] };
   paiements: {
-    total: number; revenus: number; mensuel: number; annuel: number;
+    total: number; revenus: number; mensuel: number; trimestriel: number; semestriel: number; annuel: number;
     achatsJournal: number; achatsMagazine: number;
     recent: Paiement[];
     recentAbonnements: Paiement[]; recentJournal: Paiement[]; recentMagazine: Paiement[];
@@ -78,6 +78,13 @@ function Badge({ children, color }: { children: React.ReactNode; color: string }
   };
   return <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${c[color] || c.gray}`}>{children}</span>;
 }
+
+const PLAN_BADGE_COLOR: Record<string, string> = {
+  mensuel: "green",
+  trimestriel: "blue",
+  semestriel: "red",
+  annuel: "yellow",
+};
 
 interface BannerItem {
   id: string;
@@ -803,12 +810,14 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold">Abonnements</h2>
               <div className="flex gap-3">
-                <div className="text-center"><div className="text-2xl font-bold text-blue-400">{stats.paiements.mensuel}</div><div className="text-xs text-gray-500">Mensuel</div></div>
+                <div className="text-center"><div className="text-2xl font-bold text-green-400">{stats.paiements.mensuel}</div><div className="text-xs text-gray-500">Mensuel</div></div>
+                <div className="text-center"><div className="text-2xl font-bold text-blue-400">{stats.paiements.trimestriel}</div><div className="text-xs text-gray-500">Trimestriel</div></div>
+                <div className="text-center"><div className="text-2xl font-bold text-red-400">{stats.paiements.semestriel}</div><div className="text-xs text-gray-500">Semestriel</div></div>
                 <div className="text-center"><div className="text-2xl font-bold text-yellow-400">{stats.paiements.annuel}</div><div className="text-xs text-gray-500">Annuel</div></div>
               </div>
             </div>
             <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-              {stats.abonnes.list.filter(a => a.plan === "mensuel" || a.plan === "annuel").length === 0 ? (
+              {stats.abonnes.list.filter(a => a.plan !== "gratuit").length === 0 ? (
                 <p className="text-gray-500 text-sm p-6">Aucun abonné payant pour le moment</p>
               ) : (
                 <table className="w-full">
@@ -819,14 +828,14 @@ export default function DashboardPage() {
                     <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Expiration</th>
                   </tr></thead>
                   <tbody>
-                    {stats.abonnes.list.filter(a => a.plan === "mensuel" || a.plan === "annuel").map((a, i) => (
+                    {stats.abonnes.list.filter(a => a.plan !== "gratuit").map((a, i) => (
                       <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/50">
                         <td className="px-5 py-3">
                           <div className="text-sm text-white font-medium">{a.name || "—"}</div>
                           <div className="text-xs text-gray-500">{a.email}</div>
                         </td>
                         <td className="px-5 py-3">
-                          <Badge color={a.plan === "annuel" ? "yellow" : "blue"}>{a.plan}</Badge>
+                          <Badge color={PLAN_BADGE_COLOR[a.plan || ""] || "gray"}>{a.plan}</Badge>
                         </td>
                         <td className="px-5 py-3 text-sm text-gray-400">{fmtDate(a.createdAt)}</td>
                         <td className="px-5 py-3 text-sm text-gray-400">{fmtDate(a.expiresAt)}</td>
@@ -1280,7 +1289,7 @@ export default function DashboardPage() {
                           <td className="py-2 px-2 text-gray-300">{a.email}</td>
                           <td className="py-2 px-2 text-gray-400">{a.name || "—"}</td>
                           <td className="py-2 px-2">
-                            <Badge color={a.plan === "annuel" ? "blue" : a.plan === "mensuel" ? "green" : "gray"}>
+                            <Badge color={PLAN_BADGE_COLOR[a.plan || ""] || "gray"}>
                               {a.plan || "gratuit"}
                             </Badge>
                           </td>

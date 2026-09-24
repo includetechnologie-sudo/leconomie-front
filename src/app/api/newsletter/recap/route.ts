@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { checkDashboardAuth } from "@/lib/dashboard-auth";
 import { readAbonnes } from "@/lib/abonnes";
+import { isPaidPlan } from "@/lib/subscription";
 import { readSubscribers } from "@/lib/newsletter";
 
 interface Article {
@@ -251,7 +252,7 @@ export async function POST(req: NextRequest) {
   const now = Date.now();
   const activeEmails = new Set(
     abonnes
-      .filter(a => (a.plan === "mensuel" || a.plan === "annuel") && a.expiresAt > now)
+      .filter(a => isPaidPlan(a.plan) && a.expiresAt > now)
       .map(a => a.email.toLowerCase())
   );
 
@@ -262,7 +263,7 @@ export async function POST(req: NextRequest) {
     const newsletterSubs = await readSubscribers();
 
     const abonnesEmails = abonnes
-      .filter(a => a.plan === "annuel" || a.plan === "mensuel")
+      .filter(a => isPaidPlan(a.plan))
       .map(a => a.email.toLowerCase());
 
     const newsletterEmails = newsletterSubs.map(s => s.email.toLowerCase());

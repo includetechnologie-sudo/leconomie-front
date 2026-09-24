@@ -5,7 +5,7 @@ import path from "path";
 import { readAbonnes, writeAbonnes, saveSubscriber, type Subscriber } from "@/lib/abonnes";
 import { readSubscribers, writeSubscribers, generateToken } from "@/lib/newsletter";
 import type { Plan } from "@/lib/subscription";
-import { PLAN_DURATION_DAYS, buildAccessCookie } from "@/lib/subscription";
+import { PLAN_DURATION_DAYS, PLAN_AMOUNTS, buildAccessCookie } from "@/lib/subscription";
 import { sendInvoiceEmail } from "@/lib/invoice-email";
 import { createMagicLinkToken, sendMagicLinkEmail } from "@/lib/magic-link";
 
@@ -360,7 +360,7 @@ export async function GET(req: NextRequest) {
           email,
           name: name || email.split("@")[0],
           plan,
-          amount: plan === "annuel" ? 50000 : 5000,
+          amount: plan === "gratuit" ? 0 : PLAN_AMOUNTS[plan],
           reference,
           expiresAt,
         }));

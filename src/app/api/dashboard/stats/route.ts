@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { checkDashboardAuth } from "@/lib/dashboard-auth";
 import { fetchMyCoolPayBalance } from "@/lib/mycoolpay";
+import { isPaidPlan } from "@/lib/subscription";
 
 function readJSON(file: string, fallback: unknown = []) {
   try {
@@ -71,13 +72,15 @@ export async function GET(req: NextRequest) {
   }, 0);
   // Abonnés depuis abonnes.json
   const mensuel = abonnes.filter(a => a.plan === "mensuel").length;
+  const trimestriel = abonnes.filter(a => a.plan === "trimestriel").length;
+  const semestriel = abonnes.filter(a => a.plan === "semestriel").length;
   const annuel = abonnes.filter(a => a.plan === "annuel").length;
   // Achats unitaires (journal + magazine)
   const allAchats = abonnes.flatMap(a => (a.achats || []).map(ac => ({ ...ac, email: a.email, name: a.name })));
   const achatsJournal = allAchats.filter(a => a.type === "journal");
   const achatsMagazine = allAchats.filter(a => a.type === "magazine");
   // Paiements par type
-  const paiementsAbonnement = paiements.filter(p => p.plan === "mensuel" || p.plan === "annuel");
+  const paiementsAbonnement = paiements.filter(p => isPaidPlan(p.plan || ""));
   const paiementsJournal = paiements.filter(p => p.type === "journal");
   const paiementsMagazine = paiements.filter(p => p.type === "magazine");
   // Visiteurs en ligne
@@ -132,6 +135,8 @@ export async function GET(req: NextRequest) {
       total: paiements.length,
       revenus,
       mensuel,
+      trimestriel,
+      semestriel,
       annuel,
       achatsJournal: achatsJournal.length,
       achatsMagazine: achatsMagazine.length,

@@ -152,7 +152,7 @@ export default function EspaceVipWidget() {
             </button>
 
             <div className="flex justify-between text-[10px] pt-1">
-              <Link href="/inscription" className="text-[#c9a84c] hover:underline font-semibold">
+              <Link href="/abonnement" className="text-[#c9a84c] hover:underline font-semibold">
                 Créer un compte
               </Link>
               <Link href="/reset-password" className="text-gray-400 hover:text-[#c9a84c]">
