@@ -59,6 +59,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i3.ytimg.com" },
       { protocol: "https", hostname: "i4.ytimg.com" },
       { protocol: "https", hostname: "teal-horse-411567.hostingersite.com" },
+      // Avatars des auteurs (WordPress → Gravatar)
+      { protocol: "https", hostname: "secure.gravatar.com" },
+      { protocol: "https", hostname: "*.gravatar.com" },
     ],
   },
 };

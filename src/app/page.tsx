@@ -15,6 +15,9 @@ import NewsletterForm from "@/components/newsletter/NewsletterForm";
 export default function HomePage() {
   return (
     <>
+      {/* Titre principal de la page pour les moteurs et lecteurs d'écran (le logo tient ce rôle visuellement) */}
+      <h1 className="sr-only">L&apos;Economie — actualité économique, financière et des marchés au Cameroun et dans la zone CEMAC</h1>
+
       {/* Hero : article principal + sidebar + plus lus */}
       <HeroSlider />
 

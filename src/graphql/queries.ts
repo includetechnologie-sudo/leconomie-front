@@ -125,7 +125,7 @@ export const GET_POST_BY_SLUG = `
         nodes { name slug }
       }
       author {
-        node { name }
+        node { name slug }
       }
       tags {
         nodes { name }
@@ -253,6 +253,27 @@ export const GET_RELATED_POSTS = `
         }
         categories {
           nodes { name }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_AUTHOR = `
+  query GetAuthor($slug: ID!) {
+    user(id: $slug, idType: SLUG) {
+      name
+      slug
+      description
+      avatar(size: 192) { url }
+      posts(first: 24) {
+        nodes {
+          title
+          slug
+          date
+          excerpt
+          featuredImage { node { sourceUrl } }
+          categories { nodes { name } }
         }
       }
     }

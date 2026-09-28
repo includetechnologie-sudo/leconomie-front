@@ -49,3 +49,19 @@ export const SECONDARY_RUBRIQUES = [
   "a-la-une", "buisness", "tech", "eco-afrique", "economie-verte", "banque-et-assurances",
   "agriculture", "transport", "management", "sante", "sport", "mbolo", "offres", "agenda",
 ];
+
+// Catégorie WordPress → page du site (miroir de wordpress/mu-plugins/leconomie-headless-redirect.php)
+const WP_CATEGORY_PATHS: Record<string, string> = {
+  "cameroun-2": "/cemac/cameroun",
+  "republique-centrafricaine": "/rca",
+  uemoa: "/uemoa",
+  "articles-premium": "/articles-premium",
+  uncategorized: "/",
+};
+const UEMOA_PAYS = ["senegal", "cote-d-ivoire", "mali", "burkina-faso", "niger", "benin", "togo", "guinee-bissau"];
+
+export function rubriqueHref(wpSlug: string): string {
+  if (WP_CATEGORY_PATHS[wpSlug]) return WP_CATEGORY_PATHS[wpSlug];
+  if (UEMOA_PAYS.includes(wpSlug)) return `/uemoa/${wpSlug}`;
+  return `/${wpSlug}`;
+}

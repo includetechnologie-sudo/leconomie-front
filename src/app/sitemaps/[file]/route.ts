@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CATEGORY_MAP } from "@/lib/categories";
+import { graphqlFetch } from "@/lib/graphql-fetch";
 import { SITE_URL, WP_POST_SITEMAP, fetchWp, rewritePostSitemap, xmlResponse } from "@/lib/sitemap";
 
 const CEMAC_PAYS = ["cameroun", "tchad", "rca", "congo", "gabon", "guinee-equatoriale"];
@@ -21,11 +22,24 @@ const STATIC_PAGES: { path: string; changefreq: string; priority: string }[] = [
     .map((slug) => ({ path: `/${slug}`, changefreq: "daily", priority: "0.6" })),
 ];
 
-function pagesSitemap(): string {
+// Auteurs ayant publié au moins un article (WPGraphQL n'expose que ceux-là)
+async function authorPages() {
+  try {
+    const data = await graphqlFetch<{ users: { nodes: { slug: string }[] } }>(
+      `query SitemapAuthors { users(first: 100) { nodes { slug } } }`
+    );
+    return data.users.nodes.map((u) => ({ path: `/auteur/${u.slug}`, changefreq: "weekly", priority: "0.4" }));
+  } catch {
+    return [];
+  }
+}
+
+async function pagesSitemap(): Promise<string> {
   const now = new Date().toISOString();
+  const pages = [...STATIC_PAGES, ...(await authorPages())];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${STATIC_PAGES.map((p) => `  <url>\n    <loc>${SITE_URL}${p.path === "/" ? "/" : p.path}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`).join("\n")}
+${pages.map((p) => `  <url>\n    <loc>${SITE_URL}${p.path === "/" ? "/" : p.path}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`).join("\n")}
 </urlset>`;
 }
 
@@ -35,7 +49,7 @@ export async function GET(
 ) {
   const { file } = await params;
 
-  if (file === "pages.xml") return xmlResponse(pagesSitemap());
+  if (file === "pages.xml") return xmlResponse(await pagesSitemap());
 
   if (!WP_POST_SITEMAP.test(file)) {
     return new NextResponse("Not found", { status: 404 });

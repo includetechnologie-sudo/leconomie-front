@@ -14,6 +14,8 @@ import TrackPageView from "@/components/TrackPageView";
 import ViewCount from "@/components/article/ViewCount";
 import { parseAccessCookie, canAccess } from "@/lib/subscription";
 import type { JournalWP } from "@/lib/types";
+import { ORGANIZATION_ID, ORGANIZATION_LOGO, isRedactionAuthor } from "@/lib/organization";
+import { rubriqueHref } from "@/lib/categories";
 import type { Metadata } from "next";
 
 interface Banner {
@@ -93,7 +95,7 @@ interface Post {
   slug: string;
   featuredImage?: { node?: { sourceUrl?: string; altText?: string } };
   categories?: { nodes: { name: string; slug: string }[] };
-  author?: { node?: { name: string } };
+  author?: { node?: { name: string; slug?: string } };
   tags?: { nodes: { name: string }[] };
   is_premium?: { article?: boolean | null };
 }
@@ -205,14 +207,19 @@ export default async function ArticlePage({
     "image": coverImage.startsWith("http") ? coverImage : `${SITE_URL}${coverImage}`,
     "datePublished": isoUtc(post.dateGmt, post.date),
     "dateModified": isoUtc(post.modifiedGmt, post.modified),
-    "author": {
-      "@type": "Person",
-      "name": post.author?.node?.name || "L'Economie",
-    },
+    "author": !post.author?.node?.slug || isRedactionAuthor(post.author.node.slug)
+      ? { "@type": "NewsMediaOrganization", "@id": ORGANIZATION_ID, "name": "L'Economie" }
+      : {
+          "@type": "Person",
+          "@id": `${SITE_URL}/auteur/${post.author.node.slug}#person`,
+          "name": post.author.node.name,
+          "url": `${SITE_URL}/auteur/${post.author.node.slug}`,
+        },
     "publisher": {
-      "@type": "Organization",
+      "@type": "NewsMediaOrganization",
+      "@id": ORGANIZATION_ID,
       "name": "L'Economie",
-      "logo": { "@type": "ImageObject", "url": `${SITE_URL}/images/favicon.png` },
+      "logo": ORGANIZATION_LOGO,
     },
     "mainEntityOfPage": { "@type": "WebPage", "@id": articleUrl },
     "url": articleUrl,
@@ -229,8 +236,20 @@ export default async function ArticlePage({
     }),
   };
 
+  // Fil d'Ariane (Accueil › Rubrique › Article) pour les résultats de recherche
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": `${SITE_URL}/` },
+      ...(category ? [{ "@type": "ListItem", "position": 2, "name": category.name, "item": `${SITE_URL}${rubriqueHref(category.slug)}` }] : []),
+      { "@type": "ListItem", "position": category ? 3 : 2, "name": post.title, "item": articleUrl },
+    ],
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ReadingProgressBar color={isPremium ? "#c9a84c" : undefined} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <TrackPageView slug={post.slug} />
@@ -244,7 +263,7 @@ export default async function ArticlePage({
             <span>›</span>
             {category && (
               <>
-                <Link href={`/${category.slug}`} className={`transition capitalize ${isPremium ? "hover:text-[#c9a84c]" : "hover:text-red-600"}`}>
+                <Link href={rubriqueHref(category.slug)} className={`transition capitalize ${isPremium ? "hover:text-[#c9a84c]" : "hover:text-red-600"}`}>
                   {category.name}
                 </Link>
                 <span>›</span>
@@ -256,7 +275,7 @@ export default async function ArticlePage({
           {/* Badges catégorie + premium */}
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             {category && (
-              <Link href={`/${category.slug}`}
+              <Link href={rubriqueHref(category.slug)}
                 className={`inline-block text-xs font-bold px-3 py-1 uppercase tracking-wide transition ${
                   isPremium
                     ? "bg-[#c9a84c] text-black hover:bg-[#b8943f]"
@@ -286,7 +305,11 @@ export default async function ArticlePage({
                   <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
-                {post.author.node.name}
+                {post.author.node.slug ? (
+                  <Link href={`/auteur/${post.author.node.slug}`} rel="author" className="hover:text-red-600 transition">
+                    {post.author.node.name}
+                  </Link>
+                ) : post.author.node.name}
               </span>
             )}
             <span className="flex items-center gap-1">
@@ -518,7 +541,7 @@ export default async function ArticlePage({
             <span className={`w-1 h-7 rounded inline-block ${isPremium ? "bg-[#c9a84c]" : "bg-red-600"}`} />
             <h2 className="text-xl font-bold uppercase tracking-wide">Dans la même catégorie</h2>
             {category && (
-              <Link href={`/${category.slug}`} className={`ml-auto text-sm font-semibold hover:underline whitespace-nowrap ${isPremium ? "text-[#c9a84c]" : "text-red-600"}`}>
+              <Link href={rubriqueHref(category.slug)} className={`ml-auto text-sm font-semibold hover:underline whitespace-nowrap ${isPremium ? "text-[#c9a84c]" : "text-red-600"}`}>
                 Voir plus →
               </Link>
             )}

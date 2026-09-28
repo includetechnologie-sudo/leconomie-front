@@ -14,6 +14,7 @@ import Footer from "@/components/layout/Footer";
 import RightClickProtection from "@/components/RightClickProtection";
 import SupportChat from "@/components/SupportChat";
 import CookieBanner from "@/components/CookieBanner";
+import { organizationJsonLd, websiteJsonLd } from "@/lib/organization";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -76,26 +77,6 @@ export const metadata = {
   },
 };
 
-const organizationJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "NewsMediaOrganization",
-  "name": "L'Economie",
-  "url": "https://leconomie.info",
-  "logo": {
-    "@type": "ImageObject",
-    "url": "https://leconomie.info/images/favicon.png",
-    "width": 512,
-    "height": 512,
-  },
-  "sameAs": [
-    "https://www.facebook.com/leconomie.info",
-  ],
-  "description": "Le premier quotidien économique de la zone CEMAC",
-  "foundingDate": "2010",
-  "areaServed": ["CM", "GA", "CG", "TD", "CF", "GQ"],
-  "inLanguage": "fr",
-};
-
 export function generateViewport() {
   return { themeColor: "#dc2626" };
 }
@@ -105,7 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${inter.variable} ${sourceSerif.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-200 transition-colors duration-300">
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||(t==null&&window.matchMedia("(prefers-color-scheme:dark)").matches))document.documentElement.classList.add("dark")}catch(e){}})()` }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([organizationJsonLd, websiteJsonLd]) }} />
         {/* Google Reader Revenue Manager */}
         <script async type="application/javascript" src="https://news.google.com/swg/js/v1/swg-basic.js" />
         <script dangerouslySetInnerHTML={{ __html: `(self.SWG_BASIC = self.SWG_BASIC || []).push(basicSubscriptions => { basicSubscriptions.init({ type: "NewsArticle", isPartOfType: ["Product"], isPartOfProductId: "CAow_bHHCw:openaccess", clientOptions: { theme: "light", lang: "fr" }, }); });` }} />
