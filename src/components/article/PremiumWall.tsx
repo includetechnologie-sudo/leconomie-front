@@ -2,12 +2,13 @@ import Link from "next/link";
 import BuyArticleButton from "./BuyArticleButton";
 
 interface Props {
-  content: string;
+  // Chapô seul : le texte réservé aux abonnés ne doit jamais être envoyé au navigateur
+  preview: string;
   slug: string;
   title: string;
 }
 
-function getPreview(html: string): string {
+export function getPreview(html: string): string {
   const paragraphs = html.match(/<p[^>]*>[\s\S]*?<\/p>/gi) || [];
   const nonEmpty = paragraphs.filter((p) => p.replace(/<[^>]+>/g, "").trim().length > 0);
   // Seul le chapô (1er paragraphe) est affiché : le reste du texte peut contenir
@@ -15,11 +16,9 @@ function getPreview(html: string): string {
   return nonEmpty[0] || "";
 }
 
-export default function PremiumWall({ content, slug, title }: Props) {
-  const preview = getPreview(content);
-
+export default function PremiumWall({ preview, slug, title }: Props) {
   return (
-    <div className="relative">
+    <div className="relative paywall">
 
       {/* Aperçu — chapô uniquement */}
       <div
@@ -27,12 +26,13 @@ export default function PremiumWall({ content, slug, title }: Props) {
         dangerouslySetInnerHTML={{ __html: preview }}
       />
 
-      {/* Zone floutée courte */}
+      {/* Zone floutée courte — effet visuel uniquement, construit à partir du chapô */}
       <div className="relative mt-2 overflow-hidden" style={{ maxHeight: "80px" }}>
         <div
           className="prose prose-lg max-w-none prose-headings:font-bold select-none pointer-events-none"
           style={{ filter: "blur(4px)", opacity: 0.4 }}
-          dangerouslySetInnerHTML={{ __html: content }}
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: preview }}
         />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, white 60%)" }} />
       </div>

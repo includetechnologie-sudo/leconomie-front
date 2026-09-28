@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_POST_BY_SLUG, GET_RELATED_POSTS, GET_JOURNAUX } from "@/graphql/queries";
-import PremiumWall from "@/components/article/PremiumWall";
+import PremiumWall, { getPreview } from "@/components/article/PremiumWall";
 import ReadingProgressBar from "@/components/article/ReadingProgressBar";
 import BookmarkButton from "@/components/article/BookmarkButton";
 import NewsletterForm from "@/components/newsletter/NewsletterForm";
@@ -211,6 +211,15 @@ export default async function ArticlePage({
     "url": articleUrl,
     "articleSection": post.categories?.nodes[0]?.name || "Actualité",
     "inLanguage": "fr-FR",
+    // Balisage « paywall » recommandé par Google pour les contenus réservés aux abonnés
+    "isAccessibleForFree": !isPremium,
+    ...(isPremium && {
+      "hasPart": {
+        "@type": "WebPageElement",
+        "isAccessibleForFree": false,
+        "cssSelector": ".paywall",
+      },
+    }),
   };
 
   return (
@@ -311,17 +320,17 @@ export default async function ArticlePage({
             {/* Filigrane */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" style={{ opacity: 0.10 }}>
               <span className="text-white font-serif font-bold tracking-widest rotate-[-30deg]" style={{ fontSize: "clamp(24px, 4vw, 48px)", whiteSpace: "nowrap", textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
-                L'ECONOMIE
+                L&apos;ECONOMIE
               </span>
             </div>
           </div>
 
           {/* Contenu article — mur premium si non connecté */}
           {showWall ? (
-            <PremiumWall content={post.content} slug={post.slug} title={post.title} />
+            <PremiumWall preview={getPreview(post.content)} slug={post.slug} title={post.title} />
           ) : (
             <div
-              className={`prose prose-lg max-w-none prose-headings:font-bold prose-img:rounded-lg ${
+              className={`${isPremium ? "paywall " : ""}prose prose-lg max-w-none prose-headings:font-bold prose-img:rounded-lg ${
                 isPremium ? "prose-a:text-[#c9a84c]" : "prose-a:text-red-600"
               }`}
               dangerouslySetInnerHTML={{ __html: post.content }}
