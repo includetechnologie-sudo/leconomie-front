@@ -44,6 +44,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/contacts", destination: "/contact", permanent: true },
+      // Anciennes URL de rubriques WordPress
+      { source: "/category/:slug", destination: "/:slug", permanent: true },
     ];
   },
 

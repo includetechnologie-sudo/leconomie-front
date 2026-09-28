@@ -3,35 +3,23 @@ import Link from "next/link";
 import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_POSTS_BY_CATEGORY } from "@/graphql/queries";
 import LoadMorePosts from "@/components/category/LoadMorePosts";
+import { CATEGORY_MAP } from "@/lib/categories";
+import { permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 
-const CATEGORY_MAP: Record<string, string> = {
-  economie: "Economie",
-  finance: "Finance",
-  cemac: "CEMAC",
-  infrastructure: "Infrastructure",
-  infrastructures: "Infrastructure",
-  decideur: "Décideur",
-  opinion: "Opinion",
-  interview: "Interview",
-  evenement: "Événement",
-  "politiques-publiques": "Politiques publiques",
-  entreprises: "Entreprises",
-  assurances: "Assurances",
-  banques: "Banques",
-  "bourse-marches": "Bourse & Marchés",
-  telecoms: "Telecoms",
-  "start-ups": "Start-ups",
-  mines: "Mines",
-  "publi-info": "Publi-Info",
-  // Pays CEMAC
-  cameroun: "Cameroun",
-  tchad: "Tchad",
-  gabon: "Gabon",
-  congo: "Congo",
-  "guinee-equatoriale": "Guinée Équatoriale",
-  rca: "République Centrafricaine",
-};
+// Les anciennes URL WordPress (`/{slug}/`) sont encore connues de Google et des réseaux
+// sociaux : si le segment est le slug d'un article, on redirige vers `/article/{slug}`.
+async function isPostSlug(slug: string): Promise<boolean> {
+  try {
+    const data = await graphqlFetch<{ post: { slug: string } | null }>(
+      `query IsPostSlug($slug: ID!) { post(id: $slug, idType: SLUG) { slug } }`,
+      { slug }
+    );
+    return !!data.post;
+  } catch {
+    return false;
+  }
+}
 
 interface CatPost {
   title: string;
@@ -71,6 +59,8 @@ export default async function CategoriePage({
   const categoryName = CATEGORY_MAP[categorie];
 
   if (!categoryName) {
+    if (await isPostSlug(categorie)) permanentRedirect(`/article/${categorie}`);
+
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
         <h1 className="text-2xl font-bold">Rubrique introuvable</h1>

@@ -1,20 +1,31 @@
 import { NextResponse } from "next/server";
+import { SITE_URL, WP_POST_SITEMAP, fetchWp, xmlResponse } from "@/lib/sitemap";
 
-const WP = "https://teal-horse-411567.hostingersite.com";
-const SITE = "https://leconomie.info";
-
+// Index des sitemaps : pages/rubriques générées ici + sitemaps d'articles de Rank Math réécrits.
 export async function GET() {
+  let wpIndex: string;
   try {
-    const res = await fetch(`${WP}/sitemap_index.xml`, { next: { revalidate: 3600 } });
-    const xml = await res.text();
-    const fixed = xml.replaceAll(`${WP}/`, `${SITE}/api/sitemap/`);
-    return new NextResponse(fixed, {
-      headers: {
-        "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=3600",
-      },
-    });
+    wpIndex = await fetchWp("sitemap_index.xml");
   } catch {
     return new NextResponse("Sitemap indisponible", { status: 503 });
   }
+
+  const now = new Date().toISOString();
+  const entries = [
+    { loc: `${SITE_URL}/sitemaps/pages.xml`, lastmod: now },
+    { loc: `${SITE_URL}/sitemap-news.xml`, lastmod: now },
+  ];
+
+  for (const m of wpIndex.matchAll(/<sitemap>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?/g)) {
+    const file = m[1].trim().split("/").pop() || "";
+    if (!WP_POST_SITEMAP.test(file)) continue;
+    entries.push({ loc: `${SITE_URL}/sitemaps/${file}`, lastmod: m[2] || now });
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries.map((e) => `  <sitemap>\n    <loc>${e.loc}</loc>\n    <lastmod>${e.lastmod}</lastmod>\n  </sitemap>`).join("\n")}
+</sitemapindex>`;
+
+  return xmlResponse(xml);
 }

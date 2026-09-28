@@ -1,0 +1,28 @@
+// Rubriques exposées par le frontend : slug d'URL → nom de catégorie WordPress
+export const CATEGORY_MAP: Record<string, string> = {
+  economie: "Economie",
+  finance: "Finance",
+  cemac: "CEMAC",
+  infrastructure: "Infrastructure",
+  infrastructures: "Infrastructure",
+  decideur: "Décideur",
+  opinion: "Opinion",
+  interview: "Interview",
+  evenement: "Événement",
+  "politiques-publiques": "Politiques publiques",
+  entreprises: "Entreprises",
+  assurances: "Assurances",
+  banques: "Banques",
+  "bourse-marches": "Bourse & Marchés",
+  telecoms: "Telecoms",
+  "start-ups": "Start-ups",
+  mines: "Mines",
+  "publi-info": "Publi-Info",
+  // Pays CEMAC
+  cameroun: "Cameroun",
+  tchad: "Tchad",
+  gabon: "Gabon",
+  congo: "Congo",
+  "guinee-equatoriale": "Guinée Équatoriale",
+  rca: "République Centrafricaine",
+};

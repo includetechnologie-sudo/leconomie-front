@@ -1,21 +1,7 @@
 import { NextResponse } from "next/server";
+import { SITE_URL } from "@/lib/sitemap";
 
-const WP = "https://teal-horse-411567.hostingersite.com";
-const SITE = "https://leconomie.info";
-
-export async function GET() {
-  try {
-    const res = await fetch(`${WP}/sitemap_index.xml`, { next: { revalidate: 3600 } });
-    const xml = await res.text();
-    // Les sous-sitemaps passent par /api/sitemap/{file}
-    const fixed = xml.replaceAll(`${WP}/`, `${SITE}/api/sitemap/`);
-    return new NextResponse(fixed, {
-      headers: {
-        "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=3600",
-      },
-    });
-  } catch {
-    return new NextResponse("Sitemap indisponible", { status: 503 });
-  }
+// Ancienne adresse (Rank Math) : l'index vit désormais sur /sitemap.xml
+export function GET() {
+  return NextResponse.redirect(`${SITE_URL}/sitemap.xml`, 301);
 }
