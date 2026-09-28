@@ -5,11 +5,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
 
 const GET_RECENT_POSTS = `
   query GetRecentPostsForNewsSitemap {
-    posts(first: 1000, where: { status: PUBLISH }) {
+    posts(first: 100, where: { status: PUBLISH }) {
       nodes {
         title
         slug
-        date
+        dateGmt
         modified
         categories { nodes { name } }
       }
@@ -27,7 +27,7 @@ function escapeXml(str: string): string {
 }
 
 export async function GET() {
-  let posts: { title: string; slug: string; date: string; categories?: { nodes: { name: string }[] } }[] = [];
+  let posts: { title: string; slug: string; dateGmt: string; categories?: { nodes: { name: string }[] } }[] = [];
 
   try {
     const data = await graphqlFetch<{
@@ -36,11 +36,12 @@ export async function GET() {
     // Google News sitemap : seulement les articles des 2 derniers jours
     const twoDaysAgo = new Date();
     twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-    posts = data.posts.nodes.filter(p => new Date(p.date) >= twoDaysAgo);
+    // dateGmt est en UTC mais sans suffixe : on l'ajoute pour que Date ne l'interprète pas en heure locale
+    posts = data.posts.nodes.filter(p => new Date(`${p.dateGmt}Z`) >= twoDaysAgo);
   } catch { /* silence */ }
 
   const urls = posts.map((post) => {
-    const pubDate = new Date(post.date).toISOString();
+    const pubDate = new Date(`${post.dateGmt}Z`).toISOString();
     const category = escapeXml(post.categories?.nodes[0]?.name || "Actualité");
     return `
   <url>

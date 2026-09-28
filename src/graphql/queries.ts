@@ -114,7 +114,9 @@ export const GET_POST_BY_SLUG = `
       content
       excerpt
       date
+      dateGmt
       modified
+      modifiedGmt
       slug
       featuredImage {
         node { sourceUrl altText }

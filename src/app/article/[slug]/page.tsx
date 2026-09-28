@@ -34,6 +34,11 @@ function getBanner(id: string): Banner | null {
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
 
+// WordPress renvoie `date` à l'heure de Douala sans fuseau : pour les moteurs, on publie l'heure UTC explicite
+function isoUtc(gmt: string | undefined, local: string): string {
+  return gmt ? `${gmt}Z` : local;
+}
+
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
@@ -60,8 +65,8 @@ export async function generateMetadata(
         title: post.title,
         description,
         images: [{ url: image, width: 1200, height: 630 }],
-        publishedTime: post.date,
-        modifiedTime: post.modified,
+        publishedTime: isoUtc(post.dateGmt, post.date),
+        modifiedTime: isoUtc(post.modifiedGmt, post.modified),
         authors: post.author?.node?.name ? [post.author.node.name] : [],
         section: category?.name,
       },
@@ -82,7 +87,9 @@ interface Post {
   content: string;
   excerpt: string;
   date: string;
+  dateGmt?: string;
   modified: string;
+  modifiedGmt?: string;
   slug: string;
   featuredImage?: { node?: { sourceUrl?: string; altText?: string } };
   categories?: { nodes: { name: string; slug: string }[] };
@@ -196,8 +203,8 @@ export default async function ArticlePage({
     "headline": post.title,
     "description": post.excerpt?.replace(/<[^>]*>/g, "").trim().slice(0, 160) || "",
     "image": coverImage.startsWith("http") ? coverImage : `${SITE_URL}${coverImage}`,
-    "datePublished": post.date,
-    "dateModified": post.modified,
+    "datePublished": isoUtc(post.dateGmt, post.date),
+    "dateModified": isoUtc(post.modifiedGmt, post.modified),
     "author": {
       "@type": "Person",
       "name": post.author?.node?.name || "L'Economie",
