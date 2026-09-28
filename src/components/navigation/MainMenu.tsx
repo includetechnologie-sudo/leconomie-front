@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import BoursePanel from "@/components/bourse/BoursePanel";
 import ThemeToggle from "@/components/ThemeToggle";
+import { CATEGORY_MAP, SECONDARY_RUBRIQUES } from "@/lib/categories";
 
 type MenuItem = {
   label: string;
@@ -45,6 +46,9 @@ const menuItems: MenuItem[] = [
   { label: "Publi-Info",        href: "/publi-info" },
   { label: "Magazine",          href: "/magazine", premium: true },
 ];
+
+// Rubriques secondaires regroupées sous « Plus » pour ne pas surcharger la barre
+const moreItems = SECONDARY_RUBRIQUES.map((slug) => ({ label: CATEGORY_MAP[slug].label, href: `/${slug}` }));
 
 export default function MainMenu() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -134,6 +138,29 @@ export default function MainMenu() {
               ))}
 
             </ul>
+
+            {/* Menu « Plus » — hors du container overflow pour éviter le clipping */}
+            <div className="shrink-0 relative group border-l border-gray-100">
+              <button
+                className="px-3 h-12 flex items-center gap-1 text-[13px] font-semibold uppercase tracking-wide text-gray-700 border-b-2 border-transparent hover:text-red-600 hover:border-red-600 group-focus-within:text-red-600 transition-colors"
+                aria-haspopup="true"
+              >
+                Plus
+                <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              </button>
+              <ul className="absolute top-full right-0 bg-white border border-gray-200 shadow-lg w-[420px] z-[110] hidden group-hover:grid group-focus-within:grid grid-cols-2 rounded-b-lg overflow-hidden">
+                {moreItems.map((item) => (
+                  <li key={item.href}>
+                    <Link href={item.href}
+                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition border-b border-gray-100">
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             {/* Bouton Bourse — hors du container overflow pour éviter le clipping */}
             <div className="shrink-0 relative border-l border-gray-100">
@@ -271,6 +298,30 @@ export default function MainMenu() {
                   )}
                 </li>
               ))}
+              <li className="border-b border-gray-50 last:border-0">
+                <button
+                  onClick={() => toggleExpand("Plus")}
+                  className="w-full flex items-center justify-between px-5 py-4 text-sm font-bold uppercase tracking-wide text-gray-800 hover:text-red-600 transition"
+                >
+                  Plus de rubriques
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"
+                    className={`transition-transform duration-200 ${expanded === "Plus" ? "rotate-180" : ""}`}>
+                    <path d="M6 9l6 6 6-6"/>
+                  </svg>
+                </button>
+                {expanded === "Plus" && (
+                  <ul className="bg-gray-50 border-t border-gray-100">
+                    {moreItems.map((child) => (
+                      <li key={child.href}>
+                        <Link href={child.href} onClick={() => setMobileOpen(false)}
+                          className="block px-8 py-3 text-sm text-gray-600 hover:text-red-600 transition border-b border-gray-100 last:border-0">
+                          {child.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
             </ul>
 
             {/* Pied */}

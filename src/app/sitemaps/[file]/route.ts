@@ -15,9 +15,9 @@ const STATIC_PAGES: { path: string; changefreq: string; priority: string }[] = [
   { path: "/contact", changefreq: "yearly", priority: "0.3" },
   ...CEMAC_PAYS.map((p) => ({ path: `/cemac/${p}`, changefreq: "daily", priority: "0.6" })),
   ...UEMOA_PAYS.map((p) => ({ path: `/uemoa/${p}`, changefreq: "daily", priority: "0.6" })),
-  // "infrastructures" est un alias de "infrastructure" : une seule URL par rubrique
+  // "infrastructures" est un alias de "infrastructure" et /cemac a sa propre page : une seule URL par rubrique
   ...Object.keys(CATEGORY_MAP)
-    .filter((slug) => slug !== "infrastructures")
+    .filter((slug) => slug !== "infrastructures" && slug !== "cemac")
     .map((slug) => ({ path: `/${slug}`, changefreq: "daily", priority: "0.6" })),
 ];
 

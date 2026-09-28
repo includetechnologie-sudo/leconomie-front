@@ -4,7 +4,7 @@ import { graphqlFetch } from "@/lib/graphql-fetch";
 import { GET_POSTS_BY_CATEGORY } from "@/graphql/queries";
 import LoadMorePosts from "@/components/category/LoadMorePosts";
 import { CATEGORY_MAP } from "@/lib/categories";
-import { permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 
 // Les anciennes URL WordPress (`/{slug}/`) sont encore connues de Google et des réseaux
@@ -40,7 +40,9 @@ export async function generateMetadata(
   { params }: { params: Promise<{ categorie: string }> }
 ): Promise<Metadata> {
   const { categorie } = await params;
-  const label = CATEGORY_MAP[categorie] || categorie;
+  const rubrique = CATEGORY_MAP[categorie];
+  if (!rubrique) return {};
+  const label = rubrique.label;
   return {
     title: `${label} — Actualités`,
     description: `Toute l'actualité ${label} de la zone CEMAC sur L'Economie.`,
@@ -56,18 +58,13 @@ export default async function CategoriePage({
   params: Promise<{ categorie: string }>;
 }) {
   const { categorie } = await params;
-  const categoryName = CATEGORY_MAP[categorie];
+  const rubrique = CATEGORY_MAP[categorie];
 
-  if (!categoryName) {
+  if (!rubrique) {
     if (await isPostSlug(categorie)) permanentRedirect(`/article/${categorie}`);
-
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <h1 className="text-2xl font-bold">Rubrique introuvable</h1>
-        <Link href="/" className="text-red-600 mt-4 inline-block hover:underline">← Retour à l'accueil</Link>
-      </div>
-    );
+    notFound();
   }
+  const categoryName = rubrique.label;
 
   let posts: CatPost[] = [];
   let hasNextPage = false;
@@ -78,7 +75,7 @@ export default async function CategoriePage({
         pageInfo: { hasNextPage: boolean; endCursor: string | null };
         nodes: CatPost[];
       };
-    }>(GET_POSTS_BY_CATEGORY, { category: categoryName });
+    }>(GET_POSTS_BY_CATEGORY, { category: rubrique.wp });
     posts = data.posts.nodes;
     hasNextPage = data.posts.pageInfo.hasNextPage;
     endCursor = data.posts.pageInfo.endCursor;
@@ -99,7 +96,7 @@ export default async function CategoriePage({
       {posts.length === 0 ? (
         <div className="text-center py-20 text-gray-500">
           <p className="text-lg">Aucun article disponible pour le moment.</p>
-          <Link href="/" className="text-red-600 mt-4 inline-block hover:underline">← Retour à l'accueil</Link>
+          <Link href="/" className="text-red-600 mt-4 inline-block hover:underline">← Retour à l&apos;accueil</Link>
         </div>
       ) : (
         <>
@@ -131,7 +128,7 @@ export default async function CategoriePage({
             ))}
           </div>
           <LoadMorePosts
-            categoryName={categoryName}
+            categoryName={rubrique.wp}
             initialCursor={endCursor}
             initialHasNext={hasNextPage}
           />
