@@ -4,6 +4,7 @@ import { Inter, Source_Serif_4 } from "next/font/google";
 import SiteChrome from "@/components/layout/SiteChrome";
 import PageLoader from "@/components/layout/PageLoader";
 import OnlineHeartbeat from "@/components/layout/OnlineHeartbeat";
+import AiReferralTracker from "@/components/AiReferralTracker";
 import OneSignalInit from "@/components/layout/OneSignalInit";
 import TopBar from "@/components/navigation/TopBar";
 import MainMenu from "@/components/navigation/MainMenu";
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: `(self.SWG_BASIC = self.SWG_BASIC || []).push(basicSubscriptions => { basicSubscriptions.init({ type: "NewsArticle", isPartOfType: ["Product"], isPartOfProductId: "CAow_bHHCw:openaccess", clientOptions: { theme: "light", lang: "fr" }, }); });` }} />
         <PageLoader />
         <OnlineHeartbeat />
+        <AiReferralTracker />
         <OneSignalInit />
         <SiteChrome
           rightClickProtection={<RightClickProtection />}

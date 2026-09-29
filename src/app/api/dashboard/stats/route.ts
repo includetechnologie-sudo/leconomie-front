@@ -4,6 +4,7 @@ import path from "path";
 import { checkDashboardAuth } from "@/lib/dashboard-auth";
 import { fetchMyCoolPayBalance } from "@/lib/mycoolpay";
 import { isPaidPlan } from "@/lib/subscription";
+import { getAiVisibility } from "@/lib/ai-visibility";
 
 function readJSON(file: string, fallback: unknown = []) {
   try {
@@ -153,6 +154,7 @@ export async function GET(req: NextRequest) {
     visits: { total: totalVisits, today: todayVisits, last7, online },
     topArticles,
     articlesPayants,
+    aiVisibility: getAiVisibility(),
     retraits: {
       total: retraits.length,
       totalRetire: retraits.reduce((s, r) => s + (r.net || 0), 0),

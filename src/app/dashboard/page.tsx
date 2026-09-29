@@ -28,10 +28,14 @@ interface Stats {
   visits: { total: number; today: number; last7: { date: string; count: number }[]; online: number };
   topArticles: { slug: string; views: number }[];
   articlesPayants?: { totalVentes: number; totalRevenus: number; list: { slug: string; ventes: number; revenus: number; dernierAchat: string }[] };
+  aiVisibility?: {
+    referrals: { total30: number; bySource: { source: string; label: string; count: number }[]; daily: { date: string; count: number }[]; topPages: { path: string; count: number }[] };
+    bots: { updatedAt: string | null; rows: { key: string; label: string; group: string; kind: "live" | "index" | "training"; last7: number; last30: number }[]; liveDaily: { date: string; count: number }[]; live7: number; topPages: { path: string; count: number }[] };
+  };
   retraits?: { total: number; totalRetire: number; soldeDisponible: number; soldeSource?: "live" | "estime"; list: { id: number; montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] };
 }
 
-type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "top-articles" | "articles-payants" | "banners" | "settings";
+type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "ia" | "top-articles" | "articles-payants" | "banners" | "settings";
 
 function fmt(n: number) { return n.toLocaleString("fr-FR") + " FCFA"; }
 function fmtDate(iso?: string | number) {
@@ -484,6 +488,7 @@ export default function DashboardPage() {
     { id: "achats-magazine", label: "Achats Magazine", count: stats.paiements.achatsMagazine },
     { id: "newsletter", label: "Newsletter", count: stats.newsletter.total },
     { id: "visiteurs", label: "Visiteurs", count: stats.visits.today },
+    { id: "ia", label: "Visibilité IA", count: stats.aiVisibility?.referrals.total30 },
     { id: "top-articles", label: "Top Articles" },
     { id: "articles-payants", label: "Articles Payants", count: stats.articlesPayants?.totalVentes },
     { id: "articles", label: "Articles", count: stats.articles.total },
@@ -1044,6 +1049,98 @@ export default function DashboardPage() {
                 value: d.count,
               }))} />
             </div>
+          </div>
+        )}
+
+        {/* ── VISIBILITÉ IA ── */}
+        {activeTab === "ia" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-bold">Visibilité IA</h2>
+              <p className="text-sm text-gray-500 mt-1">Qui, parmi ChatGPT, Gemini, Perplexity, Claude…, lit L&apos;Economie et vous envoie des lecteurs.</p>
+            </div>
+            {!stats.aiVisibility ? (
+              <p className="text-gray-500 text-sm">Aucune donnée encore.</p>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <StatCard icon="🤖" label="Lecteurs envoyés par une IA (30 j)" value={stats.aiVisibility.referrals.total30}
+                    sub={stats.aiVisibility.referrals.bySource.map(s => `${s.label} ${s.count}`).join(" · ") || "Aucun pour l'instant"} color="purple" />
+                  <StatCard icon="💬" label="Lectures en direct par une IA (7 j)" value={stats.aiVisibility.bots.live7}
+                    sub="Une IA a lu la page pour répondre à une question" color="teal" />
+                  <StatCard icon="🔎" label="Robots IA et moteurs suivis" value={stats.aiVisibility.bots.rows.length}
+                    sub={stats.aiVisibility.bots.updatedAt ? `Mis à jour ${fmtDate(stats.aiVisibility.bots.updatedAt)}` : "En attente du premier comptage"} color="blue" />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5">Lecteurs venus d&apos;une IA — 14 jours</h3>
+                    <BarChart color="#a855f7" data={stats.aiVisibility.referrals.daily.map(d => ({
+                      label: new Date(d.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }), value: d.count,
+                    }))} />
+                  </div>
+                  <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-5">Lectures en direct par une IA — 14 jours</h3>
+                    <BarChart color="#14b8a6" data={stats.aiVisibility.bots.liveDaily.map(d => ({
+                      label: new Date(d.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }), value: d.count,
+                    }))} />
+                  </div>
+                </div>
+
+                <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-5 pt-5 pb-3">Robots des IA et des moteurs de recherche</h3>
+                  {stats.aiVisibility.bots.rows.length === 0 ? (
+                    <p className="text-gray-500 text-sm px-5 pb-5">Premier comptage dans l&apos;heure.</p>
+                  ) : (
+                    <table className="w-full">
+                      <thead><tr className="border-b border-gray-800">
+                        <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Robot</th>
+                        <th className="text-left px-5 py-3 text-xs text-gray-500 uppercase">Rôle</th>
+                        <th className="text-right px-5 py-3 text-xs text-gray-500 uppercase">7 jours</th>
+                        <th className="text-right px-5 py-3 text-xs text-gray-500 uppercase">30 jours</th>
+                      </tr></thead>
+                      <tbody>
+                        {stats.aiVisibility.bots.rows.map(r => (
+                          <tr key={r.key} className="border-b border-gray-800 hover:bg-gray-800/50">
+                            <td className="px-5 py-3 text-sm"><span className="text-white font-semibold">{r.label}</span> <span className="text-gray-500">· {r.group}</span></td>
+                            <td className="px-5 py-3">
+                              <Badge color={r.kind === "live" ? "green" : r.kind === "index" ? "blue" : "gray"}>
+                                {r.kind === "live" ? "Lecture en direct" : r.kind === "index" ? "Indexation" : "Entraînement"}
+                              </Badge>
+                            </td>
+                            <td className="px-5 py-3 text-right text-sm text-white tabular-nums">{r.last7.toLocaleString("fr-FR")}</td>
+                            <td className="px-5 py-3 text-right text-sm text-gray-400 tabular-nums">{r.last30.toLocaleString("fr-FR")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {[
+                    { title: "Pages les plus lues par les IA (7 j)", rows: stats.aiVisibility.bots.topPages },
+                    { title: "Pages où arrivent les lecteurs venus d'une IA (30 j)", rows: stats.aiVisibility.referrals.topPages },
+                  ].map(block => (
+                    <div key={block.title} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{block.title}</h3>
+                      {block.rows.length === 0 ? <p className="text-gray-500 text-sm">Aucune donnée encore.</p> : (
+                        <ul className="space-y-2">
+                          {block.rows.map(p => (
+                            <li key={p.path} className="flex items-center justify-between gap-3 text-sm">
+                              <a href={`https://leconomie.info${p.path}`} target="_blank" rel="noreferrer" className="text-white hover:text-red-400 truncate">
+                                {p.path === "/" ? "Accueil" : p.path.replace(/^\/article\//, "").replace(/-/g, " ")}
+                              </a>
+                              <Badge color="blue">{p.count}</Badge>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
