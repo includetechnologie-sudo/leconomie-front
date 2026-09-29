@@ -25,7 +25,7 @@ export const organizationJsonLd = {
   "telephone": "+237693537690",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Congeni Mvog-Ada, face Boulangerie The Best",
+    "streetAddress": "Congeni Mvog-Ada, en face de l'entrée de l'hôtel Le Best",
     "addressLocality": "Yaoundé",
     "addressCountry": "CM",
   },
@@ -33,6 +33,9 @@ export const organizationJsonLd = {
     { "@type": "ContactPoint", "contactType": "newsroom", "email": "redaction@leconomie.info", "availableLanguage": "fr" },
     { "@type": "ContactPoint", "contactType": "customer service", "email": "contact@leconomie.info", "telephone": "+237693537690", "availableLanguage": "fr" },
   ],
+  "publishingPrinciples": `${SITE_URL}/politique-editoriale`,
+  "ethicsPolicy": `${SITE_URL}/politique-editoriale`,
+  "correctionsPolicy": `${SITE_URL}/corrections`,
   "sameAs": [
     "https://www.facebook.com/leconomiecmr",
     "https://x.com/leconomie_quo",

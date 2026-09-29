@@ -16,7 +16,7 @@ export default function ConditionsUtilisation() {
         <h2>1. Présentation du site</h2>
         <p>
           Le site <strong>leconomie.info</strong> est édité par le journal <strong>L'Economie</strong>,
-          premier quotidien économique de la zone CEMAC, dont le siège est situé à Douala, Cameroun.
+          premier quotidien économique de la zone CEMAC, dont le siège est situé à Yaoundé (Congeni Mvog-Ada), Cameroun.
           Le site propose des contenus informatifs, économiques et financiers relatifs à la zone CEMAC
           (Cameroun, Gabon, Congo, Tchad, République Centrafricaine, Guinée Équatoriale).
         </p>

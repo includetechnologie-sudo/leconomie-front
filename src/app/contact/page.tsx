@@ -110,7 +110,7 @@ export default function ContactPage() {
             </div>
             <div>
               <p className="font-bold text-sm text-gray-900 mb-1">Localisation</p>
-              <p className="text-xs text-gray-500 leading-relaxed">CONGENI MVOG-ADA<br/>face Boulangerie The BEST, Yaoundé</p>
+              <p className="text-xs text-gray-500 leading-relaxed">Congeni Mvog-Ada<br/>en face de l&apos;entrée de l&apos;hôtel Le Best, Yaoundé</p>
             </div>
           </a>
 

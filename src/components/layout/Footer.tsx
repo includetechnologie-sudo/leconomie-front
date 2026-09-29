@@ -13,17 +13,17 @@ const navLinks = [
 
 const resourceLinks = [
   { label: "Abonnement", href: "/abonnement" },
-  { label: "Newsletter", href: "/newsletter" },
-  { label: "Publicité", href: "/publicite" },
+  { label: "Publicité", href: "/contact?sujet=publicite" },
   { label: "Contact", href: "/contact" },
-  { label: "Mentions légales", href: "/mentions-legales" },
+  { label: "Conditions d'utilisation", href: "/conditions-utilisation" },
+  { label: "Cookies", href: "/politique-cookies" },
 ];
 
 const infoLinks = [
   { label: "À propos", href: "/a-propos" },
-  { label: "CGU", href: "/cgu" },
-  { label: "Confidentialité", href: "/confidentialite" },
   { label: "Politique éditoriale", href: "/politique-editoriale" },
+  { label: "Corrections", href: "/corrections" },
+  { label: "Confidentialité", href: "/confidentialite" },
 ];
 
 const rubriquesLinks = [
