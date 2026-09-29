@@ -28,6 +28,7 @@ Les articles sont rédigés en français par la rédaction de L'Economie. Certai
 ## Rubriques
 
 ${KEY_RUBRIQUES.map((slug) => `- [${CATEGORY_MAP[slug].label}](${SITE_URL}/${slug})`).join("\n")}
+- [Cours officiels de la BVMAC du jour](${SITE_URL}/marches) : indice BVMAC All Share, cours et variations des actions cotées (source : Bulletin officiel de la cote)
 - [Zone CEMAC par pays](${SITE_URL}/cemac) : Cameroun, Gabon, Congo, Tchad, Centrafrique, Guinée équatoriale
 - [Zone UEMOA par pays](${SITE_URL}/uemoa)
 - [Articles premium](${SITE_URL}/articles-premium)

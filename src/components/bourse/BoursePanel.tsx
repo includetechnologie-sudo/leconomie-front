@@ -1,44 +1,40 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 
-interface Action {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume?: number;
-  market?: string;
+// Dernière séance officielle de la BVMAC (voir /api/bvmac et scripts/bvmac-sync.mjs)
+interface Session {
+  date: string;
+  numero: number;
+  pdfUrl: string;
+  indice: { nom: string; code: string; valeur: number; variationPct: number | null };
+  actions: { isin: string; nom: string; pays: string; cours: number | null; variationPct: number | null }[];
 }
 
-// Données statiques BVMAC/BGFI Elite en attendant l'API
-const BVMAC_STATIC: Action[] = [
-  { symbol: "BGFI",   name: "BGFI Bank",           price: 42500, change: 500,   changePercent: 1.19,  market: "BVMAC" },
-  { symbol: "PRSC",   name: "Société Financière",  price: 4740,  change: 330,   changePercent: 7.48,  market: "BVMAC" },
-  { symbol: "ETIT",   name: "Ecobank Togo",        price: 34,    change: 2,     changePercent: 6.25,  market: "BRVM"  },
-  { symbol: "CIEC",   name: "CIE Côte d'Ivoire",   price: 4995,  change: 240,   changePercent: 5.05,  market: "BRVM"  },
-  { symbol: "NEIC",   name: "NEI-CEDA",            price: 2300,  change: -85,   changePercent: -3.56, market: "BRVM"  },
-  { symbol: "FTSC",   name: "FILTISAC",            price: 2100,  change: -75,   changePercent: -3.45, market: "BRVM"  },
-  { symbol: "ONTBF",  name: "ONATEL Burkina",      price: 2750,  change: -90,   changePercent: -3.17, market: "BRVM"  },
-  { symbol: "SNTS",   name: "Sonatel",             price: 15800, change: 200,   changePercent: 1.28,  market: "BRVM"  },
-  { symbol: "SIBC",   name: "SIB Côte d'Ivoire",   price: 5200,  change: 100,   changePercent: 1.96,  market: "BRVM"  },
-  { symbol: "BICB",   name: "BIC Burkina",         price: 8750,  change: -50,   changePercent: -0.57, market: "BRVM"  },
-  { symbol: "SGBC",   name: "Société Générale CI",  price: 12500, change: 150,   changePercent: 1.21,  market: "BRVM"  },
-  { symbol: "BOAB",   name: "BOA Bénin",           price: 4500,  change: -30,   changePercent: -0.66, market: "BRVM"  },
-  { symbol: "ECOBC",  name: "Ecobank CI",          price: 3750,  change: 80,    changePercent: 2.18,  market: "BRVM"  },
-  { symbol: "SAFC",   name: "SAFCA",               price: 1650,  change: 25,    changePercent: 1.54,  market: "BRVM"  },
-  { symbol: "TTLC",   name: "Total Côte d'Ivoire", price: 2190,  change: -15,   changePercent: -0.68, market: "BRVM"  },
-];
+function fmt(n: number | null, decimals = 0) {
+  if (n == null) return "—";
+  return n.toLocaleString("fr-FR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
 
-function formatPrice(p: number) {
-  return p.toLocaleString("fr-FR");
+function formatDate(date: string) {
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
 export default function BoursePanel({ onClose }: { onClose: () => void }) {
-  const [actions] = useState<Action[]>(BVMAC_STATIC);
-  const [filter, setFilter] = useState<"all" | "BVMAC" | "BRVM">("all");
+  const [session, setSession] = useState<Session | null>(null);
+  const [status, setStatus] = useState<"loading" | "ok" | "empty">("loading");
   const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/bvmac")
+      .then((r) => r.json())
+      .then((d) => {
+        setSession(d.session);
+        setStatus(d.session ? "ok" : "empty");
+      })
+      .catch(() => setStatus("empty"));
+  }, []);
 
   // Fermer en cliquant dehors
   useEffect(() => {
@@ -51,11 +47,10 @@ export default function BoursePanel({ onClose }: { onClose: () => void }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
 
-  const filtered = filter === "all" ? actions : actions.filter((a) => a.market === filter);
-  const hausse = actions.filter((a) => a.changePercent > 0);
-  const baisse = actions.filter((a) => a.changePercent < 0);
-  const brvm = 438.68;
-  const brvmChange = 0.50;
+  const actions = session?.actions ?? [];
+  const hausse = actions.filter((a) => (a.variationPct ?? 0) > 0).length;
+  const baisse = actions.filter((a) => (a.variationPct ?? 0) < 0).length;
+  const varIndice = session?.indice.variationPct ?? 0;
 
   return (
     <div
@@ -70,83 +65,76 @@ export default function BoursePanel({ onClose }: { onClose: () => void }) {
             <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
             <polyline points="16 7 22 7 22 13"/>
           </svg>
-          <span className="font-bold text-sm">Bourse CEMAC</span>
+          <span className="font-bold text-sm">Bourse CEMAC (BVMAC)</span>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-white transition">
+        <button onClick={onClose} className="text-gray-400 hover:text-white transition" aria-label="Fermer">
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
 
-      {/* Indices */}
-      <div className="bg-gray-800 px-4 py-2.5 flex gap-4 text-xs">
-        <div>
-          <span className="text-gray-400">BRVM COMP</span>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-white font-bold">{brvm}</span>
-            <span className={`font-semibold ${brvmChange >= 0 ? "text-green-400" : "text-red-400"}`}>
-              {brvmChange >= 0 ? "▲" : "▼"} {Math.abs(brvmChange)}%
-            </span>
-          </div>
-        </div>
-        <div className="text-gray-600 self-stretch w-px bg-gray-700" />
-        <div>
-          <span className="text-gray-400">Hausse</span>
-          <div className="text-green-400 font-bold mt-0.5">{hausse.length} titres</div>
-        </div>
-        <div>
-          <span className="text-gray-400">Baisse</span>
-          <div className="text-red-400 font-bold mt-0.5">{baisse.length} titres</div>
-        </div>
-      </div>
+      {status === "loading" && <p className="px-4 py-6 text-xs text-gray-500 text-center">Chargement des cours…</p>}
+      {status === "empty" && <p className="px-4 py-6 text-xs text-gray-500 text-center">Cours officiels bientôt disponibles.</p>}
 
-      {/* Filtres */}
-      <div className="flex border-b border-gray-100">
-        {(["all", "BRVM", "BVMAC"] as const).map((f) => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`flex-1 text-xs font-bold py-2 transition ${filter === f ? "text-red-600 border-b-2 border-red-600" : "text-gray-500 hover:text-gray-800"}`}>
-            {f === "all" ? "Tous" : f}
-          </button>
-        ))}
-      </div>
-
-      {/* Liste des actions */}
-      <div className="divide-y divide-gray-50">
-        {/* Header colonnes */}
-        <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-4 py-2 bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
-          <span>Titre</span>
-          <span className="text-right">Prix (FCFA)</span>
-          <span className="text-right w-16">Var.</span>
-        </div>
-
-        {filtered.map((action) => (
-          <div key={action.symbol}
-            className="grid grid-cols-[1fr_auto_auto] gap-2 px-4 py-2.5 hover:bg-gray-50 transition items-center">
+      {session && (
+        <>
+          {/* Indice */}
+          <div className="bg-gray-800 px-4 py-2.5 flex gap-4 text-xs">
             <div>
-              <p className="text-xs font-bold text-gray-900">{action.symbol}</p>
-              <p className="text-[10px] text-gray-400 truncate max-w-[120px]">{action.name}</p>
+              <span className="text-gray-400">{session.indice.code}</span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-white font-bold">{fmt(session.indice.valeur, 2)}</span>
+                <span className={`font-semibold ${varIndice > 0 ? "text-green-400" : varIndice < 0 ? "text-red-400" : "text-gray-400"}`}>
+                  {varIndice > 0 ? "▲" : varIndice < 0 ? "▼" : ""} {fmt(Math.abs(varIndice), 2)}%
+                </span>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold text-gray-900">{formatPrice(action.price)}</p>
-              <p className="text-[10px] text-gray-400">{action.market}</p>
+            <div className="self-stretch w-px bg-gray-700" />
+            <div>
+              <span className="text-gray-400">Hausse</span>
+              <div className="text-green-400 font-bold mt-0.5">{hausse} titre{hausse > 1 ? "s" : ""}</div>
             </div>
-            <div className={`text-right w-16 text-xs font-bold rounded px-1.5 py-0.5 text-center
-              ${action.changePercent > 0 ? "bg-green-50 text-green-600" : action.changePercent < 0 ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-500"}`}>
-              {action.changePercent > 0 ? "+" : ""}{action.changePercent.toFixed(2)}%
+            <div>
+              <span className="text-gray-400">Baisse</span>
+              <div className="text-red-400 font-bold mt-0.5">{baisse} titre{baisse > 1 ? "s" : ""}</div>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Footer */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-center">
-        <p className="text-[10px] text-gray-400">Données indicatives · BRVM & BVMAC</p>
-        <a href="https://www.sika.finance" target="_blank" rel="noreferrer"
-          className="text-[10px] text-red-600 hover:underline font-semibold">
-          Données complètes sur Sika Finance →
-        </a>
-      </div>
+          {/* Liste des actions */}
+          <div className="divide-y divide-gray-50">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-4 py-2 bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+              <span>Titre</span>
+              <span className="text-right">Cours (FCFA)</span>
+              <span className="text-right w-16">Var.</span>
+            </div>
+            {actions.map((a) => (
+              <div key={a.isin} className="grid grid-cols-[1fr_auto_auto] gap-2 px-4 py-2.5 hover:bg-gray-50 transition items-center">
+                <div>
+                  <p className="text-xs font-bold text-gray-900">{a.nom}</p>
+                  <p className="text-[10px] text-gray-400">{a.pays}</p>
+                </div>
+                <p className="text-right text-xs font-semibold text-gray-900 tabular-nums">{fmt(a.cours)}</p>
+                <div className={`w-16 text-xs font-bold rounded px-1.5 py-0.5 text-center
+                  ${(a.variationPct ?? 0) > 0 ? "bg-green-50 text-green-600" : (a.variationPct ?? 0) < 0 ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-500"}`}>
+                  {(a.variationPct ?? 0) > 0 ? "+" : ""}{fmt(a.variationPct ?? 0, 2)}%
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pied : source officielle + page complète */}
+          <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 text-center space-y-1">
+            <p className="text-[10px] text-gray-500">
+              Séance du {formatDate(session.date)} · Source :{" "}
+              <a href={session.pdfUrl} target="_blank" rel="noopener" className="hover:underline">BVMAC, bulletin n° {session.numero}</a>
+            </p>
+            <Link href="/marches" onClick={onClose} className="text-xs text-red-600 hover:underline font-semibold">
+              Tous les cours et l&apos;historique →
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 }

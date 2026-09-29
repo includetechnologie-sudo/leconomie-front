@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Cours BVMAC : donnée vivante produite par le cron du VPS (scripts/bvmac-sync.mjs)
+data/bvmac.json

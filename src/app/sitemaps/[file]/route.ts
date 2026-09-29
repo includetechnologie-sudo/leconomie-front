@@ -8,6 +8,7 @@ const UEMOA_PAYS = ["senegal", "cote-d-ivoire", "mali", "burkina-faso", "niger",
 
 const STATIC_PAGES: { path: string; changefreq: string; priority: string }[] = [
   { path: "/", changefreq: "hourly", priority: "1.0" },
+  { path: "/marches", changefreq: "daily", priority: "0.9" },
   { path: "/articles-premium", changefreq: "daily", priority: "0.8" },
   { path: "/magazine", changefreq: "weekly", priority: "0.8" },
   { path: "/abonnement", changefreq: "monthly", priority: "0.6" },
