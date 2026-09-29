@@ -75,6 +75,10 @@ export const metadata = {
   alternates: {
     canonical: SITE_URL,
   },
+  // Vérification de propriété des outils pour webmasters
+  verification: {
+    other: { "msvalidate.01": "0E32755C3BB263FF8634FD1E31896DA0" }, // Bing Webmaster Tools
+  },
 };
 
 export function generateViewport() {
