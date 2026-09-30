@@ -1,17 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { cookies } from "next/headers";
-import HeaderUserMenu from "./HeaderUserMenu";
+import HeaderAccount from "./HeaderAccount";
 import HeaderSearch from "./HeaderSearch";
 import ThemeToggle from "@/components/ThemeToggle";
-import { parseAccessCookie } from "@/lib/parse-access";
 
-export default async function Header() {
-  const cookieStore = await cookies();
-  const access = cookieStore.get("abonne_access");
-
-  const user = access ? parseAccessCookie(access.value) : null;
-
+// Sans lecture de cookie côté serveur : la partie « compte » est rendue dans le navigateur
+// (HeaderAccount), ce qui permet de mettre les pages en cache.
+export default function Header() {
   return (
     <header className="hidden lg:block bg-white dark:bg-slate-900 border-b dark:border-slate-700">
       <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
@@ -65,27 +60,7 @@ export default async function Header() {
 
         {/* Boutons action */}
         <div className="hidden lg:flex items-center gap-3">
-          {user ? (
-            <HeaderUserMenu name={user.name} email={user.email} />
-          ) : (
-            <>
-              <Link href="/connexion"
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded text-sm font-medium hover:bg-gray-50 transition flex items-center gap-2">
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-                Se connecter
-              </Link>
-              <Link href="/abonnement"
-                className="bg-red-600 text-white px-5 py-2 rounded text-sm font-bold hover:bg-red-700 transition flex items-center gap-2">
-                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                S&apos;abonner
-              </Link>
-            </>
-          )}
+          <HeaderAccount />
         </div>
 
       </div>
