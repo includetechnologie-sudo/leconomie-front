@@ -1,3 +1,5 @@
+export const WP_CACHE_TAG = "wp";
+
 export async function graphqlFetch<T>(
   query: string,
   variables?: Record<string, unknown>
@@ -16,7 +18,9 @@ export async function graphqlFetch<T>(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ query, variables }),
-      next: { revalidate: 30 },
+      // Cache de 5 min pour ménager WordPress (et le pare-feu Hostinger) ; les nouvelles publications
+      // sont rafraîchies immédiatement via revalidateTag(WP_CACHE_TAG) (scripts/publish-watch.mjs)
+      next: { revalidate: 300, tags: [WP_CACHE_TAG] },
       signal: controller.signal,
     });
   } finally {

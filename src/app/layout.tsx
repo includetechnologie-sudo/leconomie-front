@@ -75,6 +75,7 @@ export const metadata = {
   },
   alternates: {
     canonical: SITE_URL,
+    types: { "application/rss+xml": [{ url: `${SITE_URL}/rss.xml`, title: "L'Economie — derniers articles" }] },
   },
   // Vérification de propriété des outils pour webmasters
   verification: {

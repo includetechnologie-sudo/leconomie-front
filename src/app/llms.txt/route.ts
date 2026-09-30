@@ -46,6 +46,7 @@ ${latest.map((p) => `- [${p.title}](${SITE_URL}/article/${p.slug})`).join("\n")}
 
 ## Optional
 
+- [Flux RSS des derniers articles](${SITE_URL}/rss.xml)
 - [Plan du site (sitemap)](${SITE_URL}/sitemap.xml)
 - [Actualités des 48 dernières heures (Google News)](${SITE_URL}/sitemap-news.xml)
 `;

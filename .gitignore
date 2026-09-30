@@ -45,3 +45,6 @@ data/bvmac.json
 # Visibilité IA : données vivantes (api/track-ai, scripts/ai-bots-stats.mjs)
 data/ai-referrals.json
 data/ai-bots.json
+# Secret des routes internes et état du veilleur de publication (générés sur le VPS)
+data/.internal-secret
+data/publish-watch.json
