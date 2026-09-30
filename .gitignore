@@ -48,3 +48,5 @@ data/ai-bots.json
 # Secret des routes internes et état du veilleur de publication (générés sur le VPS)
 data/.internal-secret
 data/publish-watch.json
+# Archive des vidéos YouTube (scripts/youtube-sync.mjs, VPS)
+data/youtube-videos.json

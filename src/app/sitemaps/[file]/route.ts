@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CATEGORY_MAP } from "@/lib/categories";
 import { graphqlFetch } from "@/lib/graphql-fetch";
+import { getVideos, videoSlug, thumbnail, embedUrl } from "@/lib/youtube";
 import { SITE_URL, WP_POST_SITEMAP, fetchWp, rewritePostSitemap, xmlResponse } from "@/lib/sitemap";
 
 const CEMAC_PAYS = ["cameroun", "tchad", "rca", "congo", "gabon", "guinee-equatoriale"];
@@ -9,6 +10,7 @@ const UEMOA_PAYS = ["senegal", "cote-d-ivoire", "mali", "burkina-faso", "niger",
 const STATIC_PAGES: { path: string; changefreq: string; priority: string }[] = [
   { path: "/", changefreq: "hourly", priority: "1.0" },
   { path: "/marches", changefreq: "daily", priority: "0.9" },
+  { path: "/videos", changefreq: "daily", priority: "0.7" },
   { path: "/articles-premium", changefreq: "daily", priority: "0.8" },
   { path: "/magazine", changefreq: "weekly", priority: "0.8" },
   { path: "/abonnement", changefreq: "monthly", priority: "0.6" },
@@ -47,6 +49,28 @@ ${pages.map((p) => `  <url>\n    <loc>${SITE_URL}${p.path === "/" ? "/" : p.path
 </urlset>`;
 }
 
+const escapeXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// Sitemap vidéo (format Google) : une entrée par page /videos/…, avec miniature et lecteur YouTube
+function videosSitemap(): string {
+  const items = getVideos().map((v) => `  <url>
+    <loc>${SITE_URL}/videos/${videoSlug(v)}</loc>
+    <lastmod>${v.updated || v.published}</lastmod>
+    <video:video>
+      <video:thumbnail_loc>${thumbnail(v.id)}</video:thumbnail_loc>
+      <video:title>${escapeXml(v.title)}</video:title>
+      <video:description>${escapeXml((v.description || v.title).slice(0, 2000))}</video:description>
+      <video:player_loc>${embedUrl(v.id)}</video:player_loc>
+      <video:publication_date>${v.published}</video:publication_date>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>`);
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+${items.join("\n")}
+</urlset>`;
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ file: string }> }
@@ -54,6 +78,7 @@ export async function GET(
   const { file } = await params;
 
   if (file === "pages.xml") return xmlResponse(await pagesSitemap());
+  if (file === "videos.xml") return xmlResponse(videosSitemap());
 
   if (!WP_POST_SITEMAP.test(file)) {
     return new NextResponse("Not found", { status: 404 });

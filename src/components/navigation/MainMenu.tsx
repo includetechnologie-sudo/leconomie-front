@@ -48,7 +48,10 @@ const menuItems: MenuItem[] = [
 ];
 
 // Rubriques secondaires regroupées sous « Plus » pour ne pas surcharger la barre
-const moreItems = SECONDARY_RUBRIQUES.map((slug) => ({ label: CATEGORY_MAP[slug].label, href: `/${slug}` }));
+const moreItems = [
+  { label: "L'Economie TV (vidéos)", href: "/videos" },
+  ...SECONDARY_RUBRIQUES.map((slug) => ({ label: CATEGORY_MAP[slug].label, href: `/${slug}` })),
+];
 
 export default function MainMenu() {
   const [mobileOpen, setMobileOpen] = useState(false);

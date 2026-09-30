@@ -14,6 +14,7 @@ export async function GET() {
   const entries = [
     { loc: `${SITE_URL}/sitemaps/pages.xml`, lastmod: now },
     { loc: `${SITE_URL}/sitemap-news.xml`, lastmod: now },
+    { loc: `${SITE_URL}/sitemaps/videos.xml`, lastmod: now },
   ];
 
   for (const m of wpIndex.matchAll(/<sitemap>\s*<loc>([^<]+)<\/loc>\s*(?:<lastmod>([^<]+)<\/lastmod>)?/g)) {

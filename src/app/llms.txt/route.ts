@@ -1,5 +1,6 @@
 import { graphqlFetch } from "@/lib/graphql-fetch";
 import { CATEGORY_MAP } from "@/lib/categories";
+import { getVideos, videoSlug } from "@/lib/youtube";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://leconomie.info";
 
@@ -37,6 +38,11 @@ ${KEY_RUBRIQUES.map((slug) => `- [${CATEGORY_MAP[slug].label}](${SITE_URL}/${slu
 ## Derniers articles
 
 ${latest.map((p) => `- [${p.title}](${SITE_URL}/article/${p.slug})`).join("\n")}
+
+## Vidéos récentes (L'Economie TV)
+
+${getVideos().slice(0, 10).map((v) => `- [${v.title}](${SITE_URL}/videos/${videoSlug(v)})`).join("\n")}
+- [Toutes les vidéos](${SITE_URL}/videos)
 
 ## Contact
 

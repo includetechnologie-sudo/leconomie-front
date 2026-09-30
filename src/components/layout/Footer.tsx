@@ -9,6 +9,7 @@ const navLinks = [
   { label: "CEMAC", href: "/cemac" },
   { label: "Infrastructure", href: "/infrastructure" },
   { label: "Magazine", href: "/magazine" },
+  { label: "L'Economie TV", href: "/videos" },
 ];
 
 const resourceLinks = [

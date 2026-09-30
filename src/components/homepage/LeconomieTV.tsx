@@ -3,7 +3,6 @@ import VideoPlayerClient from "./VideoPlayerClient";
 
 const CHANNEL_ID = "UCQOk7FfVumWv2RLw9yIx2SQ";
 const RSS_URL = `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`;
-const CHANNEL_URL = `https://www.youtube.com/channel/${CHANNEL_ID}`;
 
 interface Video {
   videoId: string;
@@ -68,9 +67,7 @@ export default async function LeconomieTV() {
           </h2>
         </div>
         <Link
-          href={CHANNEL_URL}
-          target="_blank"
-          rel="noreferrer"
+          href="/videos"
           className="flex items-center gap-2 text-red-600 text-sm font-semibold hover:underline"
         >
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
