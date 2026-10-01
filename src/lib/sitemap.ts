@@ -22,8 +22,8 @@ export async function fetchWp(file: string): Promise<string> {
   return res.text();
 }
 
-// Les URL WordPress `/{slug}/` deviennent `/article/{slug}` côté Next.
-// Les <image:loc> restent sur WordPress, où les médias sont réellement servis.
+// Les URL WordPress `/{slug}/` deviennent `/article/{slug}` côté Next, et les médias (<image:loc>)
+// passent par leconomie.info/wp-content/ : le domaine technique ne doit apparaître nulle part.
 export function rewritePostSitemap(xml: string): string {
   return xml
     .replace(/<\?xml-stylesheet[^>]*\?>/, "")
@@ -31,5 +31,6 @@ export function rewritePostSitemap(xml: string): string {
       if (!url.startsWith(`${WP_URL}/`)) return `<loc>${url}</loc>`;
       const slug = url.slice(WP_URL.length + 1).replace(/\/$/, "");
       return `<loc>${slug ? `${SITE_URL}/article/${slug}` : `${SITE_URL}/`}</loc>`;
-    });
+    })
+    .split(`${WP_URL}/wp-content/`).join(`${SITE_URL}/wp-content/`);
 }

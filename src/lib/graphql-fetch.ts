@@ -1,3 +1,5 @@
+import { toPublicUrls } from "@/lib/public-url";
+
 export const WP_CACHE_TAG = "wp";
 
 export async function graphqlFetch<T>(
@@ -31,7 +33,7 @@ export async function graphqlFetch<T>(
     throw new Error(`GraphQL request failed: ${res.status} ${res.statusText}`);
   }
 
-  const json = await res.json();
+  const json = JSON.parse(toPublicUrls(await res.text()));
 
   if (json.errors?.length) {
     throw new Error(json.errors[0].message);

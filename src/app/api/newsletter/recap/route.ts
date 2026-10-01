@@ -4,6 +4,7 @@ import { checkDashboardAuth } from "@/lib/dashboard-auth";
 import { readAbonnes } from "@/lib/abonnes";
 import { isPaidPlan } from "@/lib/subscription";
 import { readSubscribers } from "@/lib/newsletter";
+import { toPublicUrls } from "@/lib/public-url";
 
 interface Article {
   title: string;
@@ -141,7 +142,7 @@ async function fetchLatestJournal(): Promise<JournalDuJour | null> {
       }),
     });
     if (!res.ok) return null;
-    const data = await res.json();
+    const data = JSON.parse(toPublicUrls(await res.text())); // pas de domaine technique WordPress dans les emails
     const nodes = data?.data?.journaux?.nodes;
     return nodes?.[0] || null;
   } catch {
@@ -239,7 +240,7 @@ export async function POST(req: NextRequest) {
   ]);
 
   if (!gqlRes.ok) return NextResponse.json({ error: "Erreur GraphQL" }, { status: 500 });
-  const gqlData = await gqlRes.json();
+  const gqlData = JSON.parse(toPublicUrls(await gqlRes.text()));
   const articles: Article[] = gqlData?.data?.posts?.nodes || [];
 
   if (articles.length === 0) return NextResponse.json({ error: "Aucun article trouvé" }, { status: 404 });

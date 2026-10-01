@@ -5,6 +5,7 @@ import path from "path";
 import { readSubscribers, buildUnsubscribeUrl } from "@/lib/newsletter";
 import { readAbonnes } from "@/lib/abonnes";
 import { isPaidPlan } from "@/lib/subscription";
+import { toPublicUrls } from "@/lib/public-url";
 
 const WEBHOOK_SECRET = process.env.NEWSLETTER_WEBHOOK_SECRET || "";
 const NOTIFIED_PATH = path.join(process.cwd(), "data", "newsletter-notified.json");
@@ -48,7 +49,7 @@ async function fetchLatestJournal(): Promise<JournalDuJour | null> {
       }),
     });
     if (!res.ok) return null;
-    const data = await res.json();
+    const data = JSON.parse(toPublicUrls(await res.text())); // pas de domaine technique WordPress dans les emails
     const nodes = data?.data?.journaux?.nodes;
     return nodes?.[0] || null;
   } catch {

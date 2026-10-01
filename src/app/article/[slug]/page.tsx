@@ -17,6 +17,7 @@ import type { JournalWP } from "@/lib/types";
 import { ORGANIZATION_ID, ORGANIZATION_LOGO, isRedactionAuthor } from "@/lib/organization";
 import { rubriqueHref } from "@/lib/categories";
 import type { Metadata } from "next";
+import { toPublicUrls } from "@/lib/public-url";
 
 interface Banner {
   id: string;
@@ -29,7 +30,7 @@ interface Banner {
 function getBanner(id: string): Banner | null {
   try {
     const file = path.join(process.cwd(), "data", "banners.json");
-    const banners: Banner[] = JSON.parse(fs.readFileSync(file, "utf-8"));
+    const banners: Banner[] = JSON.parse(toPublicUrls(fs.readFileSync(file, "utf-8")));
     return banners.find(b => b.id === id && b.active) || null;
   } catch { return null; }
 }

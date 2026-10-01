@@ -23,7 +23,7 @@ export default function PubMagazineSidebar() {
       {/* Image principale */}
       <div className="relative w-full" style={{ aspectRatio: "300/400" }}>
         <Image
-          src="https://teal-horse-411567.hostingersite.com/wp-content/uploads/2026/07/pub-magazine-international.jpg"
+          src="https://leconomie.info/wp-content/uploads/2026/07/pub-magazine-international.jpg"
           alt="L'Economie International N°049"
           fill
           className="object-cover object-top group-hover:scale-105 transition-transform duration-500"

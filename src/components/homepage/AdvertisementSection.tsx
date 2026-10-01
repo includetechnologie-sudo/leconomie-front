@@ -1,6 +1,7 @@
 import Image from "next/image";
 import fs from "fs";
 import path from "path";
+import { toPublicUrls } from "@/lib/public-url";
 
 interface Banner {
   id: string;
@@ -13,7 +14,7 @@ interface Banner {
 function getBanner(id: string): Banner | null {
   try {
     const file = path.join(process.cwd(), "data", "banners.json");
-    const banners: Banner[] = JSON.parse(fs.readFileSync(file, "utf-8"));
+    const banners: Banner[] = JSON.parse(toPublicUrls(fs.readFileSync(file, "utf-8")));
     return banners.find(b => b.id === id && b.active) || null;
   } catch { return null; }
 }
