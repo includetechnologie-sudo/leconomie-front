@@ -76,8 +76,9 @@ export default function HeroSliderClient({ posts }: Props) {
           src={image}
           alt={post.title}
           fill
+          sizes="(min-width: 1280px) 45vw, (min-width: 1024px) 55vw, 100vw"
           className="object-cover"
-          priority
+          preload
         />
       </div>
 

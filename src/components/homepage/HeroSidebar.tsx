@@ -42,8 +42,9 @@ export default async function HeroSidebar() {
               src={post.featuredImage?.node?.sourceUrl || "/images/hero.jpg"}
               alt={post.title}
               fill
+              sizes="96px"
               className="object-cover object-top"
-              priority={i === 0}
+              preload={i === 0}
             />
           </div>
 

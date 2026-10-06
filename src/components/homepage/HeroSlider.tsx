@@ -30,8 +30,8 @@ export default async function HeroSlider() {
               src="https://leconomie.info/wp-content/uploads/2026/07/Banniere-publicitaire-magazine.jpg"
               alt="L'Economie International N°049"
               fill
+              sizes="160px"
               className="object-contain group-hover:scale-105 transition-transform duration-500"
-              priority
             />
           </Link>
         </div>
@@ -51,8 +51,8 @@ export default async function HeroSlider() {
               src={cover}
               alt={`Couverture ${numero}`}
               fill
+              sizes="160px"
               className="object-contain"
-              priority
             />
           </div>
           {/* Infos + bouton */}
