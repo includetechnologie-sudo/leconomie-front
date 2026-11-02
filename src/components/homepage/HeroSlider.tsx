@@ -27,8 +27,8 @@ export default async function HeroSlider() {
         <div className="h-full flex items-center justify-center">
           <Link href="/magazine?tab=magazines" className="block w-full h-full relative rounded-lg overflow-hidden group bg-[#f5ede8]">
             <Image
-              src="https://leconomie.info/wp-content/uploads/2026/07/Banniere-publicitaire-magazine.jpg"
-              alt="L'Economie International N°049"
+              src="/images/pub-magazine1.png"
+              alt="L'Economie International — Spécial N°50, Grands projets qui ont transformé l'Afrique"
               fill
               sizes="160px"
               className="object-contain group-hover:scale-105 transition-transform duration-500"
