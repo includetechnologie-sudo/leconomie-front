@@ -1,0 +1,18 @@
+name: Daily subscription check
+
+on:
+  schedule:
+    # Tous les jours à 7h00 (heure Cameroun UTC+1 = 6h00 UTC)
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  check-expirations:
+    runs-on: self-hosted
+    steps:
+      - name: Notify expiring subscriptions
+        run: |
+          curl -s -X POST https://leconomie.info/api/abonnement/notifier-expiration \
+            -H "Content-Type: application/json" \
+            -H "x-webhook-secret: ${{ secrets.WEBHOOK_SECRET }}" \
+            -d '{}' || true

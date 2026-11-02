@@ -11,6 +11,7 @@ import ReadingProgressBar from "@/components/article/ReadingProgressBar";
 import BookmarkButton from "@/components/article/BookmarkButton";
 import NewsletterForm from "@/components/newsletter/NewsletterForm";
 import TrackPageView from "@/components/TrackPageView";
+import ReadingTracker from "@/components/article/ReadingTracker";
 import ViewCount from "@/components/article/ViewCount";
 import { parseAccessCookie, canAccess } from "@/lib/subscription";
 import type { JournalWP } from "@/lib/types";
@@ -254,6 +255,15 @@ export default async function ArticlePage({
       <ReadingProgressBar color={isPremium ? "#c9a84c" : undefined} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <TrackPageView slug={post.slug} />
+      {userEmail && !showWall && (
+        <ReadingTracker
+          slug={post.slug}
+          title={post.title}
+          category={category?.name}
+          categorySlug={category?.slug}
+          minutes={minutes}
+        />
+      )}
       <div className="grid lg:grid-cols-[1fr_300px] gap-10">
 
         {/* ── Contenu principal ── */}
