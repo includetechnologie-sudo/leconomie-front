@@ -21,6 +21,30 @@ const decode = (s) => s
   .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'").replace(/&amp;/g, "&");
 const pick = (entry, re) => (entry.match(re) || [])[1] ?? "";
 
+// Sans en-têtes "navigateur", YouTube renvoie sporadiquement 404/500 aux requêtes
+// faites depuis une IP de datacenter. On imite un navigateur et on retente avant d'abandonner.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchFeed(url, attempts = 3) {
+  let lastError;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+          "Accept": "application/xml,text/xml;q=0.9,*/*;q=0.8",
+        },
+      });
+      if (!res.ok) throw new Error(`RSS YouTube ${res.status}`);
+      return await res.text();
+    } catch (e) {
+      lastError = e;
+      if (i < attempts - 1) await sleep(2000 * (i + 1));
+    }
+  }
+  throw lastError;
+}
+
 // Même règle que videoSlug() dans src/lib/youtube.ts
 function videoSlug(v) {
   const s = v.title.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
@@ -39,9 +63,7 @@ function secret() {
 }
 
 async function main() {
-  const res = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`);
-  if (!res.ok) throw new Error(`RSS YouTube ${res.status}`);
-  const xml = await res.text();
+  const xml = await fetchFeed(`https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`);
   const entries = xml.match(/<entry>[\s\S]*?<\/entry>/g) ?? [];
   if (!entries.length) throw new Error("flux vide");
 
