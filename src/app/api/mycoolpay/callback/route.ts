@@ -474,9 +474,18 @@ export async function GET(req: NextRequest) {
           }
         }
       }
+
+      // Connexion automatique + redirection directe vers la lecture du numéro — même principe
+      // que pour les articles : plus besoin de passer par /paiement-succes (création de mot de
+      // passe obligatoire, délai de 3s, appel API redondant). Le mot de passe reste proposable
+      // plus tard depuis "Mon compte", sans bloquer l'accès au numéro déjà payé.
+      const finalAbonnesForAchat = await readAbonnes();
+      const achatUser = finalAbonnesForAchat.find((a) => a.email.toLowerCase() === email.toLowerCase());
+      const lectureResponse = NextResponse.redirect(new URL(`/lecture/${id}`, req.url));
+      return setAutoLogin(lectureResponse, email, achatUser?.plan || "gratuit", achatUser?.ref || reference, name);
     }
 
-    // Auto-login après achat journal/magazine
+    // Référence introuvable (ni pending, ni paiements.json) — on retombe sur la page générique.
     const finalAbonnes = await readAbonnes();
     const finalUser = finalAbonnes.find(a => a.email.toLowerCase() === email.toLowerCase());
     const successResponse = NextResponse.redirect(new URL(`/paiement-succes?ref=${reference}&email=${encodeURIComponent(email)}`, req.url));
