@@ -539,6 +539,12 @@ function getMonthLabel(key: string): string {
   return `${MOIS_FR[m]} ${year}`;
 }
 
+// Pluriel irrégulier : un journal → des journaux (pas "journals")
+function pluralLabel(type: "journal" | "magazine", count: number): string {
+  if (count <= 1) return type;
+  return type === "journal" ? "journaux" : "magazines";
+}
+
 function MonthGroupedList({ items, type }: { items: (JournalWP | MagazineWP)[]; type: "journal" | "magazine" }) {
   const [openMonth, setOpenMonth] = useState<string | null>(null);
 
@@ -579,7 +585,7 @@ function MonthGroupedList({ items, type }: { items: (JournalWP | MagazineWP)[]; 
                 </svg>
               </div>
               <p className="text-sm font-bold text-gray-800">{getMonthLabel(key)}</p>
-              <p className="text-xs text-gray-400">{monthItems.length} {type}{monthItems.length > 1 ? "s" : ""}</p>
+              <p className="text-xs text-gray-400">{monthItems.length} {pluralLabel(type, monthItems.length)}</p>
             </button>
           );
         })}
