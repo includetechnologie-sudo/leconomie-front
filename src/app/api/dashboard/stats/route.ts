@@ -5,6 +5,8 @@ import { checkDashboardAuth } from "@/lib/dashboard-auth";
 import { fetchMyCoolPayBalance } from "@/lib/mycoolpay";
 import { isPaidPlan } from "@/lib/subscription";
 import { getAiVisibility } from "@/lib/ai-visibility";
+import { REACTION_TYPES } from "@/lib/reactions";
+import { SHARE_NETWORKS } from "@/lib/shares";
 
 function readJSON(file: string, fallback: unknown = []) {
   try {
@@ -31,6 +33,8 @@ export async function GET(req: NextRequest) {
   const onlineRaw: Record<string, number> = readJSON("online.json", {});
   const achatsArticles: { email: string; slug: string; purchasedAt: string; reference: string; expiresAt: string }[] = readJSON("achats-articles.json");
   const soldeCorrectif: { valeur?: number } = readJSON("solde-correctif.json", {});
+  const reactionsRaw: Record<string, { counts: Record<string, { anonyme: number; abonne: number }> }> = readJSON("reactions.json", {});
+  const sharesRaw: Record<string, { counts: Record<string, { anonyme: number; abonne: number }> }> = readJSON("shares.json", {});
 
   // Articles WordPress via GraphQL + solde marchand en temps réel via MyCoolPay (en parallèle)
   let articles = { total: 0, recent: [] as { title: string; date: string; slug: string }[] };
@@ -130,6 +134,46 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.ventes - a.ventes),
   };
 
+  // Engagement (réactions + partages) par article, anonyme vs abonné
+  let totalReactionsAnonyme = 0, totalReactionsAbonne = 0, totalSharesAnonyme = 0, totalSharesAbonne = 0;
+  const engagementSlugs = new Set([...Object.keys(reactionsRaw), ...Object.keys(sharesRaw)]);
+  const engagementList = Array.from(engagementSlugs).map((slug) => {
+    const r = reactionsRaw[slug]?.counts;
+    const s = sharesRaw[slug]?.counts;
+    let reactionsAnonyme = 0, reactionsAbonne = 0;
+    const perReaction: Record<string, number> = {};
+    for (const t of REACTION_TYPES) {
+      const c = r?.[t] || { anonyme: 0, abonne: 0 };
+      perReaction[t] = c.anonyme + c.abonne;
+      reactionsAnonyme += c.anonyme; reactionsAbonne += c.abonne;
+    }
+    let sharesAnonyme = 0, sharesAbonne = 0;
+    const perShare: Record<string, number> = {};
+    for (const n of SHARE_NETWORKS) {
+      const c = s?.[n] || { anonyme: 0, abonne: 0 };
+      perShare[n] = c.anonyme + c.abonne;
+      sharesAnonyme += c.anonyme; sharesAbonne += c.abonne;
+    }
+    totalReactionsAnonyme += reactionsAnonyme; totalReactionsAbonne += reactionsAbonne;
+    totalSharesAnonyme += sharesAnonyme; totalSharesAbonne += sharesAbonne;
+    const totalReactions = reactionsAnonyme + reactionsAbonne;
+    const totalShares = sharesAnonyme + sharesAbonne;
+    return {
+      slug, perReaction, perShare, totalReactions, totalShares,
+      totalEngagement: totalReactions + totalShares,
+      anonyme: reactionsAnonyme + sharesAnonyme,
+      abonne: reactionsAbonne + sharesAbonne,
+    };
+  }).sort((a, b) => b.totalEngagement - a.totalEngagement).slice(0, 20);
+
+  const engagement = {
+    totalReactions: totalReactionsAnonyme + totalReactionsAbonne,
+    totalShares: totalSharesAnonyme + totalSharesAbonne,
+    anonyme: totalReactionsAnonyme + totalSharesAnonyme,
+    abonne: totalReactionsAbonne + totalSharesAbonne,
+    list: engagementList,
+  };
+
   return NextResponse.json({
     newsletter: { total: subscribers.length, list: subscribers },
     paiements: {
@@ -154,6 +198,7 @@ export async function GET(req: NextRequest) {
     visits: { total: totalVisits, today: todayVisits, last7, online },
     topArticles,
     articlesPayants,
+    engagement,
     aiVisibility: getAiVisibility(),
     retraits: {
       total: retraits.length,

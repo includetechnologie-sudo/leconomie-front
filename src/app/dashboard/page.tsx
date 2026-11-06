@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, startTransition, Fragment } from "react";
+import { REACTION_TYPES, REACTION_EMOJI } from "@/lib/reactions";
+import { SHARE_NETWORKS, SHARE_LABEL } from "@/lib/shares";
 
 interface Achat { id: number; type: string; titre: string; ref: string; acheteLe: number; email?: string; name?: string; }
 interface Abonne { email?: string; name?: string; plan?: string; createdAt?: number; expiresAt?: number; achats?: Achat[]; }
@@ -28,6 +30,10 @@ interface Stats {
   visits: { total: number; today: number; last7: { date: string; count: number }[]; online: number };
   topArticles: { slug: string; views: number }[];
   articlesPayants?: { totalVentes: number; totalRevenus: number; list: { slug: string; ventes: number; revenus: number; dernierAchat: string }[] };
+  engagement?: {
+    totalReactions: number; totalShares: number; anonyme: number; abonne: number;
+    list: { slug: string; perReaction: Record<string, number>; perShare: Record<string, number>; totalReactions: number; totalShares: number; totalEngagement: number; anonyme: number; abonne: number }[];
+  };
   aiVisibility?: {
     referrals: { total30: number; bySource: { source: string; label: string; count: number }[]; daily: { date: string; count: number }[]; topPages: { path: string; count: number }[] };
     bots: { updatedAt: string | null; rows: { key: string; label: string; group: string; kind: "live" | "index" | "training"; last7: number; last30: number }[]; liveDaily: { date: string; count: number }[]; live7: number; topPages: { path: string; count: number }[] };
@@ -35,7 +41,7 @@ interface Stats {
   retraits?: { total: number; totalRetire: number; soldeDisponible: number; soldeSource?: "live" | "estime"; list: { id: number; montant: number; frais: number; net: number; beneficiaire: string; banque: string; motif: string; date: string; statut: string }[] };
 }
 
-type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "ia" | "top-articles" | "articles-payants" | "banners" | "settings";
+type Tab = "overview" | "newsletter" | "abonnements" | "gerer-abonnes" | "achats-journal" | "achats-magazine" | "devis" | "articles" | "visiteurs" | "ia" | "top-articles" | "articles-payants" | "engagement" | "banners" | "settings";
 
 function fmt(n: number) { return n.toLocaleString("fr-FR") + " FCFA"; }
 function fmtDate(iso?: string | number) {
@@ -316,6 +322,7 @@ export default function DashboardPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignsLoaded, setCampaignsLoaded] = useState(false);
   const [expandedFailed, setExpandedFailed] = useState<string | null>(null);
+  const [expandedEngagement, setExpandedEngagement] = useState<string | null>(null);
 
   // Gérer abonnés
   const [gAbEmail, setGAbEmail] = useState("");
@@ -491,6 +498,7 @@ export default function DashboardPage() {
     { id: "ia", label: "Visibilité IA", count: stats.aiVisibility?.referrals.total30 },
     { id: "top-articles", label: "Top Articles" },
     { id: "articles-payants", label: "Articles Payants", count: stats.articlesPayants?.totalVentes },
+    { id: "engagement", label: "Engagement", count: (stats.engagement?.totalReactions || 0) + (stats.engagement?.totalShares || 0) },
     { id: "articles", label: "Articles", count: stats.articles.total },
     { id: "devis", label: "Devis", count: stats.devis.total },
     { id: "gerer-abonnes", label: "Gérer Abonnés" },
@@ -1223,6 +1231,98 @@ export default function DashboardPage() {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── ENGAGEMENT (réactions & partages) ── */}
+        {activeTab === "engagement" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold">Réactions &amp; Partages</h2>
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard icon="👍" label="Réactions totales" value={stats.engagement?.totalReactions || 0} color="red" />
+              <StatCard icon="🔗" label="Partages totaux" value={stats.engagement?.totalShares || 0} color="blue" />
+              <StatCard icon="🕶️" label="Anonyme" value={stats.engagement?.anonyme || 0} sub="réactions + partages" color="purple" />
+              <StatCard icon="⭐" label="Abonné" value={stats.engagement?.abonne || 0} sub="réactions + partages" color="yellow" />
+            </div>
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+              {!stats.engagement?.list?.length ? (
+                <p className="text-gray-500 text-sm p-6">Aucune réaction ni partage enregistré pour le moment</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs sm:text-sm">
+                    <thead><tr className="border-b border-gray-800">
+                      <th className="text-left px-3 sm:px-5 py-3 text-xs text-gray-500 uppercase">#</th>
+                      <th className="text-left px-3 sm:px-5 py-3 text-xs text-gray-500 uppercase">Article</th>
+                      <th className="text-right px-3 sm:px-5 py-3 text-xs text-gray-500 uppercase">Réactions</th>
+                      <th className="text-right px-3 sm:px-5 py-3 text-xs text-gray-500 uppercase">Partages</th>
+                      <th className="text-right px-3 sm:px-5 py-3 text-xs text-gray-500 uppercase">Anonyme/Abonné</th>
+                      <th className="text-right px-3 sm:px-5 py-3 text-xs text-gray-500 uppercase">Total</th>
+                      <th className="text-right px-3 sm:px-5 py-3 text-xs text-gray-500 uppercase"></th>
+                    </tr></thead>
+                    <tbody>
+                      {stats.engagement.list.map((a, i) => (
+                        <Fragment key={a.slug}>
+                          <tr className="border-b border-gray-800/50 hover:bg-gray-800/30">
+                            <td className="px-3 sm:px-5 py-3 text-gray-500 font-bold">{i + 1}</td>
+                            <td className="px-3 sm:px-5 py-3">
+                              <a href={`https://leconomie.info/article/${a.slug}`} target="_blank" rel="noreferrer"
+                                className="text-white hover:text-red-400 transition line-clamp-1">
+                                {a.slug.replace(/-/g, " ")}
+                              </a>
+                            </td>
+                            <td className="px-3 sm:px-5 py-3 text-right"><Badge color="blue">{a.totalReactions}</Badge></td>
+                            <td className="px-3 sm:px-5 py-3 text-right"><Badge color="green">{a.totalShares}</Badge></td>
+                            <td className="px-3 sm:px-5 py-3 text-right text-gray-400 whitespace-nowrap">
+                              🕶️ {a.anonyme} · ⭐ {a.abonne}
+                            </td>
+                            <td className="px-3 sm:px-5 py-3 text-right font-bold text-white">{a.totalEngagement}</td>
+                            <td className="px-3 sm:px-5 py-3 text-right">
+                              <button
+                                onClick={() => setExpandedEngagement(expandedEngagement === a.slug ? null : a.slug)}
+                                className="text-gray-400 hover:text-white transition"
+                                title="Voir le détail"
+                              >
+                                {expandedEngagement === a.slug ? "▲" : "▼"}
+                              </button>
+                            </td>
+                          </tr>
+                          {expandedEngagement === a.slug && (
+                            <tr className="border-b border-gray-800/50 bg-gray-950/50">
+                              <td colSpan={7} className="px-3 sm:px-5 py-3">
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                  <div>
+                                    <p className="text-gray-500 mb-2 uppercase text-[10px] tracking-widest">Réactions</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {REACTION_TYPES.map((t) => (
+                                        <span key={t} className="bg-gray-800 rounded-full px-2.5 py-1 text-gray-300">
+                                          {REACTION_EMOJI[t]} {a.perReaction[t] || 0}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-500 mb-2 uppercase text-[10px] tracking-widest">Partages</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {SHARE_NETWORKS.map((n) => (
+                                        <span key={n} className="bg-gray-800 rounded-full px-2.5 py-1 text-gray-300">
+                                          {SHARE_LABEL[n]} {a.perShare[n] || 0}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
